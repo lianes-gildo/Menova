@@ -129,6 +129,349 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.ToTable("auditoria", (string)null);
                 });
 
+            modelBuilder.Entity("Menova.Domain.Caixa.Caixa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativa");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<DateTime?>("EliminadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_em");
+
+                    b.Property<string>("EliminadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eliminado_por");
+
+                    b.Property<bool>("EstaEliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esta_eliminado");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("integer")
+                        .HasColumnName("numero");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("caixas", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Caixa.DocumentoZ", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("DataHora")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_hora");
+
+                    b.Property<string>("EmitidoPor")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("emitido_por");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("hash");
+
+                    b.Property<string>("HashAnterior")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("hash_anterior");
+
+                    b.Property<int>("NumeroZ")
+                        .HasColumnType("integer")
+                        .HasColumnName("numero_z");
+
+                    b.Property<Guid>("SessaoCaixaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sessao_caixa_id");
+
+                    b.Property<string>("TotaisPorMetodo")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("totais_por_metodo");
+
+                    b.Property<string>("TotaisPorTaxaIva")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("totais_por_taxa_iva");
+
+                    b.Property<decimal>("TotalBruto")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("total_bruto");
+
+                    b.Property<decimal>("TotalDesconto")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("total_desconto");
+
+                    b.Property<int>("TotalDocumentosFaturados")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_documentos_faturados");
+
+                    b.Property<decimal>("TotalIva")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("total_iva");
+
+                    b.Property<decimal>("TotalLiquido")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("total_liquido");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataHora");
+
+                    b.HasIndex("NumeroZ")
+                        .IsUnique();
+
+                    b.HasIndex("SessaoCaixaId");
+
+                    b.ToTable("documentos_z", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Caixa.MovimentoCaixa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("motivo");
+
+                    b.Property<Guid>("SessaoCaixaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sessao_caixa_id");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("valor");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessaoCaixaId");
+
+                    b.ToTable("movimentos_caixa", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Caixa.Pagamento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conta_id");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<decimal>("Gorjeta")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("gorjeta");
+
+                    b.Property<int>("Metodo")
+                        .HasColumnType("integer")
+                        .HasColumnName("metodo");
+
+                    b.Property<string>("Referencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("referencia");
+
+                    b.Property<Guid>("SessaoCaixaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sessao_caixa_id");
+
+                    b.Property<decimal>("Troco")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("troco");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("valor");
+
+                    b.Property<decimal>("ValorRecebido")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("valor_recebido");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("SessaoCaixaId");
+
+                    b.ToTable("pagamentos", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Caixa.SessaoCaixa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("AbertaEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("aberta_em");
+
+                    b.Property<Guid>("CaixaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("caixa_id");
+
+                    b.Property<decimal?>("Diferenca")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("diferenca");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer")
+                        .HasColumnName("estado");
+
+                    b.Property<DateTime?>("FechadaEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fechada_em");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("observacoes");
+
+                    b.Property<decimal?>("SaldoContado")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("saldo_contado");
+
+                    b.Property<decimal>("SaldoEsperado")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("saldo_esperado");
+
+                    b.Property<decimal>("SaldoInicial")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("saldo_inicial");
+
+                    b.Property<decimal>("TotalEntradas")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("total_entradas");
+
+                    b.Property<decimal>("TotalSaidas")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("total_saidas");
+
+                    b.Property<decimal>("TotalVendas")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("total_vendas");
+
+                    b.Property<Guid>("UtilizadorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("utilizador_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AbertaEm");
+
+                    b.HasIndex("CaixaId");
+
+                    b.HasIndex("UtilizadorId");
+
+                    b.ToTable("sessoes_caixa", (string)null);
+                });
+
             modelBuilder.Entity("Menova.Domain.Configuracao.Configuracao", b =>
                 {
                     b.Property<string>("Chave")
@@ -819,6 +1162,151 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.HasIndex("PerfilId");
 
                     b.ToTable("utilizadores_perfis", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Impressao.Impressora", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("AbrirGaveta")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("abrir_gaveta");
+
+                    b.Property<bool>("Ativa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativa");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<bool>("CortarPapel")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("cortar_papel");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<DateTime?>("EliminadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_em");
+
+                    b.Property<string>("EliminadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eliminado_por");
+
+                    b.Property<string>("EnderecoIp")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("endereco_ip");
+
+                    b.Property<bool>("EstaEliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esta_eliminado");
+
+                    b.Property<int>("LarguraColunas")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(42)
+                        .HasColumnName("largura_colunas");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.Property<int>("Porta")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(9100)
+                        .HasColumnName("porta");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("impressoras", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Impressao.TrabalhoImpressao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<byte[]>("ConteudoBytes")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("conteudo_bytes");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<DateTime?>("EnviadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enviado_em");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer")
+                        .HasColumnName("estado");
+
+                    b.Property<Guid?>("ImpressoraId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("impressora_id");
+
+                    b.Property<string>("MensagemErro")
+                        .HasColumnType("text")
+                        .HasColumnName("mensagem_erro");
+
+                    b.Property<int>("Tentativas")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("tentativas");
+
+                    b.Property<int>("TipoDocumento")
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo_documento");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CriadoEm");
+
+                    b.HasIndex("Estado");
+
+                    b.HasIndex("ImpressoraId");
+
+                    b.ToTable("trabalhos_impressao", (string)null);
                 });
 
             modelBuilder.Entity("Menova.Domain.Menu.Alergenio", b =>
@@ -1909,6 +2397,66 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.ToTable("zonas", (string)null);
                 });
 
+            modelBuilder.Entity("Menova.Domain.Caixa.DocumentoZ", b =>
+                {
+                    b.HasOne("Menova.Domain.Caixa.SessaoCaixa", "SessaoCaixa")
+                        .WithMany()
+                        .HasForeignKey("SessaoCaixaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SessaoCaixa");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Caixa.MovimentoCaixa", b =>
+                {
+                    b.HasOne("Menova.Domain.Caixa.SessaoCaixa", "SessaoCaixa")
+                        .WithMany("Movimentos")
+                        .HasForeignKey("SessaoCaixaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SessaoCaixa");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Caixa.Pagamento", b =>
+                {
+                    b.HasOne("Menova.Domain.Pedidos.Conta", "Conta")
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Menova.Domain.Caixa.SessaoCaixa", "SessaoCaixa")
+                        .WithMany("Pagamentos")
+                        .HasForeignKey("SessaoCaixaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Conta");
+
+                    b.Navigation("SessaoCaixa");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Caixa.SessaoCaixa", b =>
+                {
+                    b.HasOne("Menova.Domain.Caixa.Caixa", "Caixa")
+                        .WithMany("Sessoes")
+                        .HasForeignKey("CaixaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Menova.Domain.Identity.Utilizador", "Utilizador")
+                        .WithMany()
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Caixa");
+
+                    b.Navigation("Utilizador");
+                });
+
             modelBuilder.Entity("Menova.Domain.Identity.PerfilPermissao", b =>
                 {
                     b.HasOne("Menova.Domain.Identity.Perfil", "Perfil")
@@ -1980,6 +2528,16 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.Navigation("Perfil");
 
                     b.Navigation("Utilizador");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Impressao.TrabalhoImpressao", b =>
+                {
+                    b.HasOne("Menova.Domain.Impressao.Impressora", "Impressora")
+                        .WithMany()
+                        .HasForeignKey("ImpressoraId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Impressora");
                 });
 
             modelBuilder.Entity("Menova.Domain.Menu.Artigo", b =>
@@ -2193,6 +2751,18 @@ namespace Menova.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Zona");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Caixa.Caixa", b =>
+                {
+                    b.Navigation("Sessoes");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Caixa.SessaoCaixa", b =>
+                {
+                    b.Navigation("Movimentos");
+
+                    b.Navigation("Pagamentos");
                 });
 
             modelBuilder.Entity("Menova.Domain.Identity.Dispositivo", b =>

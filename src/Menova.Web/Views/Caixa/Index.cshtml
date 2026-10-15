@@ -1,0 +1,394 @@
+@using Menova.Application.DTOs
+@using Menova.Domain.Caixa
+@{
+    ViewData["Title"] = "Gestão de Caixa e Sessões";
+    var caixas = (List<CaixaDto>)ViewBag.Caixas;
+    var sessao = (SessaoCaixaDto?)ViewBag.SessaoAtiva;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-cash-coin me-2"></i>Gestão de Caixa e Turnos</h3>
+        <p class="text-muted small mb-0">Abertura de caixa, sangrias, suprimentos, pagamentos e fecho diário Z.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <a href="/caixa/historico-z" class="btn btn-outline-secondary py-2 px-3 me-2">
+            <i class="bi bi-shield-check me-1"></i>Histórico e Auditoria Z
+        </a>
+        <a href="/pedidos" class="btn btn-outline-primary py-2 px-3">
+            <i class="bi bi-receipt-cutoff me-1"></i>Contas e Cobranças
+        </a>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (sessao == null)
+{
+    <!-- Sem Sessão Aberta -->
+    <div class="card border shadow-sm p-4 text-center my-4">
+        <div class="my-4">
+            <div class="display-4 text-muted mb-3"><i class="bi bi-door-closed"></i></div>
+            <h4 class="fw-bold text-dark">Não tem nenhuma sessão de caixa aberta</h4>
+            <p class="text-muted mx-auto" style="max-width: 500px;">
+                Para poder liquidar contas, registar recebimentos e movimentar valores na gaveta, deve abrir uma sessão de caixa com o respetivo fundo inicial.
+            </p>
+            <button type="button" class="btn text-white py-2 px-4 fs-6" style="background-color: #6E1A33;" data-bs-toggle="modal" data-bs-target="#modalAbrirCaixa">
+                <i class="bi bi-unlock-fill me-2"></i>Abrir Sessão de Caixa
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Painel de Sessão Ativa -->
+    <div class="card border shadow-sm mb-4">
+        <div class="card-header text-white d-flex justify-content-between align-items-center py-2" style="background-color: #6E1A33;">
+            <div>
+                <span class="badge bg-light text-dark me-2">@sessao.CaixaNome (#@sessao.CaixaNumero)</span>
+                <span class="badge bg-success">Sessão Aberta</span>
+                <span class="ms-2 small">Iniciada em: @sessao.AbertaEm.AddHours(2).ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
+            <div>
+                <span class="small me-2"><i class="bi bi-person-fill me-1"></i>Operador: <strong>@sessao.UtilizadorNome</strong></span>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Indicadores Financeiros do Turno -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-2 col-6">
+                    <div class="p-3 border rounded bg-light text-center">
+                        <div class="text-muted small">Fundo Inicial</div>
+                        <div class="fs-5 fw-bold text-dark">@sessao.SaldoInicial.ToString("N2") MT</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="p-3 border rounded bg-light text-center">
+                        <div class="text-muted small">Total Vendas</div>
+                        <div class="fs-5 fw-bold text-success">@sessao.TotalVendas.ToString("N2") MT</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="p-3 border rounded bg-light text-center">
+                        <div class="text-muted small">Suprimentos (+)</div>
+                        <div class="fs-5 fw-bold text-primary">@sessao.TotalEntradas.ToString("N2") MT</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="p-3 border rounded bg-light text-center">
+                        <div class="text-muted small">Sangrias (-)</div>
+                        <div class="fs-5 fw-bold text-danger">@sessao.TotalSaidas.ToString("N2") MT</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-12">
+                    <div class="p-3 border rounded text-center text-white" style="background-color: #531124;">
+                        <div class="small opacity-75">Saldo Teórico Gaveta</div>
+                        <div class="fs-4 fw-bold">@sessao.SaldoEsperado.ToString("N2") MT</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação Operacional -->
+            <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center pt-2 border-top">
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalSuprimento">
+                        <i class="bi bi-plus-circle me-1"></i>Suprimento (+)
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalSangria">
+                        <i class="bi bi-dash-circle me-1"></i>Sangria (-)
+                    </button>
+                    <a href="/caixa/x/@sessao.Id" class="btn btn-outline-secondary">
+                        <i class="bi bi-printer me-1"></i>Relatório X
+                    </a>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-warning text-dark" data-bs-toggle="modal" data-bs-target="#modalFecharCaixa">
+                        <i class="bi bi-lock-fill me-1"></i>Fechar Caixa (Contagem)
+                    </button>
+                    <button type="button" class="btn text-white" style="background-color: #6E1A33;" data-bs-toggle="modal" data-bs-target="#modalEmitirZ">
+                        <i class="bi bi-file-earmark-check-fill me-1"></i>Emitir Talão Z
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabelas de Detalhe: Pagamentos e Movimentos -->
+    <div class="row g-3">
+        <!-- Pagamentos da Sessão -->
+        <div class="col-lg-7">
+            <div class="card border shadow-sm h-100">
+                <div class="card-header bg-light py-2">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2"></i>Pagamentos Recebidos nesta Sessão</h6>
+                </div>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Hora</th>
+                                <th>Método</th>
+                                <th>Referência</th>
+                                <th class="text-end">Troco</th>
+                                <th class="text-end">Valor Liquidado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (sessao.Pagamentos == null || !sessao.Pagamentos.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Ainda não foram registados pagamentos nesta sessão.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var p in sessao.Pagamentos)
+                                {
+                                    <tr>
+                                        <td>@p.CriadoEm.AddHours(2).ToString("HH:mm:ss")</td>
+                                        <td><span class="badge bg-secondary">@p.MetodoDescricao</span></td>
+                                        <td class="text-muted">@(string.IsNullOrWhiteSpace(p.Referencia) ? "-" : p.Referencia)</td>
+                                        <td class="text-end text-muted">@(p.Troco > 0 ? $"{p.Troco:N2} MT" : "-")</td>
+                                        <td class="text-end fw-bold text-success">@p.Valor.ToString("N2") MT</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movimentos de Caixa -->
+        <div class="col-lg-5">
+            <div class="card border shadow-sm h-100">
+                <div class="card-header bg-light py-2">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-arrow-left-right me-2"></i>Movimentos Internos de Caixa</h6>
+                </div>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Motivo</th>
+                                <th class="text-end">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (sessao.Movimentos == null || !sessao.Movimentos.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted">Nenhum suprimento ou sangria registados.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var m in sessao.Movimentos)
+                                {
+                                    var ePositivo = m.Tipo == TipoMovimentoCaixa.Entrada || m.Tipo == TipoMovimentoCaixa.Suprimento;
+                                    <tr>
+                                        <td>
+                                            <span class="badge @(ePositivo ? "bg-primary" : "bg-danger")">@m.TipoDescricao</span>
+                                            <div class="text-muted" style="font-size: 0.75rem;">@m.CriadoEm.AddHours(2).ToString("HH:mm")</div>
+                                        </td>
+                                        <td>@m.Motivo</td>
+                                        <td class="text-end fw-bold @(ePositivo ? "text-primary" : "text-danger")">
+                                            @(ePositivo ? "+" : "-")@m.Valor.ToString("N2") MT
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL: ABRIR CAIXA -->
+<div class="modal fade" id="modalAbrirCaixa" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="/caixa/abrir" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header text-white" style="background-color: #6E1A33;">
+                <h5 class="modal-title"><i class="bi bi-unlock-fill me-2"></i>Abertura de Sessão de Caixa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Selecionar Caixa Físico:</label>
+                    <select name="CaixaId" class="form-select" required>
+                        @foreach (var c in caixas)
+                        {
+                            <option value="@c.Id" disabled="@(c.TemSessaoAberta)">
+                                @c.Nome (#@c.Numero) @(c.TemSessaoAberta ? $"— Em uso por {c.OperadorSessaoAtiva}" : "— Disponível")
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Fundo de Caixa Inicial (MZN):</label>
+                    <div class="input-group">
+                        <span class="input-group-text">MT</span>
+                        <input type="number" step="0.01" min="0" name="SaldoInicial" value="1000.00" class="form-control" required />
+                    </div>
+                    <div class="form-text">Valor inicial de trocos colocado na gaveta no arranque do turno.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Observações (opcional):</label>
+                    <input type="text" name="Observacoes" class="form-control" placeholder="Ex: Turno almoço, notas de 100 e 200 MT" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn text-white" style="background-color: #6E1A33;">Confirmar Abertura</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (sessao != null)
+{
+    <!-- MODAL: SUPRIMENTO -->
+    <div class="modal fade" id="modalSuprimento" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="/caixa/movimento" method="post" class="modal-content">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="SessaoCaixaId" value="@sessao.Id" />
+                <input type="hidden" name="Tipo" value="@((int)TipoMovimentoCaixa.Suprimento)" />
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Registo de Suprimento (Entrada de Dinheiro)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Valor a Injetar na Gaveta (MZN):</label>
+                        <div class="input-group">
+                            <span class="input-group-text">MT</span>
+                            <input type="number" step="0.01" min="1" name="Valor" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Motivo / Descrição:</label>
+                        <input type="text" name="Motivo" class="form-control" placeholder="Ex: Reforço de troco pelo gerente" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registar Suprimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: SANGRIA -->
+    <div class="modal fade" id="modalSangria" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="/caixa/movimento" method="post" class="modal-content">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="SessaoCaixaId" value="@sessao.Id" />
+                <input type="hidden" name="Tipo" value="@((int)TipoMovimentoCaixa.Sangria)" />
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-dash-circle me-2"></i>Registo de Sangria (Retirada de Dinheiro)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Valor a Retirar da Gaveta (MZN):</label>
+                        <div class="input-group">
+                            <span class="input-group-text">MT</span>
+                            <input type="number" step="0.01" min="1" max="@sessao.SaldoEsperado" name="Valor" class="form-control" required />
+                        </div>
+                        <div class="form-text">Saldo disponível na gaveta: @sessao.SaldoEsperado.ToString("N2") MT</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Motivo / Destino:</label>
+                        <input type="text" name="Motivo" class="form-control" placeholder="Ex: Pagamento urgente de fornecedor de peixe" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-danger"><i class="bi bi-shield-lock me-1"></i>PIN do Supervisor (Obrigatório):</label>
+                        <input type="password" name="PinSupervisor" maxlength="6" class="form-control text-center font-monospace fs-5" placeholder="••••" required autocomplete="off" />
+                        <div class="form-text">Obrigatória a autorização de Gerente ou Administrador para efetuar sangrias.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Autorizar e Registar Sangria</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: FECHAR CAIXA COM CONTAGEM -->
+    <div class="modal fade" id="modalFecharCaixa" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="/caixa/fechar" method="post" class="modal-content">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="SessaoCaixaId" value="@sessao.Id" />
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="bi bi-lock-fill me-2"></i>Fecho de Caixa e Apuramento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info py-2 small">
+                        <i class="bi bi-info-circle me-1"></i>Faça a contagem física das notas e moedas presentes na gaveta antes de submeter.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Valor Total Contado na Gaveta (MZN):</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">MT</span>
+                            <input type="number" step="0.01" min="0" name="SaldoContado" class="form-control fw-bold" required autofocus />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observações sobre eventuais quebras ou sobras:</label>
+                        <textarea name="Observacoes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning text-dark fw-bold">Encerrar Caixa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EMITIR FECHO Z -->
+    <div class="modal fade" id="modalEmitirZ" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="/caixa/fecho-z/@sessao.Id" method="post" class="modal-content">
+                @Html.AntiForgeryToken()
+                <div class="modal-header text-white" style="background-color: #6E1A33;">
+                    <h5 class="modal-title"><i class="bi bi-file-earmark-check-fill me-2"></i>Emissão Definitiva de Talão Z</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger py-2 small">
+                        <i class="bi bi-exclamation-octagon-fill me-1"></i><strong>Atenção:</strong> A emissão do Talão Z é irreversível. O documento será assinado com chave criptográfica SHA-256 e gravado permanentemente em WORM. A sessão de caixa atual será imediatamente fechada.
+                    </div>
+                    <p class="mb-1"><strong>Caixa:</strong> @sessao.CaixaNome (#@sessao.CaixaNumero)</p>
+                    <p class="mb-1"><strong>Operador:</strong> @sessao.UtilizadorNome</p>
+                    <p class="mb-0"><strong>Total Faturado no Turno:</strong> <span class="text-success fw-bold">@sessao.TotalVendas.ToString("N2") MT</span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn text-white" style="background-color: #6E1A33;">Confirmar e Emitir Z</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}

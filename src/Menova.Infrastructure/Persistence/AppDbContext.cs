@@ -2,9 +2,11 @@ using System.Text.RegularExpressions;
 using Menova.Application.Interfaces;
 using Menova.Domain.Auditoria;
 using Menova.Domain.Common;
+using Menova.Domain.Caixa;
 using Menova.Domain.Configuracao;
 using Menova.Domain.Estacoes;
 using Menova.Domain.Identity;
+using Menova.Domain.Impressao;
 using Menova.Domain.Menu;
 using Menova.Domain.Pedidos;
 using Menova.Domain.Sala;
@@ -66,6 +68,17 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<ItemPedido> ItensPedido => Set<ItemPedido>();
     public DbSet<ItemPedidoOpcao> ItensPedidoOpcoes => Set<ItemPedidoOpcao>();
     public DbSet<ChaveIdempotencia> ChavesIdempotencia => Set<ChaveIdempotencia>();
+
+    // Caixa e Pagamentos
+    public DbSet<Caixa> Caixas => Set<Caixa>();
+    public DbSet<SessaoCaixa> SessoesCaixa => Set<SessaoCaixa>();
+    public DbSet<MovimentoCaixa> MovimentosCaixa => Set<MovimentoCaixa>();
+    public DbSet<Pagamento> Pagamentos => Set<Pagamento>();
+    public DbSet<DocumentoZ> DocumentosZ => Set<DocumentoZ>();
+
+    // Impressão Térmica
+    public DbSet<Impressora> Impressoras => Set<Impressora>();
+    public DbSet<TrabalhoImpressao> TrabalhosImpressao => Set<TrabalhoImpressao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -842,6 +855,194 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(e => e.ExpiraEm).HasColumnName("expira_em");
 
             entity.HasIndex(e => e.ExpiraEm);
+        });
+
+        // 34. Caixa
+        modelBuilder.Entity<Caixa>(entity =>
+        {
+            entity.ToTable("caixas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Nome).HasMaxLength(100).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.Numero).HasColumnName("numero");
+            entity.Property(e => e.Ativa).HasDefaultValue(true).HasColumnName("ativa");
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+            entity.Property(e => e.EstaEliminado).HasDefaultValue(false).HasColumnName("esta_eliminado");
+            entity.Property(e => e.EliminadoEm).HasColumnName("eliminado_em");
+            entity.Property(e => e.EliminadoPor).HasMaxLength(50).HasColumnName("eliminado_por");
+
+            entity.HasQueryFilter(e => !e.EstaEliminado);
+        });
+
+        // 35. SessaoCaixa
+        modelBuilder.Entity<SessaoCaixa>(entity =>
+        {
+            entity.ToTable("sessoes_caixa");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CaixaId).HasColumnName("caixa_id");
+            entity.Property(e => e.UtilizadorId).HasColumnName("utilizador_id");
+            entity.Property(e => e.AbertaEm).HasColumnName("aberta_em");
+            entity.Property(e => e.FechadaEm).HasColumnName("fechada_em");
+            entity.Property(e => e.SaldoInicial).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("saldo_inicial");
+            entity.Property(e => e.TotalVendas).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("total_vendas");
+            entity.Property(e => e.TotalEntradas).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("total_entradas");
+            entity.Property(e => e.TotalSaidas).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("total_saidas");
+            entity.Property(e => e.SaldoEsperado).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("saldo_esperado");
+            entity.Property(e => e.SaldoContado).HasPrecision(18, 4).HasColumnName("saldo_contado");
+            entity.Property(e => e.Diferenca).HasPrecision(18, 4).HasColumnName("diferenca");
+            entity.Property(e => e.Estado).HasConversion<int>().HasColumnName("estado");
+            entity.Property(e => e.Observacoes).HasMaxLength(255).HasColumnName("observacoes");
+
+            entity.HasOne(e => e.Caixa)
+                  .WithMany(c => c.Sessoes)
+                  .HasForeignKey(e => e.CaixaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Utilizador)
+                  .WithMany()
+                  .HasForeignKey(e => e.UtilizadorId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.CaixaId);
+            entity.HasIndex(e => e.UtilizadorId);
+            entity.HasIndex(e => e.AbertaEm);
+        });
+
+        // 36. MovimentoCaixa
+        modelBuilder.Entity<MovimentoCaixa>(entity =>
+        {
+            entity.ToTable("movimentos_caixa");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.SessaoCaixaId).HasColumnName("sessao_caixa_id");
+            entity.Property(e => e.Tipo).HasConversion<int>().HasColumnName("tipo");
+            entity.Property(e => e.Valor).HasPrecision(18, 4).HasColumnName("valor");
+            entity.Property(e => e.Motivo).HasMaxLength(255).IsRequired().HasColumnName("motivo");
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+
+            entity.HasOne(e => e.SessaoCaixa)
+                  .WithMany(s => s.Movimentos)
+                  .HasForeignKey(e => e.SessaoCaixaId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.SessaoCaixaId);
+        });
+
+        // 37. Pagamento
+        modelBuilder.Entity<Pagamento>(entity =>
+        {
+            entity.ToTable("pagamentos");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ContaId).HasColumnName("conta_id");
+            entity.Property(e => e.SessaoCaixaId).HasColumnName("sessao_caixa_id");
+            entity.Property(e => e.Metodo).HasConversion<int>().HasColumnName("metodo");
+            entity.Property(e => e.Valor).HasPrecision(18, 4).HasColumnName("valor");
+            entity.Property(e => e.ValorRecebido).HasPrecision(18, 4).HasColumnName("valor_recebido");
+            entity.Property(e => e.Troco).HasPrecision(18, 4).HasColumnName("troco");
+            entity.Property(e => e.Gorjeta).HasPrecision(18, 4).HasColumnName("gorjeta");
+            entity.Property(e => e.Referencia).HasMaxLength(100).HasColumnName("referencia");
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+
+            entity.HasOne(e => e.Conta)
+                  .WithMany()
+                  .HasForeignKey(e => e.ContaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.SessaoCaixa)
+                  .WithMany(s => s.Pagamentos)
+                  .HasForeignKey(e => e.SessaoCaixaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.ContaId);
+            entity.HasIndex(e => e.SessaoCaixaId);
+        });
+
+        // 38. DocumentoZ
+        modelBuilder.Entity<DocumentoZ>(entity =>
+        {
+            entity.ToTable("documentos_z");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.SessaoCaixaId).HasColumnName("sessao_caixa_id");
+            entity.Property(e => e.NumeroZ).HasColumnName("numero_z");
+            entity.Property(e => e.DataHora).HasColumnName("data_hora");
+            entity.Property(e => e.TotalBruto).HasPrecision(18, 4).HasColumnName("total_bruto");
+            entity.Property(e => e.TotalDesconto).HasPrecision(18, 4).HasColumnName("total_desconto");
+            entity.Property(e => e.TotalIva).HasPrecision(18, 4).HasColumnName("total_iva");
+            entity.Property(e => e.TotalLiquido).HasPrecision(18, 4).HasColumnName("total_liquido");
+            entity.Property(e => e.TotaisPorMetodo).HasColumnType("jsonb").HasColumnName("totais_por_metodo");
+            entity.Property(e => e.TotaisPorTaxaIva).HasColumnType("jsonb").HasColumnName("totais_por_taxa_iva");
+            entity.Property(e => e.TotalDocumentosFaturados).HasColumnName("total_documentos_faturados");
+            entity.Property(e => e.EmitidoPor).HasMaxLength(50).HasColumnName("emitido_por");
+            entity.Property(e => e.HashAnterior).HasMaxLength(64).IsRequired().HasColumnName("hash_anterior");
+            entity.Property(e => e.Hash).HasMaxLength(64).IsRequired().HasColumnName("hash");
+
+            entity.HasOne(e => e.SessaoCaixa)
+                  .WithMany()
+                  .HasForeignKey(e => e.SessaoCaixaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.NumeroZ).IsUnique();
+            entity.HasIndex(e => e.DataHora);
+        });
+
+        // 39. Impressora
+        modelBuilder.Entity<Impressora>(entity =>
+        {
+            entity.ToTable("impressoras");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Nome).HasMaxLength(100).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.EnderecoIp).HasMaxLength(50).IsRequired().HasColumnName("endereco_ip");
+            entity.Property(e => e.Porta).HasDefaultValue(9100).HasColumnName("porta");
+            entity.Property(e => e.LarguraColunas).HasDefaultValue(42).HasColumnName("largura_colunas");
+            entity.Property(e => e.Ativa).HasDefaultValue(true).HasColumnName("ativa");
+            entity.Property(e => e.CortarPapel).HasDefaultValue(true).HasColumnName("cortar_papel");
+            entity.Property(e => e.AbrirGaveta).HasDefaultValue(false).HasColumnName("abrir_gaveta");
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+            entity.Property(e => e.EstaEliminado).HasDefaultValue(false).HasColumnName("esta_eliminado");
+            entity.Property(e => e.EliminadoEm).HasColumnName("eliminado_em");
+            entity.Property(e => e.EliminadoPor).HasMaxLength(50).HasColumnName("eliminado_por");
+
+            entity.HasQueryFilter(e => !e.EstaEliminado);
+        });
+
+        // 40. TrabalhoImpressao
+        modelBuilder.Entity<TrabalhoImpressao>(entity =>
+        {
+            entity.ToTable("trabalhos_impressao");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ImpressoraId).HasColumnName("impressora_id");
+            entity.Property(e => e.TipoDocumento).HasConversion<int>().HasColumnName("tipo_documento");
+            entity.Property(e => e.ConteudoBytes).HasColumnName("conteudo_bytes");
+            entity.Property(e => e.Estado).HasConversion<int>().HasColumnName("estado");
+            entity.Property(e => e.Tentativas).HasDefaultValue(0).HasColumnName("tentativas");
+            entity.Property(e => e.MensagemErro).HasColumnName("mensagem_erro");
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.EnviadoEm).HasColumnName("enviado_em");
+
+            entity.HasOne(e => e.Impressora)
+                  .WithMany()
+                  .HasForeignKey(e => e.ImpressoraId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.Estado);
+            entity.HasIndex(e => e.CriadoEm);
         });
     }
 

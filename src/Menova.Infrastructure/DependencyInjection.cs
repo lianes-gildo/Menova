@@ -50,6 +50,13 @@ public static class DependencyInjection
         services.AddScoped<IPedidoService, PedidoService>();
         services.AddScoped<IKdsService, KdsService>();
 
+        // Caixa, Pagamentos, Fecho Z e Impressão ESC/POS
+        services.AddScoped<ICaixaService, CaixaService>();
+        services.AddScoped<IPagamentoService, PagamentoService>();
+        services.AddScoped<IFechoZService, FechoZService>();
+        services.AddScoped<IImpressaoService, ImpressaoService>();
+        services.AddSingleton<EscPosGenerator>();
+
         return services;
     }
 }

@@ -1,0 +1,115 @@
+@model Menova.Application.DTOs.RelatorioXDto
+@{
+    ViewData["Title"] = "Relatório X - Caixa " + Model.CaixaNome;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-file-earmark-text me-2"></i>Relatório X (Leitura de Caixa)</h3>
+        <p class="text-muted small mb-0">Consulta intercalar de apuramento sem fecho da sessão.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <form action="/caixa/x/@Model.SessaoCaixaId/imprimir" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn text-white py-2 px-3 me-2" style="background-color: #6E1A33;">
+                <i class="bi bi-printer me-1"></i>Imprimir Térmico
+            </button>
+        </form>
+        <a href="/caixa" class="btn btn-outline-secondary py-2 px-3">
+            <i class="bi bi-arrow-left me-1"></i>Voltar ao Caixa
+        </a>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="card border shadow-sm mx-auto" style="max-width: 650px;">
+    <div class="card-body p-4">
+        <!-- Cabeçalho do Talão X -->
+        <div class="text-center pb-3 border-bottom">
+            <h4 class="fw-bold mb-1" style="color: #6E1A33;">MENOVA RESTAURANTE</h4>
+            <div class="badge bg-secondary mb-2">RELATÓRIO X — LEITURA NÃO FISCAL</div>
+            <div class="small text-muted">Apuramento provisório de sessão em curso</div>
+        </div>
+
+        <div class="row my-3 small">
+            <div class="col-6">
+                <div><strong>Caixa:</strong> @Model.CaixaNome (#@Model.CaixaNumero)</div>
+                <div><strong>Operador:</strong> @Model.OperadorNome</div>
+            </div>
+            <div class="col-6 text-end">
+                <div><strong>Abertura:</strong> @Model.AbertaEm.AddHours(2).ToString("dd/MM/yyyy HH:mm")</div>
+                <div><strong>Emissão:</strong> @Model.EmitidoEm.AddHours(2).ToString("dd/MM/yyyy HH:mm")</div>
+            </div>
+        </div>
+
+        <!-- Totais de Caixa -->
+        <h6 class="fw-bold border-bottom pb-2 mt-4"><i class="bi bi-cash-stack me-1"></i>Resumo da Gaveta</h6>
+        <div class="d-flex justify-content-between py-1">
+            <span>Fundo de Caixa Inicial:</span>
+            <span class="fw-bold">@Model.SaldoInicial.ToString("N2") MT</span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+            <span>Total de Vendas no Turno:</span>
+            <span class="fw-bold text-success">@Model.TotalVendas.ToString("N2") MT</span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+            <span>Total de Entradas / Suprimentos:</span>
+            <span class="fw-bold text-primary">+@Model.TotalEntradas.ToString("N2") MT</span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+            <span>Total de Saídas / Sangrias:</span>
+            <span class="fw-bold text-danger">-@Model.TotalSaidas.ToString("N2") MT</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top border-bottom fs-5 fw-bold my-2 bg-light px-2 rounded">
+            <span>Saldo Teórico em Gaveta:</span>
+            <span style="color: #6E1A33;">@Model.SaldoEsperado.ToString("N2") MT</span>
+        </div>
+
+        <!-- Vendas por Método -->
+        <h6 class="fw-bold border-bottom pb-2 mt-4"><i class="bi bi-credit-card-2-front me-1"></i>Vendas por Método de Pagamento</h6>
+        @if (!Model.VendasPorMetodo.Any())
+        {
+            <div class="text-muted small py-2">Nenhum pagamento liquidado até ao momento.</div>
+        }
+        else
+        {
+            @foreach (var (metodo, total) in Model.VendasPorMetodo)
+            {
+                <div class="d-flex justify-content-between py-1 small">
+                    <span>@metodo:</span>
+                    <span class="fw-bold">@total.ToString("N2") MT</span>
+                </div>
+            }
+        }
+
+        <!-- Resumo de IVA -->
+        <h6 class="fw-bold border-bottom pb-2 mt-4"><i class="bi bi-percent me-1"></i>Incidência de IVA</h6>
+        @foreach (var (taxa, total) in Model.TotaisPorIva)
+        {
+            <div class="d-flex justify-content-between py-1 small">
+                <span>Taxa @taxa:</span>
+                <span class="fw-bold">@total.ToString("N2") MT</span>
+            </div>
+        }
+
+        <div class="text-center pt-4 mt-4 border-top text-muted small">
+            <div>Total de Contas Liquidadas: <strong>@Model.TotalContasPagas</strong></div>
+            <div class="mt-1">Processado por software Menova POS (Moçambique)</div>
+        </div>
+    </div>
+</div>

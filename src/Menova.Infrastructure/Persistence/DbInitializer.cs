@@ -1,7 +1,9 @@
 using Menova.Application.Security;
+using Menova.Domain.Caixa;
 using Menova.Domain.Configuracao;
 using Menova.Domain.Estacoes;
 using Menova.Domain.Identity;
+using Menova.Domain.Impressao;
 using Menova.Domain.Menu;
 using Menova.Domain.Sala;
 using Microsoft.AspNetCore.Identity;
@@ -175,6 +177,9 @@ public static class DbInitializer
 
             // 7. Semear Menu, Sala, Estações e Artigos Padrão
             await SemearMenuESalaAsync(context, logger);
+
+            // 8. Semear Caixa e Impressora Padrão
+            await SemearCaixaEImpressoraAsync(context, logger);
         }
         catch (Exception ex)
         {
@@ -213,7 +218,7 @@ public static class DbInitializer
                 CREATE OR REPLACE FUNCTION fn_bloquear_mutacao_auditoria()
                 RETURNS TRIGGER AS $$
                 BEGIN
-                    RAISE EXCEPTION 'A tabela de auditoria é imutável (WORM). Operações de UPDATE, DELETE ou TRUNCATE são estritamente proibidas.';
+                    RAISE EXCEPTION 'A tabela é imutável (WORM). Operações de UPDATE, DELETE ou TRUNCATE são estritamente proibidas.';
                 END;
                 $$ LANGUAGE plpgsql;
 
@@ -223,6 +228,14 @@ public static class DbInitializer
                         IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_bloquear_mutacao_auditoria') THEN
                             CREATE TRIGGER trg_bloquear_mutacao_auditoria
                             BEFORE UPDATE OR DELETE OR TRUNCATE ON auditoria
+                            FOR EACH STATEMENT EXECUTE FUNCTION fn_bloquear_mutacao_auditoria();
+                        END IF;
+                    END IF;
+
+                    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'documentos_z') THEN
+                        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_bloquear_mutacao_documentos_z') THEN
+                            CREATE TRIGGER trg_bloquear_mutacao_documentos_z
+                            BEFORE UPDATE OR DELETE OR TRUNCATE ON documentos_z
                             FOR EACH STATEMENT EXECUTE FUNCTION fn_bloquear_mutacao_auditoria();
                         END IF;
                     END IF;
@@ -555,5 +568,36 @@ public static class DbInitializer
         }
 
         logger.LogInformation("Menu, Sala, Estações e Artigos moçambicanos semeados com sucesso.");
+    }
+
+    private static async Task SemearCaixaEImpressoraAsync(AppDbContext context, ILogger logger)
+    {
+        if (!await context.Caixas.AnyAsync())
+        {
+            context.Caixas.Add(new Caixa
+            {
+                Nome = "Caixa 01 - Balcão Principal",
+                Numero = 1,
+                Ativa = true
+            });
+            await context.SaveChangesAsync();
+        }
+
+        if (!await context.Impressoras.AnyAsync())
+        {
+            context.Impressoras.Add(new Impressora
+            {
+                Nome = "Impressora Térmica Balcão (ESC/POS)",
+                EnderecoIp = "192.168.1.200",
+                Porta = 9100,
+                LarguraColunas = 42,
+                Ativa = true,
+                CortarPapel = true,
+                AbrirGaveta = false
+            });
+            await context.SaveChangesAsync();
+        }
+
+        logger.LogInformation("Caixa padrão e Impressora padrão semeados com sucesso.");
     }
 }

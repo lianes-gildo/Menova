@@ -1,0 +1,126 @@
+@model Menova.Application.DTOs.DocumentoZDto
+@{
+    ViewData["Title"] = "Talão Z N.º " + Model.NumeroZ;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-file-earmark-check-fill me-2"></i>Talão Z N.º @Model.NumeroZ</h3>
+        <p class="text-muted small mb-0">Fecho diário e apuramento com assinatura digital SHA-256 (WORM).</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <form action="/caixa/z/@Model.Id/reimprimir" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn text-white py-2 px-3 me-2" style="background-color: #6E1A33;">
+                <i class="bi bi-printer me-1"></i>Reimprimir 2ª Via
+            </button>
+        </form>
+        <a href="/caixa/historico-z" class="btn btn-outline-secondary py-2 px-3">
+            <i class="bi bi-arrow-left me-1"></i>Histórico Z
+        </a>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="card border shadow-sm mx-auto" style="max-width: 650px;">
+    <div class="card-body p-4">
+        <!-- Cabeçalho Z -->
+        <div class="text-center pb-3 border-bottom">
+            <h4 class="fw-bold mb-1" style="color: #6E1A33;">MENOVA RESTAURANTE</h4>
+            <div class="badge bg-dark fs-6 my-1">TALÃO Z N.º @Model.NumeroZ</div>
+            <div class="small text-muted">DOCUMENTO FISCAL DEFINITIVO — ENCERRAMENTO DE TURNO</div>
+        </div>
+
+        <div class="row my-3 small">
+            <div class="col-6">
+                <div><strong>Caixa:</strong> @Model.CaixaNome (#@Model.CaixaNumero)</div>
+                <div><strong>Operador Responsável:</strong> @Model.EmitidoPor</div>
+                <div><strong>Documentos Emitidos:</strong> @Model.TotalDocumentosFaturados</div>
+            </div>
+            <div class="col-6 text-end">
+                <div><strong>Data e Hora:</strong> @Model.DataHora.AddHours(2).ToString("dd/MM/yyyy HH:mm:ss")</div>
+                <div class="mt-1">
+                    @if (Model.HashValido)
+                    {
+                        <span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Assinatura Válida</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger"><i class="bi bi-shield-x me-1"></i>Hash Corrompido</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Totais de Faturação -->
+        <h6 class="fw-bold border-bottom pb-2 mt-4"><i class="bi bi-calculator me-1"></i>Apuramento de Faturação</h6>
+        <div class="d-flex justify-content-between py-1">
+            <span>Total Bruto:</span>
+            <span class="fw-bold">@Model.TotalBruto.ToString("N2") MT</span>
+        </div>
+        @if (Model.TotalDesconto > 0)
+        {
+            <div class="d-flex justify-content-between py-1 text-danger">
+                <span>Total de Descontos:</span>
+                <span>-@Model.TotalDesconto.ToString("N2") MT</span>
+            </div>
+        }
+        <div class="d-flex justify-content-between py-1">
+            <span>Total IVA (16% Incl.):</span>
+            <span class="fw-bold">@Model.TotalIva.ToString("N2") MT</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top border-bottom fs-4 fw-bold my-2 bg-light px-2 rounded">
+            <span>TOTAL LÍQUIDO FATURADO:</span>
+            <span style="color: #6E1A33;">@Model.TotalLiquido.ToString("N2") MT</span>
+        </div>
+
+        <!-- Discriminação por Método de Pagamento -->
+        <h6 class="fw-bold border-bottom pb-2 mt-4"><i class="bi bi-cash-coin me-1"></i>Totais por Meio de Pagamento</h6>
+        @foreach (var (metodo, total) in Model.TotaisPorMetodo)
+        {
+            <div class="d-flex justify-content-between py-1 small">
+                <span>@metodo:</span>
+                <span class="fw-bold">@total.ToString("N2") MT</span>
+            </div>
+        }
+
+        <!-- Discriminação por Taxa de IVA -->
+        <h6 class="fw-bold border-bottom pb-2 mt-4"><i class="bi bi-receipt me-1"></i>Totais por Taxa de IVA</h6>
+        @foreach (var (taxa, total) in Model.TotaisPorTaxaIva)
+        {
+            <div class="d-flex justify-content-between py-1 small">
+                <span>Taxa @taxa:</span>
+                <span class="fw-bold">@total.ToString("N2") MT</span>
+            </div>
+        }
+
+        <!-- Assinatura Criptográfica WORM -->
+        <div class="mt-4 p-3 bg-light border rounded">
+            <h6 class="fw-bold small text-dark mb-2"><i class="bi bi-lock-fill me-1"></i>Encadeamento Criptográfico SHA-256:</h6>
+            <div class="small font-monospace text-break text-muted">
+                <div><strong>Hash Atual:</strong> @Model.Hash</div>
+                <div class="mt-1"><strong>Hash Anterior:</strong> @Model.HashAnterior</div>
+            </div>
+        </div>
+
+        <div class="text-center pt-3 text-muted small">
+            <div>Documento processado por computador certificado</div>
+            <div>Menova POS — Restaurante (República de Moçambique)</div>
+        </div>
+    </div>
+</div>

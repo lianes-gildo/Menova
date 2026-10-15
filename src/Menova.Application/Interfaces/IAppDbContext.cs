@@ -53,6 +53,17 @@ public interface IAppDbContext
     DbSet<Menova.Domain.Pedidos.ItemPedidoOpcao> ItensPedidoOpcoes { get; }
     DbSet<Menova.Domain.Pedidos.ChaveIdempotencia> ChavesIdempotencia { get; }
 
+    // Caixa e Pagamentos
+    DbSet<Menova.Domain.Caixa.Caixa> Caixas { get; }
+    DbSet<Menova.Domain.Caixa.SessaoCaixa> SessoesCaixa { get; }
+    DbSet<Menova.Domain.Caixa.MovimentoCaixa> MovimentosCaixa { get; }
+    DbSet<Menova.Domain.Caixa.Pagamento> Pagamentos { get; }
+    DbSet<Menova.Domain.Caixa.DocumentoZ> DocumentosZ { get; }
+
+    // Impressão Térmica
+    DbSet<Menova.Domain.Impressao.Impressora> Impressoras { get; }
+    DbSet<Menova.Domain.Impressao.TrabalhoImpressao> TrabalhosImpressao { get; }
+
     DatabaseFacade Database { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

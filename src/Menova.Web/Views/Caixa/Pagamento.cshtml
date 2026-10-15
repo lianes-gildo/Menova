@@ -1,0 +1,325 @@
+@using Menova.Application.DTOs
+@using Menova.Domain.Caixa
+@{
+    ViewData["Title"] = "Pagamento de Conta / POS";
+    var conta = (ContaDto)ViewBag.Conta;
+    var sessao = (SessaoCaixaDto)ViewBag.Sessao;
+    var pagamentos = (List<PagamentoDto>)ViewBag.Pagamentos;
+    var totalPago = (decimal)ViewBag.TotalPago;
+    var saldoRestante = (decimal)ViewBag.SaldoRestante;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-wallet2 me-2"></i>Cobrança de Conta</h3>
+        <p class="text-muted small mb-0">Liquidação de pedidos na Caixa @sessao.CaixaNome (@sessao.UtilizadorNome)</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <a href="/pedidos" class="btn btn-outline-secondary py-2 px-3">
+            <i class="bi bi-arrow-left me-1"></i>Voltar aos Pedidos
+        </a>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- COLUNA ESQUERDA: RESUMO DO CONSUMO DA CONTA -->
+    <div class="col-lg-6">
+        <div class="card border shadow-sm h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                <span class="fw-bold font-monospace fs-6">Conta: @conta.Numero</span>
+                @if (!string.IsNullOrEmpty(conta.MesaNumero))
+                {
+                    <span class="badge bg-secondary"><i class="bi bi-grid-fill me-1"></i>Mesa @conta.MesaNumero (@conta.ZonaNome)</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary"><i class="bi bi-shop me-1"></i>Balcão</span>
+                }
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Artigo</th>
+                                <th class="text-center">Qtd</th>
+                                <th class="text-end">Preço</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var itensConta = conta.Pedidos.SelectMany(p => p.Itens).Where(i => !i.Anulado).ToList();
+                            }
+                            @if (!itensConta.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">Nenhum artigo ativo nesta conta.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in itensConta)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@item.NomeArtigo</div>
+                                            @if (item.Opcoes != null && item.Opcoes.Any())
+                                            {
+                                                <div class="text-muted" style="font-size: 0.75rem;">+ @string.Join(", ", item.Opcoes)</div>
+                                            }
+                                        </td>
+                                        <td class="text-center">@item.Quantidade.ToString("0.##")</td>
+                                        <td class="text-end text-muted">@item.PrecoUnitario.ToString("N2")</td>
+                                        <td class="text-end fw-bold">@item.TotalLiquido.ToString("N2") MT</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Resumo Financeiro da Conta -->
+                <div class="p-3 bg-light border-top">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Subtotal (s/ IVA):</span>
+                        <span>@((conta.TotalLiquido - conta.TotalIva).ToString("N2")) MT</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">IVA (16% Incluído):</span>
+                        <span>@conta.TotalIva.ToString("N2") MT</span>
+                    </div>
+                    @if (conta.TotalDesconto > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-1 text-danger">
+                            <span>Desconto:</span>
+                            <span>-@conta.TotalDesconto.ToString("N2") MT</span>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between fs-5 fw-bold pt-2 border-top" style="color: #6E1A33;">
+                        <span>Total Geral:</span>
+                        <span>@conta.TotalLiquido.ToString("N2") MT</span>
+                    </div>
+                    @if (totalPago > 0)
+                    {
+                        <div class="d-flex justify-content-between text-success fw-bold mt-1">
+                            <span>Total Já Liquidado:</span>
+                            <span>-@totalPago.ToString("N2") MT</span>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between fs-4 fw-bold pt-2 mt-2 border-top text-dark">
+                        <span>A Liquidar:</span>
+                        <span class="text-danger">@saldoRestante.ToString("N2") MT</span>
+                    </div>
+                </div>
+
+                @if (pagamentos.Any())
+                {
+                    <!-- Histórico de Pagamentos Parciais -->
+                    <div class="p-3 border-top">
+                        <h6 class="fw-bold small mb-2"><i class="bi bi-clock-history me-1"></i>Pagamentos Parciais Registados:</h6>
+                        <ul class="list-group list-group-flush small">
+                            @foreach (var pg in pagamentos)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-1">
+                                    <span>
+                                        <span class="badge bg-secondary me-1">@pg.MetodoDescricao</span>
+                                        @pg.CriadoEm.AddHours(2).ToString("HH:mm") (@pg.CriadoPor)
+                                        @if (!string.IsNullOrEmpty(pg.Referencia))
+                                        {
+                                            <span class="text-muted">Ref: @pg.Referencia</span>
+                                        }
+                                    </span>
+                                    <span class="fw-bold text-success">@pg.Valor.ToString("N2") MT</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUNA DIREITA: TECLADO E FINALIZAÇÃO POS -->
+    <div class="col-lg-6">
+        <div class="card border shadow-sm">
+            <div class="card-header text-white py-2" style="background-color: #6E1A33;">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card-2-front me-2"></i>Terminal de Pagamento</h5>
+            </div>
+            <div class="card-body">
+                <form action="/caixa/pagamento" method="post" id="formPagamento">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ContaId" value="@conta.Id" />
+                    <input type="hidden" name="SessaoCaixaId" value="@sessao.Id" />
+
+                    <!-- Seleção do Método de Pagamento -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Método de Pagamento:</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="Metodo" id="metodoNumerario" value="@((int)MetodoPagamento.Numerario)" checked onchange="ajustarMetodo('Numerario')">
+                                <label class="btn btn-outline-secondary w-100 text-start py-2" for="metodoNumerario">
+                                    <i class="bi bi-cash me-1 text-success fs-5"></i> Numerário
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="Metodo" id="metodoPOS" value="@((int)MetodoPagamento.MulticaixaPOS)" onchange="ajustarMetodo('POS')">
+                                <label class="btn btn-outline-secondary w-100 text-start py-2" for="metodoPOS">
+                                    <i class="bi bi-credit-card me-1 text-primary fs-5"></i> POS / Cartão
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="Metodo" id="metodoMPesa" value="@((int)MetodoPagamento.MPesaManual)" onchange="ajustarMetodo('MPesa')">
+                                <label class="btn btn-outline-secondary w-100 text-start py-2" for="metodoMPesa">
+                                    <i class="bi bi-phone me-1 text-danger fs-5"></i> M-Pesa
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="Metodo" id="metodoEMola" value="@((int)MetodoPagamento.EMolaManual)" onchange="ajustarMetodo('EMola')">
+                                <label class="btn btn-outline-secondary w-100 text-start py-2" for="metodoEMola">
+                                    <i class="bi bi-phone-fill me-1 text-warning fs-5"></i> e-Mola
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Valor a Liquidar -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Valor a Liquidar (MZN):</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text fw-bold">MT</span>
+                            <input type="number" step="0.01" min="1" max="@saldoRestante" name="Valor" id="inputValor" value="@saldoRestante.ToString("F2")" class="form-control fw-bold" required oninput="calcularTroco()" />
+                        </div>
+                        <div class="form-text">Pode ajustar o valor caso o cliente pretenda dividir a conta.</div>
+                    </div>
+
+                    <!-- Secção de Numerário: Atalhos de Notas e Troco -->
+                    <div id="seccaoNumerario">
+                        <label class="form-label small fw-bold text-muted mb-1">Notas Rápidas (Entregues pelo Cliente):</label>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="definirRecebido(100)">100 MT</button>
+                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="definirRecebido(200)">200 MT</button>
+                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="definirRecebido(500)">500 MT</button>
+                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="definirRecebido(1000)">1.000 MT</button>
+                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="definirRecebido(2000)">2.000 MT</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="definirExato()">Valor Exato</button>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Valor Entregue:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">MT</span>
+                                    <input type="number" step="0.01" min="0" name="ValorRecebido" id="inputValorRecebido" value="@saldoRestante.ToString("F2")" class="form-control" oninput="calcularTroco()" />
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Troco a Devolver:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">MT</span>
+                                    <input type="text" id="displayTroco" value="0,00" class="form-control bg-light fw-bold text-success" readonly />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Referência para M-Pesa / POS / Transferência -->
+                    <div class="mb-3" id="seccaoReferencia" style="display: none;">
+                        <label class="form-label fw-bold small">Referência / Código da Transação:</label>
+                        <input type="text" name="Referencia" class="form-control font-monospace" placeholder="Ex: MP260312.1245 ou Talão POS" />
+                    </div>
+
+                    <!-- Gorjeta Opcional -->
+                    <div class="mb-3">
+                        <label class="form-label small">Gorjeta para a equipa (opcional):</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">MT</span>
+                            <input type="number" step="0.01" min="0" name="Gorjeta" value="0.00" class="form-control" />
+                        </div>
+                    </div>
+
+                    <!-- Opção de Impressão Térmica -->
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" name="imprimirRecibo" id="chkImprimir" value="true" checked>
+                        <label class="form-check-label small" for="chkImprimir">
+                            <i class="bi bi-printer me-1"></i>Imprimir recibo térmico imediatamente após confirmação
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn text-white w-100 py-3 fs-5 fw-bold" style="background-color: #6E1A33;">
+                        <i class="bi bi-check2-circle me-2"></i>Confirmar Pagamento
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function ajustarMetodo(metodo) {
+        const secNumerario = document.getElementById('seccaoNumerario');
+        const secReferencia = document.getElementById('seccaoReferencia');
+        const inputRecebido = document.getElementById('inputValorRecebido');
+        const inputValor = document.getElementById('inputValor');
+
+        if (metodo === 'Numerario') {
+            secNumerario.style.display = 'block';
+            secReferencia.style.display = 'none';
+        } else {
+            secNumerario.style.display = 'none';
+            secReferencia.style.display = 'block';
+            if (inputRecebido && inputValor) {
+                inputRecebido.value = inputValor.value;
+            }
+        }
+        calcularTroco();
+    }
+
+    function definirRecebido(valor) {
+        const inputRecebido = document.getElementById('inputValorRecebido');
+        if (inputRecebido) {
+            inputRecebido.value = valor.toFixed(2);
+            calcularTroco();
+        }
+    }
+
+    function definirExato() {
+        const inputValor = document.getElementById('inputValor');
+        const inputRecebido = document.getElementById('inputValorRecebido');
+        if (inputValor && inputRecebido) {
+            inputRecebido.value = inputValor.value;
+            calcularTroco();
+        }
+    }
+
+    function calcularTroco() {
+        const inputValor = parseFloat(document.getElementById('inputValor').value) || 0;
+        const inputRecebido = parseFloat(document.getElementById('inputValorRecebido').value) || 0;
+        const displayTroco = document.getElementById('displayTroco');
+
+        const troco = Math.max(0, inputRecebido - inputValor);
+        displayTroco.value = troco.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " MT";
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        calcularTroco();
+    });
+</script>
+}
