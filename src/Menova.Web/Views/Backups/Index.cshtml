@@ -1,0 +1,153 @@
+@model List<Menova.Application.DTOs.FicheiroBackupDto>
+@{
+    ViewData["Title"] = "Cópias de Segurança (Backups)";
+    var totalBytes = Model.Sum(b => b.TamanhoBytes);
+    var totalMb = totalBytes / (1024.0 * 1024.0);
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-cloud-arrow-down-fill me-2"></i>Cópias de Segurança (Backups)</h3>
+        <p class="text-muted small mb-0">Gestão de ficheiros de salvaguarda, rotação automática e integridade SHA-256.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <button type="button" class="btn text-white py-2 px-3 shadow-sm" style="background-color: #6E1A33;" data-bs-toggle="modal" data-bs-target="#modalCriarBackup">
+            <i class="bi bi-plus-circle me-1"></i>Criar Cópia Agora
+        </button>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<!-- Resumo do Repositório de Backups -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border shadow-sm p-3 text-center">
+            <div class="text-muted small">Cópias Disponíveis</div>
+            <div class="fs-4 fw-bold text-dark">@Model.Count ficheiros</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border shadow-sm p-3 text-center">
+            <div class="text-muted small">Espaço Ocupado</div>
+            <div class="fs-4 fw-bold text-primary">@totalMb.ToString("F1") MB</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border shadow-sm p-3 text-center">
+            <div class="text-muted small">Política de Rotação</div>
+            <div class="fs-6 fw-bold text-success mt-1">7 Diários | 4 Semanais | 12 Mensais</div>
+        </div>
+    </div>
+</div>
+
+<div class="card border shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome do Ficheiro</th>
+                    <th>Data / Hora Criação (UTC+2)</th>
+                    <th class="text-end">Tamanho</th>
+                    <th class="text-center">Integridade SHA-256</th>
+                    <th class="text-end" style="width: 220px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-archive fs-2 d-block mb-2 text-muted"></i>
+                            Ainda não existem cópias de segurança geradas no repositório local.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var b in Model)
+                    {
+                        <tr>
+                            <td class="font-monospace fw-bold">
+                                <i class="bi bi-file-earmark-zip text-secondary me-2"></i>@b.NomeFicheiro
+                            </td>
+                            <td>@b.CriadoEm.AddHours(2).ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td class="text-end font-monospace">@b.TamanhoFormatado</td>
+                            <td class="text-center">
+                                @if (b.HashValido)
+                                {
+                                    <span class="badge bg-success" title="Hash: @b.HashSha256">
+                                        <i class="bi bi-check2-circle me-1"></i>Íntegro
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark" title="Pendente de teste ou sem ficheiro hash">
+                                        <i class="bi bi-question-circle me-1"></i>Não Verificado
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a href="/backups/download/@b.NomeFicheiro" class="btn btn-sm btn-outline-primary me-1" title="Descarregar Ficheiro">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                <form action="/backups/verificar/@b.NomeFicheiro" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary me-1" title="Verificar Hash SHA-256">
+                                        <i class="bi bi-shield-check"></i>
+                                    </button>
+                                </form>
+                                <form action="/backups/eliminar/@b.NomeFicheiro" method="post" class="d-inline" onsubmit="return confirm('Tem a certeza que pretende eliminar esta cópia de segurança?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Criar Backup -->
+<div class="modal fade" id="modalCriarBackup" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="/backups/criar" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header text-white" style="background-color: #6E1A33;">
+                <h5 class="modal-title"><i class="bi bi-cloud-arrow-down-fill me-2"></i>Criar Cópia de Segurança</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">
+                    Será criada uma cópia integral da base de dados PostgreSQL do restaurante, incluindo salão, menu, contas, faturas, movimentos de caixa, registos Z e auditoria.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label">Motivo / Descrição (opcional):</label>
+                    <input type="text" name="motivo" class="form-control" placeholder="Ex: Backup antes de atualização de sistema" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn text-white" style="background-color: #6E1A33;">Executar Cópia</button>
+            </div>
+        </form>
+    </div>
+</div>

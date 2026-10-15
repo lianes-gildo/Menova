@@ -1,0 +1,177 @@
+@model List<Menova.Domain.Auditoria.RegistoAuditoria>
+@{
+    ViewData["Title"] = "Auditoria e Conformidade WORM";
+    var pagina = (int)ViewBag.Pagina;
+    var totalPaginas = (int)ViewBag.TotalPaginas;
+    var total = (int)ViewBag.Total;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-shield-lock-fill me-2"></i>Pista de Auditoria WORM</h3>
+        <p class="text-muted small mb-0">Registo contínuo imutável assinado com cadeia de hashes SHA-256.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <form action="/auditoria/verificar" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn text-white py-2 px-3 shadow-sm" style="background-color: #6E1A33;">
+                <i class="bi bi-shield-check me-1"></i>Verificar Integridade da Cadeia
+            </button>
+        </form>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<!-- Filtros de Pesquisa -->
+<div class="card border shadow-sm mb-4">
+    <div class="card-body py-3">
+        <form method="get" action="/auditoria" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <input type="text" name="acao" value="@ViewBag.Acao" class="form-control form-control-sm" placeholder="Filtrar por Ação (ex: CAIXA, PEDIDO)" />
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="entidade" value="@ViewBag.Entidade" class="form-control form-control-sm" placeholder="Filtrar por Entidade (ex: contas, itens)" />
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="utilizador" value="@ViewBag.Utilizador" class="form-control form-control-sm" placeholder="Filtrar por Utilizador" />
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-outline-secondary flex-grow-1">
+                    <i class="bi bi-search me-1"></i>Pesquisar
+                </button>
+                <a href="/auditoria" class="btn btn-sm btn-outline-dark" title="Limpar Filtros">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabela de Registos de Auditoria -->
+<div class="card border shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+        <span class="small text-muted">A mostrar @Model.Count de @total registos na base de dados</span>
+        <span class="badge bg-secondary font-monospace">Algoritmo: SHA-256 WORM</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 70px;">ID</th>
+                    <th>Data / Hora (UTC+2)</th>
+                    <th>Utilizador</th>
+                    <th>Ação</th>
+                    <th>Entidade</th>
+                    <th>Registo</th>
+                    <th>Motivo / Descrição</th>
+                    <th class="text-end" style="width: 100px;">Assinatura</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            Nenhum registo de auditoria encontrado.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var reg in Model)
+                    {
+                        <tr>
+                            <td class="font-monospace text-muted">#@reg.Id</td>
+                            <td>@reg.DataHora.AddHours(2).ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td>
+                                <strong>@reg.NomeUtilizadorSnapshot</strong>
+                                <div class="text-muted" style="font-size: 0.75rem;">IP: @(string.IsNullOrEmpty(reg.Ip) ? "Local" : reg.Ip)</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border font-monospace">@reg.Acao</span>
+                            </td>
+                            <td>@reg.Entidade</td>
+                            <td class="font-monospace text-muted">@(string.IsNullOrEmpty(reg.EntidadeId) ? "-" : reg.EntidadeId.Length > 8 ? reg.EntidadeId.Substring(0, 8) + "..." : reg.EntidadeId)</td>
+                            <td>@(string.IsNullOrEmpty(reg.Motivo) ? "-" : reg.Motivo)</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" 
+                                        data-bs-toggle="modal" data-bs-target="#modalHash-@reg.Id" title="Ver Hash e Criptografia">
+                                    <i class="bi bi-key-fill text-warning"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Modal de Detalhe Criptográfico -->
+                        <div class="modal fade" id="modalHash-@reg.Id" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-dark text-white">
+                                        <h6 class="modal-title font-monospace"><i class="bi bi-shield-shaded me-2"></i>Registo de Auditoria #@reg.Id</h6>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body font-monospace small">
+                                        <div class="mb-2"><strong>Ação:</strong> @reg.Acao (@reg.Entidade)</div>
+                                        <div class="mb-2"><strong>Operador:</strong> @reg.NomeUtilizadorSnapshot (Perfil: @reg.Perfil)</div>
+                                        <div class="mb-2"><strong>Carimbo Data/Hora:</strong> @reg.DataHora:O (UTC)</div>
+                                        @if (!string.IsNullOrEmpty(reg.ValoresAntes))
+                                        {
+                                            <div class="mb-2">
+                                                <strong>Valores Anteriores:</strong>
+                                                <pre class="bg-light p-2 border rounded">@reg.ValoresAntes</pre>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(reg.ValoresDepois))
+                                        {
+                                            <div class="mb-2">
+                                                <strong>Valores Novos:</strong>
+                                                <pre class="bg-light p-2 border rounded">@reg.ValoresDepois</pre>
+                                            </div>
+                                        }
+                                        <div class="p-3 bg-light border rounded mt-3">
+                                            <div class="text-break mb-1"><strong>Hash Atual (SHA-256):</strong><br/><span class="text-success">@reg.Hash</span></div>
+                                            <div class="text-break"><strong>Hash Anterior (Encadeamento):</strong><br/><span class="text-secondary">@reg.HashAnterior</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (totalPaginas > 1)
+    {
+        <div class="card-footer bg-light d-flex justify-content-between align-items-center py-2">
+            <span class="small text-muted">Página @pagina de @totalPaginas</span>
+            <ul class="pagination pagination-sm mb-0">
+                @if (pagina > 1)
+                {
+                    <li class="page-item"><a class="page-link" href="/auditoria?pagina=@(pagina - 1)&acao=@ViewBag.Acao&entidade=@ViewBag.Entidade&utilizador=@ViewBag.Utilizador">Anterior</a></li>
+                }
+                @if (pagina < totalPaginas)
+                {
+                    <li class="page-item"><a class="page-link" href="/auditoria?pagina=@(pagina + 1)&acao=@ViewBag.Acao&entidade=@ViewBag.Entidade&utilizador=@ViewBag.Utilizador">Seguinte</a></li>
+                }
+            </ul>
+        </div>
+    }
+</div>

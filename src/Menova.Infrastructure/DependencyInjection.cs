@@ -60,6 +60,9 @@ public static class DependencyInjection
         // Relatórios Analíticos e Exportações
         services.AddScoped<IRelatorioService, RelatorioService>();
 
+        // Backups e Rotação
+        services.AddScoped<IBackupService, BackupService>();
+
         return services;
     }
 }
