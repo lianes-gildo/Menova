@@ -1,0 +1,75 @@
+## .gitignore para Menova (.NET 8/10, Docker, Linux/Windows)
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio / VS Code / JetBrain/wwwroot) 
+● Bash(rm -rf bin obj) (ctrl+o to expand)
+s
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.useroptions
+
+# .NET Core / ASP.NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.log
+
+# Secrets & Environment variables
+*.env
+*.env.local
+*.env.*.local
+!deploy/.env.example
+secrets.json
+
+# Docker & local data volumes
+deploy/data/
+deploy/backups/
+deploy/caddy_data/
+deploy/caddy_config/
+deploy/logs/
+
+# Test results/wwwroot) 
+● Bash(rm -rf bin obj) (ctrl+o to expand)
+
+TestResults/
+[Tt]est[Rr]esult*/
+coverage.info
+coverage.xml
+
+# Node / Frontend builds (if any)
+node_modules/
+npm-debug.log*
+
+# OS Generated
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini

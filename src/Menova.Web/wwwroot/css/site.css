@@ -1,0 +1,444 @@
+/* ==========================================================================
+   MENOVA - DESIGN SYSTEM ERP (VINHO & BRANCO)
+   Padrão: Primavera ERP / Sóbrio / Sem Gradientes / Cantos 2px / WCAG AA
+   ========================================================================== */
+
+:root {
+    --mv-vinho-900: #3F0F1F;
+    --mv-vinho-800: #5A1429;
+    --mv-vinho-700: #6E1A33; /* Cor Primária Menova */
+    --mv-vinho-600: #862240;
+    --mv-vinho-500: #9E2B4D;
+    --mv-vinho-100: #F3E4E8;
+    --mv-vinho-50:  #FAF3F5;
+    
+    --mv-branco:      #FFFFFF;
+    --mv-fundo:       #F7F5F6;
+    --mv-borda:       #E2DADD;
+    --mv-borda-forte: #CFC4C8;
+    --mv-texto:       #2A2024;
+    --mv-texto-suave: #6B5F64;
+    
+    --mv-sucesso: #2E7D32;
+    --mv-aviso:   #B7791F;
+    --mv-erro:    #C62828;
+    --mv-info:    #1F5F8B;
+
+    --mv-radius: 2px;
+    --mv-sidebar-width: 260px;
+    --mv-sidebar-collapsed-width: 68px;
+    --mv-topbar-height: 56px;
+}
+
+/* Reset Geral & Cantos de 2px Rigorosos */
+*, *::before, *::after {
+    border-radius: var(--mv-radius) !important;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--mv-fundo);
+    color: var(--mv-texto);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Tipografia */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--mv-vinho-900);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+a {
+    color: var(--mv-vinho-700);
+    text-decoration: none;
+}
+a:hover {
+    color: var(--mv-vinho-900);
+    text-decoration: underline;
+}
+
+/* Botões do Design System */
+.btn {
+    border-radius: var(--mv-radius) !important;
+    font-weight: 500;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.875rem;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    box-shadow: none !important;
+}
+
+.btn-primary {
+    background-color: var(--mv-vinho-700) !important;
+    border-color: var(--mv-vinho-700) !important;
+    color: var(--mv-branco) !important;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--mv-vinho-800) !important;
+    border-color: var(--mv-vinho-800) !important;
+}
+
+.btn-outline-primary {
+    background-color: var(--mv-branco) !important;
+    border-color: var(--mv-vinho-700) !important;
+    color: var(--mv-vinho-700) !important;
+}
+.btn-outline-primary:hover {
+    background-color: var(--mv-vinho-50) !important;
+    color: var(--mv-vinho-900) !important;
+}
+
+.btn-danger {
+    background-color: var(--mv-erro) !important;
+    border-color: var(--mv-erro) !important;
+    color: var(--mv-branco) !important;
+}
+
+.btn-secondary {
+    background-color: #ECE8E9 !important;
+    border-color: var(--mv-borda-forte) !important;
+    color: var(--mv-texto) !important;
+}
+
+/* Campos de Formulário */
+.form-control, .form-select {
+    border-radius: var(--mv-radius) !important;
+    border: 1px solid var(--mv-borda-forte);
+    padding: 0.45rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--mv-texto);
+    background-color: var(--mv-branco);
+    box-shadow: none !important;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--mv-vinho-700);
+    outline: 0;
+    box-shadow: 0 0 0 2px var(--mv-vinho-100) !important;
+}
+
+/* Cartões (Cards) */
+.card {
+    border-radius: var(--mv-radius) !important;
+    border: 1px solid var(--mv-borda);
+    background-color: var(--mv-branco);
+    box-shadow: none !important;
+    margin-bottom: 1.25rem;
+}
+.card-header {
+    background-color: var(--mv-vinho-50);
+    border-bottom: 1px solid var(--mv-borda);
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: var(--mv-vinho-900);
+}
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Tabelas Densas Corporativas */
+.table {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    border-color: var(--mv-borda);
+}
+.table thead th {
+    background-color: var(--mv-vinho-50);
+    color: var(--mv-vinho-900);
+    font-weight: 600;
+    border-bottom: 1px solid var(--mv-borda-forte);
+    padding: 0.6rem 0.75rem;
+    white-space: nowrap;
+}
+.table tbody td {
+    padding: 0.55rem 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--mv-borda);
+}
+.table tbody tr:hover {
+    background-color: var(--mv-vinho-50);
+}
+
+/* Estrutura Principal: Layout com Sidebar e Topbar */
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.app-sidebar {
+    width: var(--mv-sidebar-width);
+    background-color: var(--mv-vinho-900);
+    color: var(--mv-branco);
+    flex-shrink: 0;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.sidebar-header {
+    height: var(--mv-topbar-height);
+    background-color: var(--mv-branco);
+    border-bottom: 1px solid var(--mv-borda);
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    overflow: hidden;
+}
+
+.sidebar-logo {
+    max-height: 40px;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.sidebar-menu {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem 0;
+    list-style: none;
+    margin: 0;
+}
+
+.sidebar-section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #CFC4C8;
+    padding: 0.75rem 1.25rem 0.25rem;
+    font-weight: 600;
+}
+
+.sidebar-item a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1.25rem;
+    color: #F7F5F6;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-left 0.15s ease;
+    border-left: 3px solid transparent;
+}
+.sidebar-item a:hover {
+    background-color: var(--mv-vinho-800);
+    color: var(--mv-branco);
+}
+.sidebar-item.active a {
+    background-color: var(--mv-vinho-700);
+    border-left: 3px solid var(--mv-branco);
+    color: var(--mv-branco);
+    font-weight: 600;
+}
+
+.sidebar-icon {
+    font-size: 1.15rem;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Sidebar Recolhida (Collapsed) */
+.app-sidebar.collapsed {
+    width: var(--mv-sidebar-collapsed-width);
+}
+.app-sidebar.collapsed .sidebar-header {
+    justify-content: center;
+    padding: 0;
+}
+.app-sidebar.collapsed .sidebar-header .sidebar-logo {
+    max-height: 32px;
+    max-width: 32px;
+}
+.app-sidebar.collapsed .sidebar-section-title,
+.app-sidebar.collapsed .sidebar-text {
+    display: none;
+}
+.app-sidebar.collapsed .sidebar-item a {
+    justify-content: center;
+    padding: 0.75rem;
+}
+
+/* Conteúdo Principal */
+.app-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background-color: var(--mv-fundo);
+}
+
+/* Topbar */
+.app-topbar {
+    height: var(--mv-topbar-height);
+    background-color: var(--mv-branco);
+    border-bottom: 1px solid var(--mv-borda);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.25rem;
+    position: sticky;
+    top: 0;
+    z-index: 990;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-sidebar-toggle {
+    background: transparent;
+    border: 1px solid var(--mv-borda);
+    color: var(--mv-texto);
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+}
+.btn-sidebar-toggle:hover {
+    background-color: var(--mv-vinho-50);
+    color: var(--mv-vinho-900);
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.server-clock {
+    font-size: 0.825rem;
+    color: var(--mv-texto-suave);
+    background-color: var(--mv-vinho-50);
+    border: 1px solid var(--mv-borda);
+    padding: 0.3rem 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.user-profile-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    text-decoration: none !important;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--mv-radius) !important;
+    object-fit: cover;
+    border: 1px solid var(--mv-borda-forte);
+}
+
+/* Conteúdo da Página */
+.app-content {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+.page-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--mv-vinho-900);
+}
+
+/* Modais Internos */
+.modal-content {
+    border-radius: var(--mv-radius) !important;
+    border: 1px solid var(--mv-borda-forte);
+    box-shadow: 0 4px 12px rgba(63, 15, 31, 0.15) !important;
+}
+.modal-header {
+    background-color: var(--mv-vinho-50);
+    border-bottom: 1px solid var(--mv-borda);
+    padding: 0.85rem 1.25rem;
+}
+.modal-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--mv-vinho-900);
+}
+.modal-footer {
+    background-color: #FAF9F9;
+    border-top: 1px solid var(--mv-borda);
+    padding: 0.75rem 1.25rem;
+}
+
+/* Badges */
+.badge {
+    border-radius: var(--mv-radius) !important;
+    font-weight: 600;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.75rem;
+}
+.badge-vinho {
+    background-color: var(--mv-vinho-100);
+    color: var(--mv-vinho-900);
+    border: 1px solid var(--mv-borda-forte);
+}
+.badge-sucesso {
+    background-color: #E8F5E9;
+    color: var(--mv-sucesso);
+    border: 1px solid #C8E6C9;
+}
+.badge-aviso {
+    background-color: #FFF8E1;
+    color: var(--mv-aviso);
+    border: 1px solid #FFE082;
+}
+
+/* Ecrã de Login Centralizado */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--mv-fundo);
+    padding: 1.5rem;
+}
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background-color: var(--mv-branco);
+    border: 1px solid var(--mv-borda);
+    padding: 2.25rem;
+}
+.login-logo-container {
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+.login-logo {
+    max-height: 65px;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* Toast Container */
+.toast-container {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 1090;
+}
+.toast {
+    border-radius: var(--mv-radius) !important;
+    border: 1px solid var(--mv-borda-forte);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}

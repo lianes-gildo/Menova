@@ -1,0 +1,55 @@
+@model Menova.Application.DTOs.LoginDto
+@{
+    Layout = "_LayoutLogin";
+    ViewData["Title"] = "Iniciar Sessão";
+}
+
+<h4 class="text-center mb-3 fw-bold" style="color: var(--mv-vinho-900);">Acesso ao Sistema</h4>
+<p class="text-center text-muted small mb-4">Introduza as suas credenciais para aceder ao painel.</p>
+
+<form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+    @Html.AntiForgeryToken()
+
+    @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+    {
+        <div class="alert alert-danger py-2 px-3 small mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            @ViewData.ModelState[string.Empty]?.Errors[0].ErrorMessage
+        </div>
+    }
+
+    <div class="mb-3">
+        <label asp-for="NomeUtilizador" class="form-label fw-semibold text-dark small">Nome de utilizador</label>
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-person"></i></span>
+            <input asp-for="NomeUtilizador" class="form-control border-start-0" placeholder="Ex.: admin" autocomplete="username" autofocus />
+        </div>
+        <span asp-validation-for="NomeUtilizador" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PalavraPasse" class="form-label fw-semibold text-dark small">Palavra-passe</label>
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+            <input asp-for="PalavraPasse" type="password" class="form-control border-start-0" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <span asp-validation-for="PalavraPasse" class="text-danger small"></span>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="form-check">
+            <input asp-for="LembrarMe" class="form-check-input" type="checkbox" id="lembrarMeCheck">
+            <label class="form-check-label small text-muted" for="lembrarMeCheck">
+                Lembrar sessão
+            </label>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+        <i class="bi bi-box-arrow-in-right me-1"></i> Entrar
+    </button>
+</form>
+
+<div class="mt-4 pt-3 border-top text-center text-muted" style="font-size: 0.75rem;">
+    Menova &middot; Moçambique (CAT) &middot; Ambiente Seguro
+</div>

@@ -1,0 +1,13 @@
+**/.git
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/TestResults
+**/*.user
+deploy/data
+deploy/backups
+deploy/logs
+deploy/caddy_data
+deploy/caddy_config
+logs

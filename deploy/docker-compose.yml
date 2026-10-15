@@ -1,0 +1,52 @@
+version: '3.8'
+
+# ==============================================================================
+# AMBIENTE DE DESENVOLVIMENTO (DEVELOPMENT) - MENOVA
+# Porta 5432 exposta para conexão direta por DBeaver/pgAdmin
+# ==============================================================================
+
+services:
+  menova_dev_db:
+    image: postgres:16-alpine
+    container_name: menova_dev_db
+    environment:
+      POSTGRES_DB: menova_db
+      POSTGRES_USER: menova_app
+      POSTGRES_PASSWORD: menova_dev_secret
+      TZ: Africa/Maputo
+    ports:
+      - "5432:5432"
+    volumes:
+      - menova_dev_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U menova_app -d menova_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - menova_dev_net
+
+  menova_dev_app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: menova_dev_app
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=menova_dev_db;Port=5432;Database=menova_db;Username=menova_app;Password=menova_dev_secret;"
+      Security__PinPepper: "Menova_Dev_Pin_Pepper_2026_Africa_Maputo"
+      TZ: Africa/Maputo
+    ports:
+      - "5000:8080"
+    depends_on:
+      menova_dev_db:
+        condition: service_healthy
+    networks:
+      - menova_dev_net
+
+volumes:
+  menova_dev_db_data:
+
+networks:
+  menova_dev_net:
+    driver: bridge

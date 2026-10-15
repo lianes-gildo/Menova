@@ -1,0 +1,84 @@
+version: '3.8'
+
+# ==============================================================================
+# AMBIENTE DE PRODUÇÃO (PRODUCTION) - MENOVA
+# Isolamento estrito de portas, non-root, Caddy SSL e volumes persistentes
+# ==============================================================================
+
+services:
+  menova_db:
+    image: postgres:16-alpine
+    container_name: menova_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: menova_db
+      POSTGRES_USER: ${MENOVA_DB_USER:-menova_app}
+      POSTGRES_PASSWORD: ${MENOVA_DB_PASSWORD:?Palavra-passe da base de dados obrigatoria}
+      TZ: Africa/Maputo
+    # Sem portas publicadas no host! Isolamento total na bridge interna.
+    volumes:
+      - menova_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MENOVA_DB_USER:-menova_app} -d menova_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - menova_net
+
+  menova_app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: menova_app
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=menova_db;Port=5432;Database=menova_db;Username=${MENOVA_DB_USER:-menova_app};Password=${MENOVA_DB_PASSWORD};"
+      Security__PinPepper: ${MENOVA_PIN_PEPPER:?Pepper de seguranca obrigatorio}
+      TZ: Africa/Maputo
+    volumes:
+      - menova_media:/app/media
+      - menova_logs:/app/logs
+      - menova_backups:/app/backups
+    depends_on:
+      menova_db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - menova_net
+
+  menova_proxy:
+    image: caddy:2-alpine
+    container_name: menova_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - menova_app
+    networks:
+      - menova_net
+
+volumes:
+  menova_db_data:
+  menova_media:
+  menova_logs:
+  menova_backups:
+  caddy_data:
+  caddy_config:
+
+networks:
+  menova_net:
+    driver: bridge

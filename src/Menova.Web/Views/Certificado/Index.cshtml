@@ -1,0 +1,59 @@
+@{
+    Layout = "_LayoutLogin";
+    ViewData["Title"] = "Instalar Certificado HTTPS Local";
+}
+
+<div class="text-center mb-4">
+    <h4 class="fw-bold mb-1" style="color: var(--mv-vinho-900);">Certificado de Rede Local</h4>
+    <p class="text-muted small">Instalação do certificado de segurança raiz para telemóveis e tablets na rede local.</p>
+</div>
+
+<div class="accordion mb-4" id="accordionCertificado">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingAndroid">
+            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAndroid" aria-expanded="false" aria-controls="collapseAndroid">
+                <i class="bi bi-android2 me-2 fs-5"></i> Como instalar no Android
+            </button>
+        </h2>
+        <div id="collapseAndroid" class="accordion-collapse collapse" aria-labelledby="headingAndroid" data-bs-parent="#accordionCertificado">
+            <div class="accordion-body small text-muted">
+                1. Descarregue o ficheiro <code>root.crt</code> do servidor.<br />
+                2. Aceda a <strong>Definições &gt; Segurança &gt; Instalar certificado &gt; Certificado de CA</strong>.<br />
+                3. Selecione o ficheiro descarregado e confirme a instalação com o PIN do telemóvel.
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingIos">
+            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIos" aria-expanded="false" aria-controls="collapseIos">
+                <i class="bi bi-apple me-2 fs-5"></i> Como instalar no iOS / iPadOS
+            </button>
+        </h2>
+        <div id="collapseIos" class="accordion-collapse collapse" aria-labelledby="headingIos" data-bs-parent="#accordionCertificado">
+            <div class="accordion-body small text-muted">
+                1. Abra o Safari e descarregue o certificado.<br />
+                2. Vá a <strong>Definições &gt; Perfil Descarregado &gt; Instalar</strong>.<br />
+                3. Vá a <strong>Definições &gt; Geral &gt; Informações &gt; Definições de Confiança nos Certificados</strong> e ative a confiança total.
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingWindows">
+            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWindows" aria-expanded="false" aria-controls="collapseWindows">
+                <i class="bi bi-windows me-2 fs-5"></i> Como instalar no Windows
+            </button>
+        </h2>
+        <div id="collapseWindows" class="accordion-collapse collapse" aria-labelledby="headingWindows" data-bs-parent="#accordionCertificado">
+            <div class="accordion-body small text-muted">
+                1. Dê duplo clique no ficheiro <code>root.crt</code>.<br />
+                2. Clique em <strong>Instalar Certificado &gt; Computador Local &gt; Colocar na pasta 'Autoridades de Certificação Raiz Confiáveis'</strong>.
+            </div>
+        </div>
+    </div>
+</div>
+
+<a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary w-100">
+    <i class="bi bi-arrow-left me-1"></i> Voltar ao Painel
+</a>

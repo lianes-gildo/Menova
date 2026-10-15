@@ -1,0 +1,33 @@
+name: CI - Menova POS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    name: Build & Testes Automatizados
+
+    steps:
+    - name: Checkout do Código
+      uses: actions/checkout@v4
+
+    - name: Configurar .NET 8.0
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restaurar Dependências
+      run: dotnet restore Menova.sln
+
+    - name: Compilar Solução (Release)
+      run: dotnet build Menova.sln -c Release --no-restore
+
+    - name: Executar Testes Unitários
+      run: dotnet test tests/Menova.UnitTests/Menova.UnitTests.csproj -c Release --no-build --verbosity normal
+
+    - name: Executar Testes de Integração
+      run: dotnet test tests/Menova.IntegrationTests/Menova.IntegrationTests.csproj -c Release --no-build --verbosity normal

@@ -1,0 +1,26 @@
+@{
+    Layout = "_LayoutLogin";
+    ViewData["Title"] = "Acesso Negado (403)";
+}
+
+<div class="text-center">
+    <div class="display-1 fw-bold mb-2" style="color: var(--mv-erro);">403</div>
+    <h4 class="fw-bold mb-3" style="color: var(--mv-vinho-900);">Acesso Negado</h4>
+    <p class="text-muted small mb-4">
+        O seu perfil atual (<strong>@ViewBag.Perfil</strong>) não dispõe de permissões para aceder a este recurso.
+    </p>
+
+    <div class="alert alert-light border small text-muted mb-4 text-start">
+        <i class="bi bi-info-circle me-1"></i> Se necessita de acesso a este módulo, solicite ao Gerente ou Administrador a atribuição da permissão correspondente.
+        <div class="mt-2 text-xs">ID de Correlação: <code>@ViewBag.CorrelacaoId</code></div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="javascript:history.back()" class="btn btn-secondary flex-fill">
+            <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary flex-fill">
+            <i class="bi bi-house me-1"></i> Painel Inicial
+        </a>
+    </div>
+</div>

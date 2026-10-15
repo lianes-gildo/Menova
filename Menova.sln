@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A74F869C-A02C-4D32-B650-9EC43364A132}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menova.Domain", "src\Menova.Domain\Menova.Domain.csproj", "{F89B268E-D547-4A0E-B9C1-EA4BD3A8DCD4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menova.Application", "src\Menova.Application\Menova.Application.csproj", "{FB73334F-2CEF-40BF-8F1B-822EA4ABD48E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menova.Infrastructure", "src\Menova.Infrastructure\Menova.Infrastructure.csproj", "{097ACA42-2C1D-4E51-B65D-D87FD39C65BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menova.Web", "src\Menova.Web\Menova.Web.csproj", "{73E72126-75B2-48F5-BD6A-524CC9CBD7F9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{2B4D1E34-975C-4E02-A2D7-861E129B0CEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menova.UnitTests", "tests\Menova.UnitTests\Menova.UnitTests.csproj", "{1561CCEA-5225-4F92-9CAA-A880C2E5192A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menova.IntegrationTests", "tests\Menova.IntegrationTests\Menova.IntegrationTests.csproj", "{5CB6A644-464E-440C-9BFF-5807ECFEB60E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F89B268E-D547-4A0E-B9C1-EA4BD3A8DCD4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F89B268E-D547-4A0E-B9C1-EA4BD3A8DCD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F89B268E-D547-4A0E-B9C1-EA4BD3A8DCD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F89B268E-D547-4A0E-B9C1-EA4BD3A8DCD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB73334F-2CEF-40BF-8F1B-822EA4ABD48E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB73334F-2CEF-40BF-8F1B-822EA4ABD48E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB73334F-2CEF-40BF-8F1B-822EA4ABD48E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB73334F-2CEF-40BF-8F1B-822EA4ABD48E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{097ACA42-2C1D-4E51-B65D-D87FD39C65BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{097ACA42-2C1D-4E51-B65D-D87FD39C65BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{097ACA42-2C1D-4E51-B65D-D87FD39C65BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{097ACA42-2C1D-4E51-B65D-D87FD39C65BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73E72126-75B2-48F5-BD6A-524CC9CBD7F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73E72126-75B2-48F5-BD6A-524CC9CBD7F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73E72126-75B2-48F5-BD6A-524CC9CBD7F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73E72126-75B2-48F5-BD6A-524CC9CBD7F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1561CCEA-5225-4F92-9CAA-A880C2E5192A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1561CCEA-5225-4F92-9CAA-A880C2E5192A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1561CCEA-5225-4F92-9CAA-A880C2E5192A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1561CCEA-5225-4F92-9CAA-A880C2E5192A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CB6A644-464E-440C-9BFF-5807ECFEB60E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CB6A644-464E-440C-9BFF-5807ECFEB60E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CB6A644-464E-440C-9BFF-5807ECFEB60E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CB6A644-464E-440C-9BFF-5807ECFEB60E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F89B268E-D547-4A0E-B9C1-EA4BD3A8DCD4} = {A74F869C-A02C-4D32-B650-9EC43364A132}
+		{FB73334F-2CEF-40BF-8F1B-822EA4ABD48E} = {A74F869C-A02C-4D32-B650-9EC43364A132}
+		{097ACA42-2C1D-4E51-B65D-D87FD39C65BB} = {A74F869C-A02C-4D32-B650-9EC43364A132}
+		{73E72126-75B2-48F5-BD6A-524CC9CBD7F9} = {A74F869C-A02C-4D32-B650-9EC43364A132}
+		{1561CCEA-5225-4F92-9CAA-A880C2E5192A} = {2B4D1E34-975C-4E02-A2D7-861E129B0CEA}
+		{5CB6A644-464E-440C-9BFF-5807ECFEB60E} = {2B4D1E34-975C-4E02-A2D7-861E129B0CEA}
+	EndGlobalSection
+EndGlobal

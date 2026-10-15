@@ -1,0 +1,22 @@
+@{
+    Layout = "_LayoutLogin";
+    ViewData["Title"] = "Conta Bloqueada";
+}
+
+<div class="text-center">
+    <div class="display-1 fw-bold mb-2" style="color: var(--mv-erro);">
+        <i class="bi bi-lock-fill"></i>
+    </div>
+    <h4 class="fw-bold mb-3" style="color: var(--mv-vinho-900);">Acesso Temporariamente Bloqueado</h4>
+    <p class="text-muted small mb-4">
+        Esta conta foi bloqueada devido a 5 tentativas falhadas de autenticação consecutivas.
+    </p>
+
+    <div class="alert alert-warning border small text-start mb-4">
+        <i class="bi bi-shield-lock me-1"></i> Por política de segurança, aguarde 15 minutos antes de tentar novamente ou contacte o Administrador para efetuar o desbloqueio imediato.
+    </div>
+
+    <a asp-controller="Auth" asp-action="Login" class="btn btn-secondary w-100">
+        <i class="bi bi-arrow-left me-1"></i> Voltar ao Ecrã de Login
+    </a>
+</div>

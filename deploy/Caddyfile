@@ -1,0 +1,30 @@
+# ==============================================================================
+# CADDYFILE - MENOVA POS (REVERSE PROXY & HTTPS LOCAL AUTOMÁTICO)
+# ==============================================================================
+
+{
+    email suporte@menova.mz
+    admin off
+}
+
+# Cenário 1: Rede Local com CA Interna do Caddy
+:80, :443 {
+    tls internal
+
+    # Compressão de alta velocidade
+    encode zstd gzip
+
+    # Reverse proxy para a aplicação ASP.NET Core
+    reverse_proxy menova_app:8080 {
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Cabeçalhos de Segurança em Produção
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

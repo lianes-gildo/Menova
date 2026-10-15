@@ -1,0 +1,21 @@
+@{
+    Layout = "_LayoutLogin";
+    ViewData["Title"] = "Página Não Encontrada (404)";
+}
+
+<div class="text-center">
+    <div class="display-1 fw-bold mb-2" style="color: var(--mv-aviso);">404</div>
+    <h4 class="fw-bold mb-3" style="color: var(--mv-vinho-900);">Página Não Encontrada</h4>
+    <p class="text-muted small mb-4">
+        O endereço que tentou aceder não existe ou foi movido.
+    </p>
+
+    <div class="d-flex gap-2">
+        <a href="javascript:history.back()" class="btn btn-secondary flex-fill">
+            <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary flex-fill">
+            <i class="bi bi-house me-1"></i> Painel Inicial
+        </a>
+    </div>
+</div>
