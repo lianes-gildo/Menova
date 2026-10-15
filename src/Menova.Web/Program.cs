@@ -47,10 +47,14 @@ builder.Services.AddValidatorsFromAssemblyContaining<LoginDtoValidator>();
 // 4. Camada de Infraestrutura (DbContext PostgreSQL, Identity, Auditoria, Serviços)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// 5. Utilizador Atual
+// 5. SignalR e Notificações em Tempo Real
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
+
+// 6. Utilizador Atual
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-// 6. Autenticação por Cookies
+// 7. Autenticação por Cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -118,6 +122,7 @@ app.MapControllerRoute(
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 
 app.MapControllers();
+app.MapHub<Menova.Web.Hubs.MenovaHub>("/hub/menova");
 
 // 10. Migração Automática e Seeding da Base de Dados
 using (var scope = app.Services.CreateScope())

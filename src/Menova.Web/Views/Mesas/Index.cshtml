@@ -1,0 +1,224 @@
+@model List<Menova.Application.DTOs.ZonaDto>
+@using Menova.Domain.Sala
+@{
+    ViewData["Title"] = "Gestão de Salão e Mesas";
+    var totalMesas = Model.Sum(z => z.TotalMesas);
+    var ocupadas = Model.Sum(z => z.MesasOcupadas);
+    var livres = totalMesas - ocupadas;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Planta de Sala e Mesas</h3>
+        <p class="text-muted small mb-0">Monitorização em tempo real das mesas e zonas do restaurante.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <span class="badge bg-success me-2 py-2 px-3"><i class="bi bi-circle-fill me-1 small"></i> Livres: <strong>@livres</strong></span>
+        <span class="badge py-2 px-3" style="background-color: #6E1A33;"><i class="bi bi-person-fill me-1"></i> Ocupadas: <strong>@ocupadas</strong></span>
+        <span class="badge bg-secondary py-2 px-3 ms-2"><i class="bi bi-grid me-1"></i> Total: <strong>@totalMesas</strong></span>
+    </div>
+</div>
+
+<!-- Tabs das Zonas -->
+<ul class="nav nav-tabs mb-4 border-bottom" id="zonaTabs" role="tablist">
+    @for (int i = 0; i < Model.Count; i++)
+    {
+        var zona = Model[i];
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(i == 0 ? "active fw-bold" : "")" 
+                    id="tab-@zona.Id" 
+                    data-bs-toggle="tab" 
+                    data-bs-target="#zona-@zona.Id" 
+                    type="button" 
+                    role="tab">
+                @zona.Nome 
+                <span class="badge bg-light text-dark border ms-2">@zona.Mesas.Count</span>
+            </button>
+        </li>
+    }
+</ul>
+
+<!-- Conteúdo das Zonas -->
+<div class="tab-content" id="zonaTabsContent">
+    @for (int i = 0; i < Model.Count; i++)
+    {
+        var zona = Model[i];
+        <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="zona-@zona.Id" role="tabpanel">
+            <div class="row g-3">
+                @foreach (var mesa in zona.Mesas)
+                {
+                    var cardClass = mesa.Estado switch
+                    {
+                        EstadoMesa.Livre => "border-success bg-white text-dark",
+                        EstadoMesa.Ocupada => "text-white",
+                        EstadoMesa.ContaPedida => "border-warning bg-warning bg-opacity-25 text-dark",
+                        EstadoMesa.Reservada => "border-primary bg-primary bg-opacity-10 text-dark",
+                        EstadoMesa.Bloqueada => "border-secondary bg-light text-muted",
+                        _ => "border-secondary"
+                    };
+
+                    var cardStyle = mesa.Estado == EstadoMesa.Ocupada ? "background-color: #6E1A33; border: 1px solid #6E1A33;" : "";
+                    var badgeClass = mesa.Estado switch
+                    {
+                        EstadoMesa.Livre => "bg-success",
+                        EstadoMesa.Ocupada => "bg-light text-dark",
+                        EstadoMesa.ContaPedida => "bg-warning text-dark",
+                        EstadoMesa.Reservada => "bg-primary",
+                        EstadoMesa.Bloqueada => "bg-secondary",
+                        _ => "bg-dark"
+                    };
+
+                    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                        <div class="card h-100 shadow-sm mesa-card @cardClass" 
+                             id="mesa-card-@mesa.Id" 
+                             style="@cardStyle cursor: pointer; transition: transform 0.15s ease-in-out;"
+                             onclick="abrirModalMesa('@mesa.Id', '@mesa.Numero', '@mesa.ZonaNome', '@((int)mesa.Estado)', '@mesa.Lugares')">
+                            <div class="card-body p-3 text-center">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small opacity-75"><i class="bi bi-people-fill me-1"></i>@mesa.Lugares</span>
+                                    <span class="badge @badgeClass" id="mesa-badge-@mesa.Id">@mesa.EstadoDescricao</span>
+                                </div>
+                                <h2 class="fw-bold my-2 mesa-numero">@mesa.Numero</h2>
+                                <div class="small opacity-75 mt-2">
+                                    <i class="bi bi-geo-alt me-1"></i>@zona.Nome
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal de Ação da Mesa -->
+<div class="modal fade" id="modalMesa" tabindex="-1" aria-labelledby="modalMesaTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #6E1A33;">
+                <h5 class="modal-title" id="modalMesaTitle"><i class="bi bi-grid-fill me-2"></i>Mesa <span id="modalMesaNumero"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalMesaId" />
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Zona:</label>
+                    <span id="modalMesaZona" class="text-muted ms-2"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Capacidade:</label>
+                    <span id="modalMesaLugares" class="text-muted ms-2"></span> lugares
+                </div>
+                <div class="mb-4">
+                    <label for="selectEstadoMesa" class="form-label fw-bold">Alterar Estado da Mesa:</label>
+                    <select id="selectEstadoMesa" class="form-select">
+                        <option value="1">Livre</option>
+                        <option value="2">Ocupada</option>
+                        <option value="3">Conta Pedida</option>
+                        <option value="4">Reservada</option>
+                        <option value="5">Bloqueada</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="inputMotivoEstado" class="form-label">Motivo (opcional):</label>
+                    <input type="text" id="inputMotivoEstado" class="form-control" placeholder="Ex: Reserva confirmada por telefone" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn text-white" style="background-color: #6E1A33;" onclick="salvarEstadoMesa()">Guardar Estado</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    function abrirModalMesa(id, numero, zona, estado, lugares) {
+        document.getElementById('modalMesaId').value = id;
+        document.getElementById('modalMesaNumero').textContent = numero;
+        document.getElementById('modalMesaZona').textContent = zona;
+        document.getElementById('modalMesaLugares').textContent = lugares;
+        document.getElementById('selectEstadoMesa').value = estado;
+        document.getElementById('inputMotivoEstado').value = '';
+        
+        var modal = new bootstrap.Modal(document.getElementById('modalMesa'));
+        modal.show();
+    }
+
+    async function salvarEstadoMesa() {
+        const mesaId = document.getElementById('modalMesaId').value;
+        const novoEstado = parseInt(document.getElementById('selectEstadoMesa').value);
+        const motivo = document.getElementById('inputMotivoEstado').value;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        try {
+            const resp = await fetch('/mesas/alterar-estado', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ mesaId: mesaId, novoEstado: novoEstado, motivo: motivo })
+            });
+
+            const data = await resp.json();
+            if (data.sucesso) {
+                bootstrap.Modal.getInstance(document.getElementById('modalMesa')).hide();
+                window.location.reload();
+            } else {
+                alert(data.mensagem || 'Erro ao alterar estado.');
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Tempo Real via SignalR
+    document.addEventListener("DOMContentLoaded", function () {
+        if (typeof signalR !== "undefined") {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hub/menova")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("MesaAlterada", function (data) {
+                const card = document.getElementById("mesa-card-" + data.mesaId);
+                const badge = document.getElementById("mesa-badge-" + data.mesaId);
+                if (card && badge) {
+                    badge.textContent = data.estadoDescricao;
+                    
+                    // Reset styling
+                    card.className = "card h-100 shadow-sm mesa-card";
+                    card.style.backgroundColor = "";
+                    card.style.border = "";
+                    badge.className = "badge";
+
+                    if (data.novoEstado === 1) { // Livre
+                        card.classList.add("border-success", "bg-white", "text-dark");
+                        badge.classList.add("bg-success");
+                    } else if (data.novoEstado === 2) { // Ocupada
+                        card.classList.add("text-white");
+                        card.style.backgroundColor = "#6E1A33";
+                        card.style.border = "1px solid #6E1A33";
+                        badge.classList.add("bg-light", "text-dark");
+                    } else if (data.novoEstado === 3) { // Conta Pedida
+                        card.classList.add("border-warning", "bg-warning", "bg-opacity-25", "text-dark");
+                        badge.classList.add("bg-warning", "text-dark");
+                    } else if (data.novoEstado === 4) { // Reservada
+                        card.classList.add("border-primary", "bg-primary", "bg-opacity-10", "text-dark");
+                        badge.classList.add("bg-primary");
+                    } else if (data.novoEstado === 5) { // Bloqueada
+                        card.classList.add("border-secondary", "bg-light", "text-muted");
+                        badge.classList.add("bg-secondary");
+                    }
+                }
+            });
+
+            connection.start().catch(err => console.error("Erro ao ligar ao SignalR:", err));
+        }
+    });
+</script>
+}

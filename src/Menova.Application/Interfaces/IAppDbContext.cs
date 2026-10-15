@@ -1,6 +1,9 @@
 using Menova.Domain.Auditoria;
 using Menova.Domain.Configuracao;
+using Menova.Domain.Estacoes;
 using Menova.Domain.Identity;
+using Menova.Domain.Menu;
+using Menova.Domain.Sala;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -20,6 +23,28 @@ public interface IAppDbContext
     DbSet<Configuracao> Configuracoes { get; }
     DbSet<Sequencia> Sequencias { get; }
     DbSet<RegistoAuditoria> Auditoria { get; }
+
+    // Sala e Mesas
+    DbSet<Zona> Zonas { get; }
+    DbSet<Mesa> Mesas { get; }
+    DbSet<ContaMesa> ContasMesas { get; }
+
+    // Estações de Preparação
+    DbSet<EstacaoPreparacao> EstacoesPreparacao { get; }
+
+    // Menu e Artigos
+    DbSet<Categoria> Categorias { get; }
+    DbSet<Artigo> Artigos { get; }
+    DbSet<ArtigoCodigoBarras> ArtigosCodigosBarras { get; }
+    DbSet<ArtigoImagem> ArtigosImagens { get; }
+    DbSet<Alergenio> Alergenios { get; }
+    DbSet<ArtigoAlergenio> ArtigosAlergenios { get; }
+    DbSet<Etiqueta> Etiquetas { get; }
+    DbSet<ArtigoEtiqueta> ArtigosEtiquetas { get; }
+    DbSet<GrupoOpcoes> GruposOpcoes { get; }
+    DbSet<Opcao> Opcoes { get; }
+    DbSet<ArtigoGrupoOpcoes> ArtigosGruposOpcoes { get; }
+    DbSet<MenuVersao> MenuVersao { get; }
 
     DatabaseFacade Database { get; }
 

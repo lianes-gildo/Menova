@@ -3,7 +3,10 @@ using Menova.Application.Interfaces;
 using Menova.Domain.Auditoria;
 using Menova.Domain.Common;
 using Menova.Domain.Configuracao;
+using Menova.Domain.Estacoes;
 using Menova.Domain.Identity;
+using Menova.Domain.Menu;
+using Menova.Domain.Sala;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -33,6 +36,28 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<Configuracao> Configuracoes => Set<Configuracao>();
     public DbSet<Sequencia> Sequencias => Set<Sequencia>();
     public DbSet<RegistoAuditoria> Auditoria => Set<RegistoAuditoria>();
+
+    // Sala e Mesas
+    public DbSet<Zona> Zonas => Set<Zona>();
+    public DbSet<Mesa> Mesas => Set<Mesa>();
+    public DbSet<ContaMesa> ContasMesas => Set<ContaMesa>();
+
+    // Estações de Preparação
+    public DbSet<EstacaoPreparacao> EstacoesPreparacao => Set<EstacaoPreparacao>();
+
+    // Menu e Artigos
+    public DbSet<Categoria> Categorias => Set<Categoria>();
+    public DbSet<Artigo> Artigos => Set<Artigo>();
+    public DbSet<ArtigoCodigoBarras> ArtigosCodigosBarras => Set<ArtigoCodigoBarras>();
+    public DbSet<ArtigoImagem> ArtigosImagens => Set<ArtigoImagem>();
+    public DbSet<Alergenio> Alergenios => Set<Alergenio>();
+    public DbSet<ArtigoAlergenio> ArtigosAlergenios => Set<ArtigoAlergenio>();
+    public DbSet<Etiqueta> Etiquetas => Set<Etiqueta>();
+    public DbSet<ArtigoEtiqueta> ArtigosEtiquetas => Set<ArtigoEtiqueta>();
+    public DbSet<GrupoOpcoes> GruposOpcoes => Set<GrupoOpcoes>();
+    public DbSet<Opcao> Opcoes => Set<Opcao>();
+    public DbSet<ArtigoGrupoOpcoes> ArtigosGruposOpcoes => Set<ArtigoGrupoOpcoes>();
+    public DbSet<MenuVersao> MenuVersao => Set<MenuVersao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -310,6 +335,362 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.HasIndex(e => e.Acao);
             entity.HasIndex(e => e.UtilizadorId);
             entity.HasIndex(e => e.CorrelacaoId);
+        });
+
+        // 13. EstacaoPreparacao
+        modelBuilder.Entity<EstacaoPreparacao>(entity =>
+        {
+            entity.ToTable("estacoes_preparacao");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Nome).HasMaxLength(100).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.TemEcra).HasDefaultValue(true).HasColumnName("tem_ecra");
+            entity.Property(e => e.ImprimeTalao).HasDefaultValue(false).HasColumnName("imprime_talao");
+            entity.Property(e => e.ImpressoraId).HasColumnName("impressora_id");
+            entity.Property(e => e.Ativa).HasDefaultValue(true).HasColumnName("ativa");
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+            entity.Property(e => e.EstaEliminado).HasDefaultValue(false).HasColumnName("esta_eliminado");
+            entity.Property(e => e.EliminadoEm).HasColumnName("eliminado_em");
+            entity.Property(e => e.EliminadoPor).HasMaxLength(50).HasColumnName("eliminado_por");
+
+            entity.HasQueryFilter(e => !e.EstaEliminado);
+        });
+
+        // 14. Zona
+        modelBuilder.Entity<Zona>(entity =>
+        {
+            entity.ToTable("zonas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Nome).HasMaxLength(100).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.Ordem).HasDefaultValue(0).HasColumnName("ordem");
+            entity.Property(e => e.Ativa).HasDefaultValue(true).HasColumnName("ativa");
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+            entity.Property(e => e.EstaEliminado).HasDefaultValue(false).HasColumnName("esta_eliminado");
+            entity.Property(e => e.EliminadoEm).HasColumnName("eliminado_em");
+            entity.Property(e => e.EliminadoPor).HasMaxLength(50).HasColumnName("eliminado_por");
+
+            entity.HasQueryFilter(e => !e.EstaEliminado);
+        });
+
+        // 15. Mesa
+        modelBuilder.Entity<Mesa>(entity =>
+        {
+            entity.ToTable("mesas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ZonaId).HasColumnName("zona_id");
+            entity.Property(e => e.Numero).HasMaxLength(20).IsRequired().HasColumnName("numero");
+            entity.Property(e => e.Lugares).HasDefaultValue(4).HasColumnName("lugares");
+            entity.Property(e => e.PosicaoX).HasDefaultValue(0).HasColumnName("posicao_x");
+            entity.Property(e => e.PosicaoY).HasDefaultValue(0).HasColumnName("posicao_y");
+            entity.Property(e => e.Estado).HasConversion<int>().HasColumnName("estado");
+            entity.Property(e => e.Ativa).HasDefaultValue(true).HasColumnName("ativa");
+
+            entity.HasOne(e => e.Zona)
+                  .WithMany(z => z.Mesas)
+                  .HasForeignKey(e => e.ZonaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+            entity.Property(e => e.EstaEliminado).HasDefaultValue(false).HasColumnName("esta_eliminado");
+            entity.Property(e => e.EliminadoEm).HasColumnName("eliminado_em");
+            entity.Property(e => e.EliminadoPor).HasMaxLength(50).HasColumnName("eliminado_por");
+
+            entity.HasIndex(e => new { e.ZonaId, e.Numero }).IsUnique();
+            entity.HasQueryFilter(e => !e.EstaEliminado && !e.Zona.EstaEliminado);
+        });
+
+        // 16. ContaMesa
+        modelBuilder.Entity<ContaMesa>(entity =>
+        {
+            entity.ToTable("contas_mesas");
+            entity.HasKey(e => new { e.ContaId, e.MesaId });
+            entity.Property(e => e.ContaId).HasColumnName("conta_id");
+            entity.Property(e => e.MesaId).HasColumnName("mesa_id");
+            entity.Property(e => e.AdicionadaEm).HasColumnName("adicionada_em");
+
+            entity.HasOne(e => e.Mesa)
+                  .WithMany(m => m.ContasMesas)
+                  .HasForeignKey(e => e.MesaId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.Mesa.EstaEliminado);
+        });
+
+        // 17. Categoria
+        modelBuilder.Entity<Categoria>(entity =>
+        {
+            entity.ToTable("categorias");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Nome).HasMaxLength(100).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.ParentId).HasColumnName("parent_id");
+            entity.Property(e => e.Icone).HasMaxLength(50).HasColumnName("icone");
+            entity.Property(e => e.Ordem).HasDefaultValue(0).HasColumnName("ordem");
+            entity.Property(e => e.EstacaoPadraoId).HasColumnName("estacao_padrao_id");
+            entity.Property(e => e.Ativa).HasDefaultValue(true).HasColumnName("ativa");
+
+            entity.HasOne(e => e.Parent)
+                  .WithMany(c => c.Subcategorias)
+                  .HasForeignKey(e => e.ParentId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.EstacaoPadrao)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstacaoPadraoId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+            entity.Property(e => e.EstaEliminado).HasDefaultValue(false).HasColumnName("esta_eliminado");
+            entity.Property(e => e.EliminadoEm).HasColumnName("eliminado_em");
+            entity.Property(e => e.EliminadoPor).HasMaxLength(50).HasColumnName("eliminado_por");
+
+            entity.HasQueryFilter(e => !e.EstaEliminado);
+        });
+
+        // 18. Artigo
+        modelBuilder.Entity<Artigo>(entity =>
+        {
+            entity.ToTable("artigos");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CategoriaId).HasColumnName("categoria_id");
+            entity.Property(e => e.CodigoInterno).HasMaxLength(50).IsRequired().HasColumnName("codigo_interno");
+            entity.HasIndex(e => e.CodigoInterno).IsUnique();
+            entity.Property(e => e.Nome).HasMaxLength(150).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.DescricaoCurta).HasMaxLength(255).HasColumnName("descricao_curta");
+            entity.Property(e => e.DescricaoLonga).HasColumnName("descricao_longa");
+            entity.Property(e => e.Preco).HasPrecision(18, 4).HasColumnName("preco");
+            entity.Property(e => e.TaxaIva).HasPrecision(5, 2).HasDefaultValue(16.00m).HasColumnName("taxa_iva");
+            entity.Property(e => e.EstacaoId).HasColumnName("estacao_id");
+            entity.Property(e => e.TempoPreparacaoMin).HasDefaultValue(15).HasColumnName("tempo_preparacao_min");
+            entity.Property(e => e.Destaque).HasDefaultValue(false).HasColumnName("destaque");
+            entity.Property(e => e.EsgotadoManual).HasDefaultValue(false).HasColumnName("esgotado_manual");
+            entity.Property(e => e.Disponivel).HasDefaultValue(true).HasColumnName("disponivel");
+            entity.Property(e => e.Ordem).HasDefaultValue(0).HasColumnName("ordem");
+            entity.Property(e => e.Ativo).HasDefaultValue(true).HasColumnName("ativo");
+
+            entity.HasOne(e => e.Categoria)
+                  .WithMany(c => c.Artigos)
+                  .HasForeignKey(e => e.CategoriaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Estacao)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstacaoId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+            entity.Property(e => e.EstaEliminado).HasDefaultValue(false).HasColumnName("esta_eliminado");
+            entity.Property(e => e.EliminadoEm).HasColumnName("eliminado_em");
+            entity.Property(e => e.EliminadoPor).HasMaxLength(50).HasColumnName("eliminado_por");
+
+            entity.HasIndex(e => e.Nome);
+            entity.HasIndex(e => e.EsgotadoManual);
+            entity.HasQueryFilter(e => !e.EstaEliminado && !e.Categoria.EstaEliminado);
+        });
+
+        // 19. ArtigoCodigoBarras
+        modelBuilder.Entity<ArtigoCodigoBarras>(entity =>
+        {
+            entity.ToTable("artigos_codigos_barras");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ArtigoId).HasColumnName("artigo_id");
+            entity.Property(e => e.Codigo).HasMaxLength(50).IsRequired().HasColumnName("codigo");
+            entity.HasIndex(e => e.Codigo).IsUnique();
+            entity.Property(e => e.Tipo).HasMaxLength(20).HasDefaultValue("EAN13").HasColumnName("tipo");
+
+            entity.HasOne(e => e.Artigo)
+                  .WithMany(a => a.CodigosBarras)
+                  .HasForeignKey(e => e.ArtigoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.Artigo.EstaEliminado);
+        });
+
+        // 20. ArtigoImagem
+        modelBuilder.Entity<ArtigoImagem>(entity =>
+        {
+            entity.ToTable("artigos_imagens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ArtigoId).HasColumnName("artigo_id");
+            entity.Property(e => e.CaminhoBase).HasMaxLength(255).IsRequired().HasColumnName("caminho_base");
+            entity.Property(e => e.Ordem).HasDefaultValue(0).HasColumnName("ordem");
+            entity.Property(e => e.Principal).HasDefaultValue(false).HasColumnName("principal");
+            entity.Property(e => e.Largura).HasColumnName("largura");
+            entity.Property(e => e.Altura).HasColumnName("altura");
+            entity.Property(e => e.Hash).HasMaxLength(64).HasColumnName("hash");
+
+            entity.HasOne(e => e.Artigo)
+                  .WithMany(a => a.Imagens)
+                  .HasForeignKey(e => e.ArtigoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.Artigo.EstaEliminado);
+        });
+
+        // 21. Alergenio
+        modelBuilder.Entity<Alergenio>(entity =>
+        {
+            entity.ToTable("alergenios");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Codigo).HasMaxLength(50).IsRequired().HasColumnName("codigo");
+            entity.HasIndex(e => e.Codigo).IsUnique();
+            entity.Property(e => e.Nome).HasMaxLength(100).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.Icone).HasMaxLength(50).HasColumnName("icone");
+        });
+
+        // 22. ArtigoAlergenio
+        modelBuilder.Entity<ArtigoAlergenio>(entity =>
+        {
+            entity.ToTable("artigos_alergenios");
+            entity.HasKey(e => new { e.ArtigoId, e.AlergenioId });
+            entity.Property(e => e.ArtigoId).HasColumnName("artigo_id");
+            entity.Property(e => e.AlergenioId).HasColumnName("alergenio_id");
+
+            entity.HasOne(e => e.Artigo)
+                  .WithMany(a => a.ArtigosAlergenios)
+                  .HasForeignKey(e => e.ArtigoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Alergenio)
+                  .WithMany(a => a.ArtigosAlergenios)
+                  .HasForeignKey(e => e.AlergenioId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.Artigo.EstaEliminado);
+        });
+
+        // 23. Etiqueta
+        modelBuilder.Entity<Etiqueta>(entity =>
+        {
+            entity.ToTable("etiquetas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Codigo).HasMaxLength(50).IsRequired().HasColumnName("codigo");
+            entity.HasIndex(e => e.Codigo).IsUnique();
+            entity.Property(e => e.Nome).HasMaxLength(100).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.CorHex).HasMaxLength(20).HasDefaultValue("#6E1A33").HasColumnName("cor_hex");
+        });
+
+        // 24. ArtigoEtiqueta
+        modelBuilder.Entity<ArtigoEtiqueta>(entity =>
+        {
+            entity.ToTable("artigos_etiquetas");
+            entity.HasKey(e => new { e.ArtigoId, e.EtiquetaId });
+            entity.Property(e => e.ArtigoId).HasColumnName("artigo_id");
+            entity.Property(e => e.EtiquetaId).HasColumnName("etiqueta_id");
+
+            entity.HasOne(e => e.Artigo)
+                  .WithMany(a => a.ArtigosEtiquetas)
+                  .HasForeignKey(e => e.ArtigoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Etiqueta)
+                  .WithMany(t => t.ArtigosEtiquetas)
+                  .HasForeignKey(e => e.EtiquetaId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.Artigo.EstaEliminado);
+        });
+
+        // 25. GrupoOpcoes
+        modelBuilder.Entity<GrupoOpcoes>(entity =>
+        {
+            entity.ToTable("grupos_opcoes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Nome).HasMaxLength(100).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.Obrigatorio).HasDefaultValue(false).HasColumnName("obrigatorio");
+            entity.Property(e => e.Min).HasDefaultValue(0).HasColumnName("min");
+            entity.Property(e => e.Max).HasDefaultValue(1).HasColumnName("max");
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+            entity.Property(e => e.EstaEliminado).HasDefaultValue(false).HasColumnName("esta_eliminado");
+            entity.Property(e => e.EliminadoEm).HasColumnName("eliminado_em");
+            entity.Property(e => e.EliminadoPor).HasMaxLength(50).HasColumnName("eliminado_por");
+
+            entity.HasQueryFilter(e => !e.EstaEliminado);
+        });
+
+        // 26. Opcao
+        modelBuilder.Entity<Opcao>(entity =>
+        {
+            entity.ToTable("opcoes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.GrupoId).HasColumnName("grupo_id");
+            entity.Property(e => e.Nome).HasMaxLength(100).IsRequired().HasColumnName("nome");
+            entity.Property(e => e.DeltaPreco).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("delta_preco");
+            entity.Property(e => e.Ordem).HasDefaultValue(0).HasColumnName("ordem");
+
+            entity.HasOne(e => e.Grupo)
+                  .WithMany(g => g.Opcoes)
+                  .HasForeignKey(e => e.GrupoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.Grupo.EstaEliminado);
+        });
+
+        // 27. ArtigoGrupoOpcoes
+        modelBuilder.Entity<ArtigoGrupoOpcoes>(entity =>
+        {
+            entity.ToTable("artigos_grupos_opcoes");
+            entity.HasKey(e => new { e.ArtigoId, e.GrupoId });
+            entity.Property(e => e.ArtigoId).HasColumnName("artigo_id");
+            entity.Property(e => e.GrupoId).HasColumnName("grupo_id");
+
+            entity.HasOne(e => e.Artigo)
+                  .WithMany(a => a.ArtigosGruposOpcoes)
+                  .HasForeignKey(e => e.ArtigoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Grupo)
+                  .WithMany(g => g.ArtigosGruposOpcoes)
+                  .HasForeignKey(e => e.GrupoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.Artigo.EstaEliminado && !e.Grupo.EstaEliminado);
+        });
+
+        // 28. MenuVersao
+        modelBuilder.Entity<MenuVersao>(entity =>
+        {
+            entity.ToTable("menu_versao");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever().HasColumnName("id");
+            entity.Property(e => e.Versao).HasColumnName("versao");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
         });
     }
 

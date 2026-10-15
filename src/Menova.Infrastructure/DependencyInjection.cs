@@ -32,12 +32,18 @@ public static class DependencyInjection
 
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
+        services.AddMemoryCache();
+
         // Serviços de Segurança e Domínio
         services.AddScoped<IPasswordHasher<Utilizador>, PasswordHasher<Utilizador>>();
         services.AddScoped<IPinService, PinService>();
         services.AddScoped<IAuditoriaService, AuditoriaService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddSingleton<IDateTimeService, DateTimeService>();
+
+        // Menu e Sala
+        services.AddScoped<IMenuService, MenuService>();
+        services.AddScoped<ISalaService, SalaService>();
 
         return services;
     }

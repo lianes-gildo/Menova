@@ -279,6 +279,84 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.ToTable("sequencias", (string)null);
                 });
 
+            modelBuilder.Entity("Menova.Domain.Estacoes.EstacaoPreparacao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativa");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<DateTime?>("EliminadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_em");
+
+                    b.Property<string>("EliminadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eliminado_por");
+
+                    b.Property<bool>("EstaEliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esta_eliminado");
+
+                    b.Property<Guid?>("ImpressoraId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("impressora_id");
+
+                    b.Property<bool>("ImprimeTalao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("imprime_talao");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.Property<bool>("TemEcra")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("tem_ecra");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("estacoes_preparacao", (string)null);
+                });
+
             modelBuilder.Entity("Menova.Domain.Identity.Dispositivo", b =>
                 {
                     b.Property<Guid>("Id")
@@ -743,6 +821,742 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.ToTable("utilizadores_perfis", (string)null);
                 });
 
+            modelBuilder.Entity("Menova.Domain.Menu.Alergenio", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("codigo");
+
+                    b.Property<string>("Icone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("icone");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.ToTable("alergenios", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Artigo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativo");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<Guid>("CategoriaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("categoria_id");
+
+                    b.Property<string>("CodigoInterno")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("codigo_interno");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<string>("DescricaoCurta")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("descricao_curta");
+
+                    b.Property<string>("DescricaoLonga")
+                        .HasColumnType("text")
+                        .HasColumnName("descricao_longa");
+
+                    b.Property<bool>("Destaque")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("destaque");
+
+                    b.Property<bool>("Disponivel")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("disponivel");
+
+                    b.Property<DateTime?>("EliminadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_em");
+
+                    b.Property<string>("EliminadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eliminado_por");
+
+                    b.Property<bool>("EsgotadoManual")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esgotado_manual");
+
+                    b.Property<bool>("EstaEliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esta_eliminado");
+
+                    b.Property<Guid?>("EstacaoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("estacao_id");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nome");
+
+                    b.Property<int>("Ordem")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("ordem");
+
+                    b.Property<decimal>("Preco")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("preco");
+
+                    b.Property<decimal>("TaxaIva")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasDefaultValue(16.00m)
+                        .HasColumnName("taxa_iva");
+
+                    b.Property<int>("TempoPreparacaoMin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(15)
+                        .HasColumnName("tempo_preparacao_min");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("CodigoInterno")
+                        .IsUnique();
+
+                    b.HasIndex("EsgotadoManual");
+
+                    b.HasIndex("EstacaoId");
+
+                    b.HasIndex("Nome");
+
+                    b.ToTable("artigos", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoAlergenio", b =>
+                {
+                    b.Property<Guid>("ArtigoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artigo_id");
+
+                    b.Property<Guid>("AlergenioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("alergenio_id");
+
+                    b.HasKey("ArtigoId", "AlergenioId");
+
+                    b.HasIndex("AlergenioId");
+
+                    b.ToTable("artigos_alergenios", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoCodigoBarras", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ArtigoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artigo_id");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("codigo");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("EAN13")
+                        .HasColumnName("tipo");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArtigoId");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.ToTable("artigos_codigos_barras", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoEtiqueta", b =>
+                {
+                    b.Property<Guid>("ArtigoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artigo_id");
+
+                    b.Property<Guid>("EtiquetaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("etiqueta_id");
+
+                    b.HasKey("ArtigoId", "EtiquetaId");
+
+                    b.HasIndex("EtiquetaId");
+
+                    b.ToTable("artigos_etiquetas", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoGrupoOpcoes", b =>
+                {
+                    b.Property<Guid>("ArtigoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artigo_id");
+
+                    b.Property<Guid>("GrupoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grupo_id");
+
+                    b.HasKey("ArtigoId", "GrupoId");
+
+                    b.HasIndex("GrupoId");
+
+                    b.ToTable("artigos_grupos_opcoes", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoImagem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Altura")
+                        .HasColumnType("integer")
+                        .HasColumnName("altura");
+
+                    b.Property<Guid>("ArtigoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artigo_id");
+
+                    b.Property<string>("CaminhoBase")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("caminho_base");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("hash");
+
+                    b.Property<int>("Largura")
+                        .HasColumnType("integer")
+                        .HasColumnName("largura");
+
+                    b.Property<int>("Ordem")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("ordem");
+
+                    b.Property<bool>("Principal")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("principal");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArtigoId");
+
+                    b.ToTable("artigos_imagens", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Categoria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativa");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<DateTime?>("EliminadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_em");
+
+                    b.Property<string>("EliminadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eliminado_por");
+
+                    b.Property<bool>("EstaEliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esta_eliminado");
+
+                    b.Property<Guid?>("EstacaoPadraoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("estacao_padrao_id");
+
+                    b.Property<string>("Icone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("icone");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.Property<int>("Ordem")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("ordem");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_id");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EstacaoPadraoId");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("categorias", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Etiqueta", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("codigo");
+
+                    b.Property<string>("CorHex")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("#6E1A33")
+                        .HasColumnName("cor_hex");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.ToTable("etiquetas", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.GrupoOpcoes", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<DateTime?>("EliminadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_em");
+
+                    b.Property<string>("EliminadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eliminado_por");
+
+                    b.Property<bool>("EstaEliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esta_eliminado");
+
+                    b.Property<int>("Max")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("max");
+
+                    b.Property<int>("Min")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("min");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.Property<bool>("Obrigatorio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("obrigatorio");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("grupos_opcoes", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.MenuVersao", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<long>("Versao")
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("menu_versao", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Opcao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("DeltaPreco")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("delta_preco");
+
+                    b.Property<Guid>("GrupoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grupo_id");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.Property<int>("Ordem")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("ordem");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrupoId");
+
+                    b.ToTable("opcoes", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Sala.ContaMesa", b =>
+                {
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conta_id");
+
+                    b.Property<Guid>("MesaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("mesa_id");
+
+                    b.Property<DateTime>("AdicionadaEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("adicionada_em");
+
+                    b.HasKey("ContaId", "MesaId");
+
+                    b.HasIndex("MesaId");
+
+                    b.ToTable("contas_mesas", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Sala.Mesa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativa");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<DateTime?>("EliminadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_em");
+
+                    b.Property<string>("EliminadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eliminado_por");
+
+                    b.Property<bool>("EstaEliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esta_eliminado");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer")
+                        .HasColumnName("estado");
+
+                    b.Property<int>("Lugares")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(4)
+                        .HasColumnName("lugares");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("numero");
+
+                    b.Property<int>("PosicaoX")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("posicao_x");
+
+                    b.Property<int>("PosicaoY")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("posicao_y");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.Property<Guid>("ZonaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("zona_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ZonaId", "Numero")
+                        .IsUnique();
+
+                    b.ToTable("mesas", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Sala.Zona", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativa");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<DateTime?>("EliminadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_em");
+
+                    b.Property<string>("EliminadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eliminado_por");
+
+                    b.Property<bool>("EstaEliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esta_eliminado");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.Property<int>("Ordem")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("ordem");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("zonas", (string)null);
+                });
+
             modelBuilder.Entity("Menova.Domain.Identity.PerfilPermissao", b =>
                 {
                     b.HasOne("Menova.Domain.Identity.Perfil", "Perfil")
@@ -816,6 +1630,153 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.Navigation("Utilizador");
                 });
 
+            modelBuilder.Entity("Menova.Domain.Menu.Artigo", b =>
+                {
+                    b.HasOne("Menova.Domain.Menu.Categoria", "Categoria")
+                        .WithMany("Artigos")
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Menova.Domain.Estacoes.EstacaoPreparacao", "Estacao")
+                        .WithMany()
+                        .HasForeignKey("EstacaoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Categoria");
+
+                    b.Navigation("Estacao");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoAlergenio", b =>
+                {
+                    b.HasOne("Menova.Domain.Menu.Alergenio", "Alergenio")
+                        .WithMany("ArtigosAlergenios")
+                        .HasForeignKey("AlergenioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Menova.Domain.Menu.Artigo", "Artigo")
+                        .WithMany("ArtigosAlergenios")
+                        .HasForeignKey("ArtigoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Alergenio");
+
+                    b.Navigation("Artigo");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoCodigoBarras", b =>
+                {
+                    b.HasOne("Menova.Domain.Menu.Artigo", "Artigo")
+                        .WithMany("CodigosBarras")
+                        .HasForeignKey("ArtigoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Artigo");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoEtiqueta", b =>
+                {
+                    b.HasOne("Menova.Domain.Menu.Artigo", "Artigo")
+                        .WithMany("ArtigosEtiquetas")
+                        .HasForeignKey("ArtigoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Menova.Domain.Menu.Etiqueta", "Etiqueta")
+                        .WithMany("ArtigosEtiquetas")
+                        .HasForeignKey("EtiquetaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Artigo");
+
+                    b.Navigation("Etiqueta");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoGrupoOpcoes", b =>
+                {
+                    b.HasOne("Menova.Domain.Menu.Artigo", "Artigo")
+                        .WithMany("ArtigosGruposOpcoes")
+                        .HasForeignKey("ArtigoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Menova.Domain.Menu.GrupoOpcoes", "Grupo")
+                        .WithMany("ArtigosGruposOpcoes")
+                        .HasForeignKey("GrupoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Artigo");
+
+                    b.Navigation("Grupo");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.ArtigoImagem", b =>
+                {
+                    b.HasOne("Menova.Domain.Menu.Artigo", "Artigo")
+                        .WithMany("Imagens")
+                        .HasForeignKey("ArtigoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Artigo");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Categoria", b =>
+                {
+                    b.HasOne("Menova.Domain.Estacoes.EstacaoPreparacao", "EstacaoPadrao")
+                        .WithMany()
+                        .HasForeignKey("EstacaoPadraoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Menova.Domain.Menu.Categoria", "Parent")
+                        .WithMany("Subcategorias")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("EstacaoPadrao");
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Opcao", b =>
+                {
+                    b.HasOne("Menova.Domain.Menu.GrupoOpcoes", "Grupo")
+                        .WithMany("Opcoes")
+                        .HasForeignKey("GrupoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Grupo");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Sala.ContaMesa", b =>
+                {
+                    b.HasOne("Menova.Domain.Sala.Mesa", "Mesa")
+                        .WithMany("ContasMesas")
+                        .HasForeignKey("MesaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Mesa");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Sala.Mesa", b =>
+                {
+                    b.HasOne("Menova.Domain.Sala.Zona", "Zona")
+                        .WithMany("Mesas")
+                        .HasForeignKey("ZonaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Zona");
+                });
+
             modelBuilder.Entity("Menova.Domain.Identity.Dispositivo", b =>
                 {
                     b.Navigation("Sessoes");
@@ -840,6 +1801,53 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.Navigation("TentativasLogin");
 
                     b.Navigation("UtilizadoresPerfis");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Alergenio", b =>
+                {
+                    b.Navigation("ArtigosAlergenios");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Artigo", b =>
+                {
+                    b.Navigation("ArtigosAlergenios");
+
+                    b.Navigation("ArtigosEtiquetas");
+
+                    b.Navigation("ArtigosGruposOpcoes");
+
+                    b.Navigation("CodigosBarras");
+
+                    b.Navigation("Imagens");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Categoria", b =>
+                {
+                    b.Navigation("Artigos");
+
+                    b.Navigation("Subcategorias");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.Etiqueta", b =>
+                {
+                    b.Navigation("ArtigosEtiquetas");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Menu.GrupoOpcoes", b =>
+                {
+                    b.Navigation("ArtigosGruposOpcoes");
+
+                    b.Navigation("Opcoes");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Sala.Mesa", b =>
+                {
+                    b.Navigation("ContasMesas");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Sala.Zona", b =>
+                {
+                    b.Navigation("Mesas");
                 });
 #pragma warning restore 612, 618
         }
