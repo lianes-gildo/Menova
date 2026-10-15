@@ -111,12 +111,9 @@
                                         <i class="bi bi-shield-check"></i>
                                     </button>
                                 </form>
-                                <form action="/backups/eliminar/@b.NomeFicheiro" method="post" class="d-inline" onsubmit="return confirm('Tem a certeza que pretende eliminar esta cópia de segurança?');">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="confirmarEliminarBackup('@b.NomeFicheiro')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     }
@@ -125,6 +122,31 @@
         </table>
     </div>
 </div>
+
+<form id="formEliminarBackup" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+<script>
+    function confirmarEliminarBackup(ficheiro) {
+        const modal = new bootstrap.Modal(document.getElementById('globalConfirmModal'));
+        document.getElementById('globalConfirmModalTitle').textContent = 'Eliminar Cópia de Segurança';
+        document.getElementById('globalConfirmModalBody').textContent = `Tem a certeza que pretende eliminar a cópia de segurança "${ficheiro}"? Esta ação é irreversível.`;
+        
+        const submitBtn = document.getElementById('globalConfirmModalSubmit');
+        submitBtn.className = 'btn btn-danger';
+        submitBtn.textContent = 'Eliminar Cópia';
+        submitBtn.onclick = function() {
+            modal.hide();
+            const form = document.getElementById('formEliminarBackup');
+            form.action = `/backups/eliminar/${encodeURIComponent(ficheiro)}`;
+            form.submit();
+        };
+        modal.show();
+    }
+</script>
+}
 
 <!-- Modal: Criar Backup -->
 <div class="modal fade" id="modalCriarBackup" tabindex="-1" aria-hidden="true">

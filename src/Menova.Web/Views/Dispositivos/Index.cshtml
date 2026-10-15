@@ -1,0 +1,285 @@
+@model List<Menova.Domain.Identity.Dispositivo>
+@{
+    ViewData["Title"] = "Gestão de Dispositivos";
+    var dtService = (Menova.Application.Interfaces.IDateTimeService)ViewBag.DateTimeService;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-phone-fill me-2"></i>Dispositivos e Terminais Registados</h3>
+        <p class="text-muted small mb-0">Controlo de acessos para telemóveis de garçons, tablets de mesa, KDS e terminais POS.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <button type="button" class="btn text-white py-2 px-3 shadow-sm" style="background-color: #6E1A33;" data-bs-toggle="modal" data-bs-target="#modalRegistarDispositivo">
+            <i class="bi bi-plus-circle me-1"></i>Registar Dispositivo
+        </button>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<!-- Indicadores de Dispositivos -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100">
+            <div class="d-flex align-items-center">
+                <div class="rounded p-3 bg-light text-primary me-3">
+                    <i class="bi bi-hdd-network fs-3"></i>
+                </div>
+                <div>
+                    <span class="text-muted small">Total Dispositivos</span>
+                    <h4 class="mb-0 fw-bold">@ViewBag.Total</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100">
+            <div class="d-flex align-items-center">
+                <div class="rounded p-3 bg-light text-success me-3">
+                    <i class="bi bi-check-circle fs-3"></i>
+                </div>
+                <div>
+                    <span class="text-muted small">Autorizados</span>
+                    <h4 class="mb-0 fw-bold text-success">@ViewBag.Autorizados</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100">
+            <div class="d-flex align-items-center">
+                <div class="rounded p-3 bg-light text-warning me-3">
+                    <i class="bi bi-clock-history fs-3"></i>
+                </div>
+                <div>
+                    <span class="text-muted small">Pendentes</span>
+                    <h4 class="mb-0 fw-bold text-warning">@ViewBag.Pendentes</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100">
+            <div class="d-flex align-items-center">
+                <div class="rounded p-3 bg-light text-danger me-3">
+                    <i class="bi bi-slash-circle fs-3"></i>
+                </div>
+                <div>
+                    <span class="text-muted small">Revogados</span>
+                    <h4 class="mb-0 fw-bold text-danger">@ViewBag.Revogados</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Dispositivo</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Autorização</th>
+                    <th>Último Acesso / IP</th>
+                    <th class="text-end" style="width: 180px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="bi bi-phone fs-2 d-block mb-2"></i>
+                            Nenhum dispositivo registado até ao momento.
+                        </td>
+                    </tr>
+                }
+                @foreach (var d in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-bold">@d.Nome</div>
+                            <span class="small font-monospace text-muted" style="font-size: 0.75rem;">ID: @d.Id.ToString()[..8]...</span>
+                        </td>
+                        <td>
+                            @switch (d.Tipo)
+                            {
+                                case Menova.Domain.Identity.TipoDispositivo.Telemovel:
+                                    <span class="badge bg-info text-dark"><i class="bi bi-phone me-1"></i>Telemóvel Garçom</span>
+                                    break;
+                                case Menova.Domain.Identity.TipoDispositivo.Tablet:
+                                    <span class="badge bg-primary"><i class="bi bi-tablet me-1"></i>Tablet de Mesa</span>
+                                    break;
+                                case Menova.Domain.Identity.TipoDispositivo.Cozinha:
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-fire me-1"></i>Terminal KDS</span>
+                                    break;
+                                case Menova.Domain.Identity.TipoDispositivo.Caixa:
+                                    <span class="badge bg-success"><i class="bi bi-cash-stack me-1"></i>Terminal Caixa</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary"><i class="bi bi-display me-1"></i>Computador</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @switch (d.Estado)
+                            {
+                                case Menova.Domain.Identity.EstadoDispositivo.Autorizado:
+                                    <span class="badge bg-success"><i class="bi bi-check me-1"></i>Autorizado</span>
+                                    break;
+                                case Menova.Domain.Identity.EstadoDispositivo.Pendente:
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendente</span>
+                                    break;
+                                case Menova.Domain.Identity.EstadoDispositivo.Revogado:
+                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Revogado</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="small">
+                            @if (d.AutorizadoEm.HasValue)
+                            {
+                                <div><i class="bi bi-person me-1"></i>@(d.AutorizadoPor ?? "Admin")</div>
+                                <div class="text-muted">@dtService.ParaHoraLocal(d.AutorizadoEm.Value).ToString("dd/MM/yyyy HH:mm")</div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Por autorizar</span>
+                            }
+                        </td>
+                        <td class="small">
+                            <div>@(d.UltimoIp ?? "Local / Loopback")</div>
+                            <div class="text-muted">
+                                @(d.UltimoAcessoEm.HasValue ? dtService.ParaHoraLocal(d.UltimoAcessoEm.Value).ToString("dd/MM/yyyy HH:mm") : "Sem acessos")
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                @if (d.Estado != Menova.Domain.Identity.EstadoDispositivo.Autorizado)
+                                {
+                                    <form asp-action="Autorizar" asp-route-id="@d.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-success" title="Autorizar Dispositivo">
+                                            <i class="bi bi-check-lg"></i> Autorizar
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-outline-warning" title="Revogar Dispositivo" onclick="confirmarRevogacao('@d.Id', '@d.Nome')">
+                                        <i class="bi bi-slash-circle"></i> Revogar
+                                    </button>
+                                }
+                                <button type="button" class="btn btn-outline-danger ms-1" title="Eliminar Dispositivo" onclick="confirmarEliminacao('@d.Id', '@d.Nome')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Formulários Ocultos para Ações de Confirmação -->
+<form id="formRevogar" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+<form id="formEliminar" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+<script>
+    function confirmarRevogacao(id, nome) {
+        const modal = new bootstrap.Modal(document.getElementById('globalConfirmModal'));
+        document.getElementById('globalConfirmModalTitle').textContent = 'Revogar Acesso do Dispositivo';
+        document.getElementById('globalConfirmModalBody').textContent = `Tem a certeza de que deseja revogar o acesso do dispositivo "${nome}"? Todas as sessões ativas deste aparelho serão terminadas imediatamente.`;
+        
+        const submitBtn = document.getElementById('globalConfirmModalSubmit');
+        submitBtn.className = 'btn btn-warning';
+        submitBtn.textContent = 'Revogar Acesso';
+        submitBtn.onclick = function() {
+            modal.hide();
+            const form = document.getElementById('formRevogar');
+            form.action = `/dispositivos/revogar/${id}`;
+            form.submit();
+        };
+        modal.show();
+    }
+
+    function confirmarEliminacao(id, nome) {
+        const modal = new bootstrap.Modal(document.getElementById('globalConfirmModal'));
+        document.getElementById('globalConfirmModalTitle').textContent = 'Eliminar Dispositivo';
+        document.getElementById('globalConfirmModalBody').textContent = `Tem a certeza de que deseja eliminar o dispositivo "${nome}" do registo do restaurante?`;
+        
+        const submitBtn = document.getElementById('globalConfirmModalSubmit');
+        submitBtn.className = 'btn btn-danger';
+        submitBtn.textContent = 'Eliminar';
+        submitBtn.onclick = function() {
+            modal.hide();
+            const form = document.getElementById('formEliminar');
+            form.action = `/dispositivos/eliminar/${id}`;
+            form.submit();
+        };
+        modal.show();
+    }
+</script>
+}
+
+<!-- Modal Registar Dispositivo -->
+<div class="modal fade" id="modalRegistarDispositivo" tabindex="-1" aria-labelledby="modalRegistarDispositivoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Registar" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="modalRegistarDispositivoLabel" style="color: #6E1A33;">
+                        <i class="bi bi-phone-fill me-2"></i>Registar Novo Dispositivo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label fw-semibold">Identificação do Dispositivo *</label>
+                        <input type="text" class="form-control" id="nome" name="nome" placeholder="ex.: Tablet Garçom 01, KDS Bar" required maxlength="100">
+                        <div class="form-text">Dê um nome claro para identificar a estação ou funcionário que usará o aparelho.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tipo" class="form-label fw-semibold">Tipo de Dispositivo *</label>
+                        <select class="form-select" id="tipo" name="tipo" required>
+                            <option value="1">Telemóvel (App PWA Garçom)</option>
+                            <option value="2">Tablet (Mesa / Modo Cliente)</option>
+                            <option value="3">Cozinha / Bar (Terminal KDS)</option>
+                            <option value="4">Caixa (Terminal POS)</option>
+                            <option value="5">Computador / Portátil</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn text-white" style="background-color: #6E1A33;">
+                        <i class="bi bi-check-circle me-1"></i>Registar e Autorizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

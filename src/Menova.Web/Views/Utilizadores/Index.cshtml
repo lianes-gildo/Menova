@@ -1,0 +1,150 @@
+@model List<Menova.Domain.Identity.Utilizador>
+@{
+    ViewData["Title"] = "Gestão de Funcionários";
+    var perfis = (List<Menova.Domain.Identity.Perfil>)ViewBag.Perfis;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-people-fill me-2"></i>Gestão de Funcionários e Acessos</h3>
+        <p class="text-muted small mb-0">Gestão de utilizadores, funções no restaurante, palavras-passe e PINs.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <button type="button" class="btn text-white py-2 px-3 shadow-sm" style="background-color: #6E1A33;" data-bs-toggle="modal" data-bs-target="#modalCriarUtilizador">
+            <i class="bi bi-person-plus-fill me-1"></i>Novo Funcionário
+        </button>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="card border shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome Completo</th>
+                    <th>Utilizador</th>
+                    <th>Função / Perfil</th>
+                    <th>Contacto</th>
+                    <th class="text-center">PIN</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-end" style="width: 140px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    var perfilNome = u.UtilizadoresPerfis.FirstOrDefault()?.Perfil?.Nome ?? "Sem Perfil";
+                    <tr>
+                        <td class="fw-bold"><i class="bi bi-person-circle text-muted me-2"></i>@u.NomeCompleto</td>
+                        <td class="font-monospace text-muted">@u.NomeUtilizador</td>
+                        <td><span class="badge bg-secondary">@perfilNome</span></td>
+                        <td class="small text-muted">@(string.IsNullOrEmpty(u.Telefone) ? u.Email ?? "-" : u.Telefone)</td>
+                        <td class="text-center">
+                            @if (!string.IsNullOrEmpty(u.HashPin))
+                            {
+                                <span class="badge bg-success" title="PIN de 4 dígitos configurado"><i class="bi bi-check2"></i> Ativo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted border">Não Definido</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (u.Ativo)
+                            {
+                                <span class="badge bg-success">Ativo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Inativo</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <form action="/utilizadores/toggle-ativo/@u.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm @(u.Ativo ? "btn-outline-danger" : "btn-outline-success")" title="@(u.Ativo ? "Desativar" : "Ativar")">
+                                    <i class="bi @(u.Ativo ? "bi-person-dash" : "bi-person-check")"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Criar Utilizador -->
+<div class="modal fade" id="modalCriarUtilizador" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="/utilizadores/criar" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header text-white" style="background-color: #6E1A33;">
+                <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Registar Novo Funcionário</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nome Completo:</label>
+                    <input type="text" name="nomeCompleto" class="form-control" placeholder="Ex: Lucas Machava" required />
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Nome de Utilizador:</label>
+                        <input type="text" name="nomeUtilizador" class="form-control" placeholder="Ex: lmachava" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Função / Perfil:</label>
+                        <select name="perfilId" class="form-select" required>
+                            @foreach (var p in perfis)
+                            {
+                                <option value="@p.Id">@p.Nome</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Telefone:</label>
+                        <input type="text" name="telefone" class="form-control" placeholder="+258 84 123 4567" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Email:</label>
+                        <input type="email" name="email" class="form-control" placeholder="utilizador@menova.mz" />
+                    </div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Palavra-passe Inicial:</label>
+                        <input type="password" name="palavraPasse" class="form-control" placeholder="••••••••" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">PIN Rápido (4 dígitos):</label>
+                        <input type="password" name="pin" maxlength="4" class="form-control text-center font-monospace" placeholder="••••" />
+                        <div class="form-text">Para garçons e caixa</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn text-white" style="background-color: #6E1A33;">Criar Colaborador</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,348 @@
+@model List<Menova.Domain.Impressao.Impressora>
+@{
+    ViewData["Title"] = "Gestão de Impressoras";
+    var dtService = (Menova.Application.Interfaces.IDateTimeService)ViewBag.DateTimeService;
+    var trabalhosRecentes = (List<Menova.Domain.Impressao.TrabalhoImpressao>)ViewBag.TrabalhosRecentes;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-printer-fill me-2"></i>Gestão de Impressoras Térmicas (ESC/POS)</h3>
+        <p class="text-muted small mb-0">Configuração de impressoras de rede Ethernet/Wi-Fi (porta 9100) para caixa, bar e cozinha.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <button type="button" class="btn text-white py-2 px-3 shadow-sm" style="background-color: #6E1A33;" data-bs-toggle="modal" data-bs-target="#modalCriarImpressora">
+            <i class="bi bi-plus-circle me-1"></i>Nova Impressora
+        </button>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<!-- Tabela de Impressoras -->
+<div class="card border shadow-sm mb-4">
+    <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-hdd-rack me-2 text-muted"></i>Impressoras de Rede Configuradas</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome da Impressora</th>
+                    <th>Endereço IP / Porta</th>
+                    <th>Formato Papel</th>
+                    <th>Recursos</th>
+                    <th>Estado</th>
+                    <th class="text-end" style="width: 220px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="bi bi-printer fs-2 d-block mb-2"></i>
+                            Nenhuma impressora configurada até ao momento.
+                        </td>
+                    </tr>
+                }
+                @foreach (var imp in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-bold">@imp.Nome</div>
+                            <span class="text-muted small">ID: @imp.Id.ToString()[..8]...</span>
+                        </td>
+                        <td>
+                            <span class="font-monospace fw-semibold">@imp.EnderecoIp:@imp.Porta</span>
+                        </td>
+                        <td>
+                            @if (imp.LarguraColunas == 42)
+                            {
+                                <span class="badge bg-primary">80 mm (42 colunas)</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info text-dark">58 mm (32 colunas)</span>
+                            }
+                        </td>
+                        <td>
+                            @if (imp.CortarPapel)
+                            {
+                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-scissors me-1"></i>Corte</span>
+                            }
+                            @if (imp.AbrirGaveta)
+                            {
+                                <span class="badge bg-light text-dark border"><i class="bi bi-cash me-1"></i>Gaveta</span>
+                            }
+                        </td>
+                        <td>
+                            @if (imp.Ativa)
+                            {
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Ativa</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary"><i class="bi bi-pause-circle me-1"></i>Inativa</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <form asp-action="Testar" asp-route-id="@imp.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-primary" title="Testar Impressão">
+                                        <i class="bi bi-play-circle"></i> Testar
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-outline-secondary ms-1" title="Editar Configuração" 
+                                        onclick="abrirModalEditar('@imp.Id', '@imp.Nome', '@imp.EnderecoIp', '@imp.Porta', '@imp.LarguraColunas', '@imp.Ativa', '@imp.CortarPapel', '@imp.AbrirGaveta')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger ms-1" title="Eliminar Impressora" 
+                                        onclick="confirmarEliminarImpressora('@imp.Id', '@imp.Nome')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Tabela de Fila e Trabalhos Recentes de Impressão -->
+<div class="card border shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-clock-history me-2 text-muted"></i>Últimos Trabalhos de Impressão</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.875rem;">
+            <thead class="table-light">
+                <tr>
+                    <th>Data / Hora (CAT)</th>
+                    <th>Documento</th>
+                    <th>Impressora</th>
+                    <th>Estado</th>
+                    <th>Tentativas</th>
+                    <th>Detalhe / Erro</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (trabalhosRecentes.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-3 text-muted">Sem registos de impressão recentes.</td>
+                    </tr>
+                }
+                @foreach (var t in trabalhosRecentes)
+                {
+                    <tr>
+                        <td class="text-nowrap">@dtService.ParaHoraLocal(t.CriadoEm).ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        <td>
+                            @switch (t.TipoDocumento)
+                            {
+                                case Menova.Domain.Impressao.TipoDocumentoImpressao.TalaoConta:
+                                    <span class="badge bg-primary">Talão de Conta</span>
+                                    break;
+                                case Menova.Domain.Impressao.TipoDocumentoImpressao.TalaoCozinha:
+                                    <span class="badge bg-warning text-dark">Ticket Cozinha</span>
+                                    break;
+                                case Menova.Domain.Impressao.TipoDocumentoImpressao.TalaoZ:
+                                    <span class="badge bg-dark">Talão Fecho Z</span>
+                                    break;
+                                case Menova.Domain.Impressao.TipoDocumentoImpressao.RelatorioX:
+                                    <span class="badge bg-info text-dark">Relatório X</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary">Movimento / Recibo</span>
+                                    break;
+                            }
+                        </td>
+                        <td>@(t.Impressora?.Nome ?? "Padrão do Sistema")</td>
+                        <td>
+                            @switch (t.Estado)
+                            {
+                                case Menova.Domain.Impressao.EstadoTrabalhoImpressao.Enviado:
+                                    <span class="badge bg-success"><i class="bi bi-check me-1"></i>Enviado</span>
+                                    break;
+                                case Menova.Domain.Impressao.EstadoTrabalhoImpressao.Pendente:
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendente</span>
+                                    break;
+                                case Menova.Domain.Impressao.EstadoTrabalhoImpressao.Falhado:
+                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Falhado</span>
+                                    break;
+                            }
+                        </td>
+                        <td>@t.Tentativas</td>
+                        <td class="text-muted small">@(string.IsNullOrEmpty(t.MensagemErro) ? "-" : t.MensagemErro)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Criar Impressora -->
+<div class="modal fade" id="modalCriarImpressora" tabindex="-1" aria-labelledby="modalCriarImpressoraLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Criar" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="modalCriarImpressoraLabel" style="color: #6E1A33;">
+                        <i class="bi bi-printer-fill me-2"></i>Adicionar Impressora Térmica
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label fw-semibold">Nome da Impressora *</label>
+                        <input type="text" class="form-control" id="nome" name="nome" placeholder="ex.: Impressora Caixa Principal, Bar Balcão" required maxlength="100">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-8">
+                            <label for="enderecoIp" class="form-label fw-semibold">Endereço IP na Rede Local *</label>
+                            <input type="text" class="form-control font-monospace" id="enderecoIp" name="enderecoIp" placeholder="192.168.1.200" required>
+                        </div>
+                        <div class="col-4">
+                            <label for="porta" class="form-label fw-semibold">Porta RAW *</label>
+                            <input type="number" class="form-control font-monospace" id="porta" name="porta" value="9100" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="larguraColunas" class="form-label fw-semibold">Largura do Papel *</label>
+                        <select class="form-select" id="larguraColunas" name="larguraColunas" required>
+                            <option value="42" selected>80 mm (Padrão 42 colunas)</option>
+                            <option value="32">58 mm (32 colunas)</option>
+                        </select>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="cortarPapel" name="cortarPapel" value="true" checked>
+                        <label class="form-check-label" for="cortarPapel">Cortar papel automaticamente após impressão (Guilhotina)</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="abrirGaveta" name="abrirGaveta" value="true">
+                        <label class="form-check-label" for="abrirGaveta">Abrir gaveta de dinheiro ao imprimir</label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn text-white" style="background-color: #6E1A33;">
+                        <i class="bi bi-check-circle me-1"></i>Guardar Impressora
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Impressora -->
+<div class="modal fade" id="modalEditarImpressora" tabindex="-1" aria-labelledby="modalEditarImpressoraLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarImpressora" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="modalEditarImpressoraLabel" style="color: #6E1A33;">
+                        <i class="bi bi-pencil-square me-2"></i>Editar Impressora
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editNome" class="form-label fw-semibold">Nome da Impressora *</label>
+                        <input type="text" class="form-control" id="editNome" name="nome" required maxlength="100">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-8">
+                            <label for="editEnderecoIp" class="form-label fw-semibold">Endereço IP na Rede Local *</label>
+                            <input type="text" class="form-control font-monospace" id="editEnderecoIp" name="enderecoIp" required>
+                        </div>
+                        <div class="col-4">
+                            <label for="editPorta" class="form-label fw-semibold">Porta RAW *</label>
+                            <input type="number" class="form-control font-monospace" id="editPorta" name="porta" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLarguraColunas" class="form-label fw-semibold">Largura do Papel *</label>
+                        <select class="form-select" id="editLarguraColunas" name="larguraColunas" required>
+                            <option value="42">80 mm (Padrão 42 colunas)</option>
+                            <option value="32">58 mm (32 colunas)</option>
+                        </select>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="editAtiva" name="ativa" value="true">
+                        <label class="form-check-label" for="editAtiva">Impressora Ativa</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="editCortarPapel" name="cortarPapel" value="true">
+                        <label class="form-check-label" for="editCortarPapel">Cortar papel automaticamente (Guilhotina)</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="editAbrirGaveta" name="abrirGaveta" value="true">
+                        <label class="form-check-label" for="editAbrirGaveta">Abrir gaveta de dinheiro</label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn text-white" style="background-color: #6E1A33;">
+                        <i class="bi bi-save me-1"></i>Guardar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<form id="formEliminarImpressora" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+<script>
+    function abrirModalEditar(id, nome, ip, porta, colunas, ativa, corte, gaveta) {
+        document.getElementById('formEditarImpressora').action = `/impressoras/editar/${id}`;
+        document.getElementById('editNome').value = nome;
+        document.getElementById('editEnderecoIp').value = ip;
+        document.getElementById('editPorta').value = porta;
+        document.getElementById('editLarguraColunas').value = colunas;
+        document.getElementById('editAtiva').checked = ativa.toLowerCase() === 'true';
+        document.getElementById('editCortarPapel').checked = corte.toLowerCase() === 'true';
+        document.getElementById('editAbrirGaveta').checked = gaveta.toLowerCase() === 'true';
+
+        new bootstrap.Modal(document.getElementById('modalEditarImpressora')).show();
+    }
+
+    function confirmarEliminarImpressora(id, nome) {
+        const modal = new bootstrap.Modal(document.getElementById('globalConfirmModal'));
+        document.getElementById('globalConfirmModalTitle').textContent = 'Eliminar Impressora';
+        document.getElementById('globalConfirmModalBody').textContent = `Tem a certeza de que deseja eliminar a impressora "${nome}"? A sua configuração deixará de estar disponível.`;
+        
+        const submitBtn = document.getElementById('globalConfirmModalSubmit');
+        submitBtn.className = 'btn btn-danger';
+        submitBtn.textContent = 'Eliminar';
+        submitBtn.onclick = function() {
+            modal.hide();
+            const form = document.getElementById('formEliminarImpressora');
+            form.action = `/impressoras/eliminar/${id}`;
+            form.submit();
+        };
+        modal.show();
+    }
+</script>
+}

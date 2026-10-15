@@ -41,11 +41,31 @@ public class ErrosController : Controller
         return View("500");
     }
 
+    [HttpGet("400")]
+    public IActionResult PedidoInvalido()
+    {
+        Response.StatusCode = 400;
+        ViewBag.CorrelacaoId = _currentUserService.CorrelacaoId;
+        return View("400");
+    }
+
     [HttpGet("bloqueado")]
     public IActionResult Bloqueado()
     {
         Response.StatusCode = 423;
         return View("Bloqueado");
+    }
+
+    [HttpGet("{statusCode:int}")]
+    public IActionResult ErroGenerico(int statusCode)
+    {
+        Response.StatusCode = statusCode;
+        ViewBag.CorrelacaoId = _currentUserService.CorrelacaoId;
+        ViewBag.CodigoErro = statusCode;
+        if (statusCode == 404) return View("404");
+        if (statusCode == 403) return View("403");
+        if (statusCode == 400) return View("400");
+        return View("500");
     }
 }
 

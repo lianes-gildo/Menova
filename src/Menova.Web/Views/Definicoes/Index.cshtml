@@ -1,0 +1,159 @@
+@model Menova.Domain.Configuracao.Restaurante
+@{
+    ViewData["Title"] = "Definições do Restaurante";
+    var dtService = (Menova.Application.Interfaces.IDateTimeService)ViewBag.DateTimeService;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-sliders me-2"></i>Definições Gerais do Restaurante</h3>
+        <p class="text-muted small mb-0">Configuração de dados fiscais (Moçambique), moeda, IVA e informações de cabeçalho e rodapé.</p>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Formulário Principal -->
+    <div class="col-lg-8">
+        <div class="card border shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-building me-2"></i>Identificação do Estabelecimento</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Guardar" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-7">
+                            <label for="nome" class="form-label fw-semibold">Nome do Restaurante *</label>
+                            <input type="text" class="form-control" id="nome" name="nome" value="@Model.Nome" required maxlength="120">
+                            <div class="form-text">Impresso no topo de todas as contas, talões e relatórios.</div>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="nuit" class="form-label fw-semibold">NUIT (Moçambique) *</label>
+                            <input type="text" class="form-control font-monospace" id="nuit" name="nuit" value="@Model.Nuit" required maxlength="9" pattern="\d{9}">
+                            <div class="form-text">Número Único de Identificação Tributária (9 dígitos).</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="morada" class="form-label fw-semibold">Morada / Endereço Físico</label>
+                        <input type="text" class="form-control" id="morada" name="morada" value="@Model.Morada" placeholder="Ex.: Av. Julius Nyerere, Maputo" maxlength="200">
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="telefone" class="form-label fw-semibold">Telefone de Contacto</label>
+                            <input type="text" class="form-control" id="telefone" name="telefone" value="@Model.Telefone" placeholder="+258 84 000 0000" maxlength="30">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label fw-semibold">Correio Eletrónico (E-mail)</label>
+                            <input type="email" class="form-control" id="email" name="email" value="@Model.Email" placeholder="contacto@restaurante.co.mz" maxlength="100">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5 class="fw-bold mb-3" style="color: #6E1A33;"><i class="bi bi-cash-coin me-2"></i>Parâmetros Financeiros & Fiscais</h5>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="moeda" class="form-label fw-semibold">Moeda Principal *</label>
+                            <input type="text" class="form-control font-monospace fw-bold" id="moeda" name="moeda" value="@Model.Moeda" readonly>
+                            <div class="form-text">Padrão nacional: Metical (MZN).</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="taxaIvaPadrao" class="form-label fw-semibold">Taxa de IVA Padrão (%) *</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control font-monospace" id="taxaIvaPadrao" name="taxaIvaPadrao" value="@Model.TaxaIvaPadrao.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="form-text">Padrão em vigor em Moçambique: 16.00%.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Fuso Horário Oficial</label>
+                            <input type="text" class="form-control bg-light font-monospace" value="Africa/Maputo (UTC+2)" readonly>
+                            <div class="form-text">Forçado a nível de sistema e base de dados.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="rodapeTalao" class="form-label fw-semibold">Mensagem de Rodapé dos Talões</label>
+                        <textarea class="form-control" id="rodapeTalao" name="rodapeTalao" rows="2" maxlength="250">@Model.RodapeTalao</textarea>
+                        <div class="form-text">Texto de cortesia apresentado no fim dos talões de conta e recibos de pagamento.</div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn text-white py-2 px-4 shadow-sm" style="background-color: #6E1A33;">
+                            <i class="bi bi-save me-1"></i>Guardar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações do Sistema e Estatísticas -->
+    <div class="col-lg-4">
+        <div class="card border shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-database me-2 text-muted"></i>Dimensão Operacional</h6>
+            </div>
+            <div class="card-body p-3">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-journal-bookmark text-muted me-2"></i>Artigos no Menu</span>
+                        <span class="badge bg-secondary rounded-pill">@ViewBag.TotalArtigos</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-layout-wtf text-muted me-2"></i>Mesas Configuradas</span>
+                        <span class="badge bg-secondary rounded-pill">@ViewBag.TotalMesas</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-people text-muted me-2"></i>Funcionários Ativos</span>
+                        <span class="badge bg-secondary rounded-pill">@ViewBag.TotalFuncionarios</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card border shadow-sm bg-light">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-shield-lock me-2 text-muted"></i>Conformidade & Integridade</h6>
+            </div>
+            <div class="card-body p-3 small text-muted">
+                <p class="mb-2">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i>
+                    <strong>Pista WORM Ativa:</strong> Auditoria criptográfica imutável com encadeamento SHA-256.
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i>
+                    <strong>Fecho Z Fiscal:</strong> Geração irreversível de fechos com numeração sequencial e encadeamento WORM.
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i>
+                    <strong>100% Offline:</strong> Todos os componentes, tipos de letra, ícones e bibliotecas funcionam localmente na rede interna.
+                </p>
+                <p class="mb-0">
+                    <i class="bi bi-clock-history text-primary me-1"></i>
+                    <strong>Hora Atual Maputo:</strong> @dtService.FormatarDataHora(dtService.NowLocal) CAT
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

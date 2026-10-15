@@ -30,7 +30,9 @@ public class AuthController : Controller
     }
 
     [HttpGet("login")]
+    [HttpGet("/login")]
     [HttpHead("login")]
+    [HttpHead("/login")]
     [AllowAnonymous]
     public IActionResult Login(string? returnUrl = null)
     {
@@ -44,6 +46,7 @@ public class AuthController : Controller
     }
 
     [HttpPost("login")]
+    [HttpPost("/login")]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginDto model, string? returnUrl = null)
@@ -156,8 +159,9 @@ public class AuthController : Controller
     }
 
     [HttpPost("logout")]
+    [HttpPost("/logout")]
+    [HttpGet("/logout")]
     [Authorize]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
