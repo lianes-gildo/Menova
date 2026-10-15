@@ -15,7 +15,7 @@ services:
       POSTGRES_PASSWORD: menova_dev_secret
       TZ: Africa/Maputo
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - menova_dev_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -37,7 +37,7 @@ services:
       Security__PinPepper: "Menova_Dev_Pin_Pepper_2026_Africa_Maputo"
       TZ: Africa/Maputo
     ports:
-      - "5000:8080"
+      - "5100:8080"
     depends_on:
       menova_dev_db:
         condition: service_healthy
