@@ -1,0 +1,63 @@
+@model List<Menova.Application.DTOs.ResumoIvaDto>
+@{
+    ViewData["Title"] = "Resumo Fiscal de IVA";
+    var inicio = (DateTime)ViewBag.Inicio;
+    var fim = (DateTime)ViewBag.Fim;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-percent me-2"></i>Mapa Fiscal de IVA (Moçambique)</h3>
+        <p class="text-muted small mb-0">Resumo de incidência fiscal de IVA a 16% para declaração contabilística periódica.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <a href="/relatorios?inicio=@inicio.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@fim.ToString("yyyy-MM-ddTHH:mm:ss")" class="btn btn-outline-secondary py-2 px-3">
+            <i class="bi bi-arrow-left me-1"></i>Voltar ao Painel
+        </a>
+    </div>
+</div>
+
+<div class="card border shadow-sm">
+    <div class="card-header bg-light py-2">
+        <span class="small text-muted">Período Fiscal: @inicio.AddHours(2).ToString("dd/MM/yyyy HH:mm") até @fim.AddHours(2).ToString("dd/MM/yyyy HH:mm")</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Escalão / Taxa de IVA</th>
+                    <th class="text-end">Base Tributável (s/ IVA)</th>
+                    <th class="text-end">IVA Liquidado</th>
+                    <th class="text-end">Total com IVA</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            Sem registos fiscais para o período selecionado.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var iva in Model)
+                    {
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary fs-6">@iva.Taxa</span>
+                            </td>
+                            <td class="text-end">@iva.BaseTributavel.ToString("N2") MT</td>
+                            <td class="text-end fw-bold text-success">@iva.TotalIva.ToString("N2") MT</td>
+                            <td class="text-end fw-bold fs-6" style="color: #6E1A33;">@iva.TotalComIva.ToString("N2") MT</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-light p-3 small text-muted">
+        <i class="bi bi-info-circle me-1"></i>De acordo com o Código do IVA da República de Moçambique, a taxa normal de IVA em restauração é de 16%, com preços a retalho ao consumidor final apresentados com IVA incluído.
+    </div>
+</div>

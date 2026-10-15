@@ -1,0 +1,349 @@
+@model Menova.Application.DTOs.PainelRelatoriosDto
+@{
+    ViewData["Title"] = "Relatórios e Análise de Vendas";
+    var inicio = (DateTime)ViewBag.Inicio;
+    var fim = (DateTime)ViewBag.Fim;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-graph-up-arrow me-2"></i>Relatórios e Análise Financeira</h3>
+        <p class="text-muted small mb-0">Visão consolidada de vendas, mapas de IVA, curvas de artigos e produtividade.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <div class="btn-group shadow-sm">
+            <a href="/relatorios/exportar/csv?inicio=@inicio.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@fim.ToString("yyyy-MM-ddTHH:mm:ss")" class="btn btn-outline-secondary py-2">
+                <i class="bi bi-file-earmark-text me-1"></i>CSV
+            </a>
+            <a href="/relatorios/exportar/excel?inicio=@inicio.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@fim.ToString("yyyy-MM-ddTHH:mm:ss")" class="btn btn-outline-success py-2">
+                <i class="bi bi-file-earmark-excel me-1"></i>Excel (.xlsx)
+            </a>
+            <a href="/relatorios/exportar/pdf?inicio=@inicio.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@fim.ToString("yyyy-MM-ddTHH:mm:ss")" class="btn text-white py-2" style="background-color: #6E1A33;">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros de Período e Navegação de Abas -->
+<div class="card border shadow-sm mb-4">
+    <div class="card-body py-3">
+        <form method="get" action="/relatorios" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">Início:</span>
+                    <input type="datetime-local" name="inicio" class="form-control" value="@inicio.ToString("yyyy-MM-ddTHH:mm")" required />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">Fim:</span>
+                    <input type="datetime-local" name="fim" class="form-control" value="@fim.ToString("yyyy-MM-ddTHH:mm")" required />
+                </div>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-sm text-white flex-grow-1" style="background-color: #6E1A33;">
+                    <i class="bi bi-funnel me-1"></i>Filtrar
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Atalhos
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/relatorios?inicio=@DateTime.UtcNow.Date.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss")">Hoje</a></li>
+                        <li><a class="dropdown-item" href="/relatorios?inicio=@DateTime.UtcNow.Date.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss")&fim=@DateTime.UtcNow.Date.AddSeconds(-1).ToString("yyyy-MM-ddTHH:mm:ss")">Ontem</a></li>
+                        <li><a class="dropdown-item" href="/relatorios?inicio=@DateTime.UtcNow.Date.AddDays(-7).ToString("yyyy-MM-ddTHH:mm:ss")&fim=@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss")">Últimos 7 Dias</a></li>
+                        <li><a class="dropdown-item" href="/relatorios?inicio=@(new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1).ToString("yyyy-MM-ddTHH:mm:ss"))&fim=@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss")">Este Mês</a></li>
+                    </ul>
+                </div>
+            </div>
+        </form>
+    </div>
+    <!-- Sub-menu de Relatórios -->
+    <div class="card-footer bg-light p-0 border-top">
+        <ul class="nav nav-tabs border-bottom-0">
+            <li class="nav-item">
+                <a class="nav-link active fw-bold text-dark border-top-0 border-start-0 border-end-0" href="/relatorios">
+                    <i class="bi bi-speedometer2 me-1"></i>Painel Executivo
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted" href="/relatorios/artigos?inicio=@inicio.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@fim.ToString("yyyy-MM-ddTHH:mm:ss")">
+                    <i class="bi bi-pie-chart me-1"></i>Top Artigos & Categorias
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted" href="/relatorios/iva?inicio=@inicio.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@fim.ToString("yyyy-MM-ddTHH:mm:ss")">
+                    <i class="bi bi-percent me-1"></i>Resumo Fiscal de IVA
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted" href="/relatorios/garcons?inicio=@inicio.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@fim.ToString("yyyy-MM-ddTHH:mm:ss")">
+                    <i class="bi bi-people me-1"></i>Desempenho de Garçons
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Cards de KPIs Financeiros -->
+<div class="row g-3 mb-4">
+    <div class="col-md">
+        <div class="card border shadow-sm h-100 p-3 text-center">
+            <div class="text-muted small">Total Faturado Líquido</div>
+            <div class="fs-4 fw-bold" style="color: #6E1A33;">@Model.Kpis.TotalFaturado.ToString("N2") MT</div>
+            <div class="small text-muted">Moçambique (MZN)</div>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="card border shadow-sm h-100 p-3 text-center">
+            <div class="text-muted small">IVA Liquidado (16%)</div>
+            <div class="fs-4 fw-bold text-success">@Model.Kpis.TotalIva.ToString("N2") MT</div>
+            <div class="small text-muted">Taxa Geral Fiscal</div>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="card border shadow-sm h-100 p-3 text-center">
+            <div class="text-muted small">Contas Liquidadas</div>
+            <div class="fs-4 fw-bold text-dark">@Model.Kpis.TotalContasLiquidadas</div>
+            <div class="small text-muted">Mesa e Balcão</div>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="card border shadow-sm h-100 p-3 text-center">
+            <div class="text-muted small">Ticket Médio</div>
+            <div class="fs-4 fw-bold text-primary">@Model.Kpis.TicketMedio.ToString("N2") MT</div>
+            <div class="small text-muted">Por conta faturada</div>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="card border shadow-sm h-100 p-3 text-center">
+            <div class="text-muted small">Artigos Vendidos</div>
+            <div class="fs-4 fw-bold text-secondary">@Model.Kpis.TotalArtigosVendidos.ToString("0.##")</div>
+            <div class="small text-muted">Unidades servidas</div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos Analíticos -->
+<div class="row g-4 mb-4">
+    <!-- Gráfico 1: Evolução Diária de Vendas -->
+    <div class="col-lg-8">
+        <div class="card border shadow-sm h-100">
+            <div class="card-header bg-light py-2">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-graph-up me-2"></i>Evolução de Vendas no Período (MZN)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartEvolucaoVendas" height="130"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico 2: Vendas por Categoria -->
+    <div class="col-lg-4">
+        <div class="card border shadow-sm h-100">
+            <div class="card-header bg-light py-2">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-pie-chart me-2"></i>Distribuição por Categoria</h6>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="chartCategorias" style="max-height: 240px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico 3: Pico de Movimento por Hora -->
+    <div class="col-12">
+        <div class="card border shadow-sm">
+            <div class="card-header bg-light py-2">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i>Pico de Movimento por Hora do Dia (Horário de Maputo)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartHoras" height="70"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabelas de Resumo: Meios de Pagamento e Top Artigos -->
+<div class="row g-4">
+    <!-- Formas de Pagamento -->
+    <div class="col-lg-5">
+        <div class="card border shadow-sm h-100">
+            <div class="card-header bg-light py-2">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2"></i>Vendas por Forma de Pagamento</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Método</th>
+                            <th class="text-center">Transações</th>
+                            <th class="text-end">Total (MT)</th>
+                            <th class="text-end">% Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.VendasPorMetodo.Any())
+                        {
+                            <tr><td colspan="4" class="text-center py-4 text-muted">Sem pagamentos no período.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var m in Model.VendasPorMetodo)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-secondary">@m.Metodo</span></td>
+                                    <td class="text-center">@m.QuantidadeTransacoes</td>
+                                    <td class="text-end fw-bold">@m.TotalLiquido.ToString("N2") MT</td>
+                                    <td class="text-end text-muted">@m.Percentagem.ToString("F1")%</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 10 Artigos -->
+    <div class="col-lg-7">
+        <div class="card border shadow-sm h-100">
+            <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-trophy me-2"></i>Top 10 Artigos Mais Faturados</h6>
+                <a href="/relatorios/artigos?inicio=@inicio.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@fim.ToString("yyyy-MM-ddTHH:mm:ss")" class="btn btn-sm btn-outline-secondary">
+                    Ver Todos
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Artigo</th>
+                            <th>Categoria</th>
+                            <th class="text-center">Qtd</th>
+                            <th class="text-end">Preço Médio</th>
+                            <th class="text-end">Total (MT)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.TopArtigos.Any())
+                        {
+                            <tr><td colspan="5" class="text-center py-4 text-muted">Sem vendas no período.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var a in Model.TopArtigos)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@a.ArtigoNome</td>
+                                    <td><span class="badge bg-light text-dark border">@a.CategoriaNome</span></td>
+                                    <td class="text-center">@a.Quantidade.ToString("0.##")</td>
+                                    <td class="text-end text-muted">@a.PrecoMedio.ToString("N2") MT</td>
+                                    <td class="text-end fw-bold" style="color: #6E1A33;">@a.TotalLiquido.ToString("N2") MT</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/lib/chartjs/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cores padrão Menova
+        const corPrimaria = '#6E1A33';
+        const corPrimariaClara = 'rgba(110, 26, 51, 0.15)';
+        const paletaCores = [
+            '#6E1A33', '#A83254', '#2E6E1A', '#1A4D6E', '#E67E22', 
+            '#8E44AD', '#16A085', '#2C3E50', '#D35400', '#7F8C8D'
+        ];
+
+        // 1. Gráfico de Evolução Diária
+        const diasLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VendasPorDia.Select(d => d.DataFormatada)));
+        const diasValores = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VendasPorDia.Select(d => d.TotalLiquido)));
+
+        new Chart(document.getElementById('chartEvolucaoVendas'), {
+            type: 'line',
+            data: {
+                labels: diasLabels.length > 0 ? diasLabels : ['Sem dados'],
+                datasets: [{
+                    label: 'Vendas (MT)',
+                    data: diasValores.length > 0 ? diasValores : [0],
+                    borderColor: corPrimaria,
+                    backgroundColor: corPrimariaClara,
+                    fill: true,
+                    tension: 0.25,
+                    borderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(val) { return val.toLocaleString('pt-PT') + ' MT'; }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 2. Gráfico de Categorias
+        const catLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VendasPorCategoria.Select(c => c.CategoriaNome)));
+        const catValores = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VendasPorCategoria.Select(c => c.TotalLiquido)));
+
+        new Chart(document.getElementById('chartCategorias'), {
+            type: 'doughnut',
+            data: {
+                labels: catLabels.length > 0 ? catLabels : ['Sem dados'],
+                datasets: [{
+                    data: catValores.length > 0 ? catValores : [0],
+                    backgroundColor: paletaCores
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                }
+            }
+        });
+
+        // 3. Gráfico por Hora do Dia
+        const horasLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VendasPorHora.Select(h => h.HoraFormatada)));
+        const horasValores = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VendasPorHora.Select(h => h.TotalLiquido)));
+
+        new Chart(document.getElementById('chartHoras'), {
+            type: 'bar',
+            data: {
+                labels: horasLabels.length > 0 ? horasLabels : ['00:00'],
+                datasets: [{
+                    label: 'Faturação (MT)',
+                    data: horasValores.length > 0 ? horasValores : [0],
+                    backgroundColor: '#A83254',
+                    borderRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(val) { return val.toLocaleString('pt-PT') + ' MT'; }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+}

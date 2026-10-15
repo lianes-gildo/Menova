@@ -80,6 +80,9 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<Impressora> Impressoras => Set<Impressora>();
     public DbSet<TrabalhoImpressao> TrabalhosImpressao => Set<TrabalhoImpressao>();
 
+    // Relatórios e Tabelas Fato
+    public DbSet<Menova.Domain.Relatorios.FatoVendasDiarias> FatoVendasDiarias => Set<Menova.Domain.Relatorios.FatoVendasDiarias>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -1043,6 +1046,29 @@ public class AppDbContext : DbContext, IAppDbContext
 
             entity.HasIndex(e => e.Estado);
             entity.HasIndex(e => e.CriadoEm);
+        });
+
+        // 41. FatoVendasDiarias
+        modelBuilder.Entity<Menova.Domain.Relatorios.FatoVendasDiarias>(entity =>
+        {
+            entity.ToTable("fato_vendas_diarias");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Data).HasColumnName("data");
+            entity.Property(e => e.ArtigoId).HasColumnName("artigo_id");
+            entity.Property(e => e.ArtigoNome).HasMaxLength(150).IsRequired().HasColumnName("artigo_nome");
+            entity.Property(e => e.CategoriaId).HasColumnName("categoria_id");
+            entity.Property(e => e.CategoriaNome).HasMaxLength(100).IsRequired().HasColumnName("categoria_nome");
+            entity.Property(e => e.QuantidadeVendida).HasPrecision(18, 3).HasColumnName("quantidade_vendida");
+            entity.Property(e => e.TotalBruto).HasPrecision(18, 4).HasColumnName("total_bruto");
+            entity.Property(e => e.TotalDesconto).HasPrecision(18, 4).HasColumnName("total_desconto");
+            entity.Property(e => e.TotalIva).HasPrecision(18, 4).HasColumnName("total_iva");
+            entity.Property(e => e.TotalLiquido).HasPrecision(18, 4).HasColumnName("total_liquido");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+
+            entity.HasIndex(e => new { e.Data, e.ArtigoId });
+            entity.HasIndex(e => new { e.Data, e.CategoriaId });
+            entity.HasIndex(e => e.Data);
         });
     }
 

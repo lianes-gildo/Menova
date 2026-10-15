@@ -1,0 +1,75 @@
+@model List<Menova.Application.DTOs.VendaPorArtigoDto>
+@{
+    ViewData["Title"] = "Top Artigos e Categorias";
+    var inicio = (DateTime)ViewBag.Inicio;
+    var fim = (DateTime)ViewBag.Fim;
+    var totalGlobal = Model.Sum(a => a.TotalLiquido);
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-pie-chart me-2"></i>Top Artigos e Curva ABC</h3>
+        <p class="text-muted small mb-0">Classificação de produtos por volume de vendas e receitas geradas.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <a href="/relatorios?inicio=@inicio.ToString("yyyy-MM-ddTHH:mm:ss")&fim=@fim.ToString("yyyy-MM-ddTHH:mm:ss")" class="btn btn-outline-secondary py-2 px-3">
+            <i class="bi bi-arrow-left me-1"></i>Voltar ao Painel
+        </a>
+    </div>
+</div>
+
+<div class="card border shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+        <span class="small text-muted">Período: @inicio.AddHours(2).ToString("dd/MM/yyyy") até @fim.AddHours(2).ToString("dd/MM/yyyy")</span>
+        <span class="badge bg-secondary">Total: @totalGlobal.ToString("N2") MT</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50px;" class="text-center">#</th>
+                    <th>Artigo</th>
+                    <th>Categoria</th>
+                    <th class="text-center">Qtd. Vendida</th>
+                    <th class="text-end">Preço Médio</th>
+                    <th class="text-end">Total Faturado</th>
+                    <th class="text-end" style="width: 140px;">% do Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            Não existem dados de vendas de artigos para o período selecionado.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    int pos = 1;
+                    foreach (var a in Model)
+                    {
+                        <tr>
+                            <td class="text-center fw-bold text-muted">@pos</td>
+                            <td class="fw-bold">@a.ArtigoNome</td>
+                            <td><span class="badge bg-light text-dark border">@a.CategoriaNome</span></td>
+                            <td class="text-center">@a.Quantidade.ToString("0.##")</td>
+                            <td class="text-end text-muted">@a.PrecoMedio.ToString("N2") MT</td>
+                            <td class="text-end fw-bold" style="color: #6E1A33;">@a.TotalLiquido.ToString("N2") MT</td>
+                            <td class="text-end">
+                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                    <div class="progress flex-grow-1" style="height: 6px; max-width: 60px;">
+                                        <div class="progress-bar" style="width: @a.Percentagem%; background-color: #6E1A33;"></div>
+                                    </div>
+                                    <span class="small fw-bold">@a.Percentagem.ToString("F1")%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        pos++;
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

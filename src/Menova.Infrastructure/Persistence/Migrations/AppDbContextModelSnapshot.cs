@@ -2217,6 +2217,77 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.ToTable("pedidos", (string)null);
                 });
 
+            modelBuilder.Entity("Menova.Domain.Relatorios.FatoVendasDiarias", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ArtigoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artigo_id");
+
+                    b.Property<string>("ArtigoNome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("artigo_nome");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<Guid>("CategoriaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("categoria_id");
+
+                    b.Property<string>("CategoriaNome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("categoria_nome");
+
+                    b.Property<DateOnly>("Data")
+                        .HasColumnType("date")
+                        .HasColumnName("data");
+
+                    b.Property<decimal>("QuantidadeVendida")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)")
+                        .HasColumnName("quantidade_vendida");
+
+                    b.Property<decimal>("TotalBruto")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("total_bruto");
+
+                    b.Property<decimal>("TotalDesconto")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("total_desconto");
+
+                    b.Property<decimal>("TotalIva")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("total_iva");
+
+                    b.Property<decimal>("TotalLiquido")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("total_liquido");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Data");
+
+                    b.HasIndex("Data", "ArtigoId");
+
+                    b.HasIndex("Data", "CategoriaId");
+
+                    b.ToTable("fato_vendas_diarias", (string)null);
+                });
+
             modelBuilder.Entity("Menova.Domain.Sala.ContaMesa", b =>
                 {
                     b.Property<Guid>("ContaId")

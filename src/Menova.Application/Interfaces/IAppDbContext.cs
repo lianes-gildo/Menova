@@ -64,6 +64,9 @@ public interface IAppDbContext
     DbSet<Menova.Domain.Impressao.Impressora> Impressoras { get; }
     DbSet<Menova.Domain.Impressao.TrabalhoImpressao> TrabalhosImpressao { get; }
 
+    // Relatórios e Tabelas Fato
+    DbSet<Menova.Domain.Relatorios.FatoVendasDiarias> FatoVendasDiarias { get; }
+
     DatabaseFacade Database { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

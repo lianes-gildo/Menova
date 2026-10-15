@@ -57,6 +57,9 @@ public static class DependencyInjection
         services.AddScoped<IImpressaoService, ImpressaoService>();
         services.AddSingleton<EscPosGenerator>();
 
+        // Relatórios Analíticos e Exportações
+        services.AddScoped<IRelatorioService, RelatorioService>();
+
         return services;
     }
 }
