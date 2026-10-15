@@ -1,0 +1,309 @@
+@using Menova.Application.DTOs
+@{
+    ViewData["Title"] = "Menova Garçom (PWA)";
+    var zonas = (List<ZonaDto>)ViewBag.Zonas;
+    var menu = (MenuCompletoDto)ViewBag.Menu;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-0" style="color: #6E1A33;"><i class="bi bi-phone-fill me-2"></i>Menova Garçom</h4>
+        <span class="badge bg-success" id="badgeStatusOnline"><i class="bi bi-wifi me-1"></i>Rede Local OK</span>
+    </div>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-sm btn-dark active" id="btnModoGarcom" onclick="alternarModo('garcom')">
+            <i class="bi bi-person-badge me-1"></i>Garçom
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-dark" id="btnModoCliente" onclick="alternarModo('cliente')">
+            <i class="bi bi-eye-fill me-1"></i>Apresentação
+        </button>
+    </div>
+</div>
+
+<!-- ================= MODO GARÇOM ================= -->
+<div id="painelModoGarcom">
+    <!-- Seletor Rápido de Mesas -->
+    <div class="card border shadow-sm mb-3">
+        <div class="card-body p-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small fw-bold text-muted"><i class="bi bi-grid-3x3-gap-fill me-1"></i>Mesa Selecionada:</span>
+                <span class="badge bg-light text-dark border fs-6" id="labelMesaAtiva">Nenhuma selecionada</span>
+            </div>
+            <div class="d-flex overflow-auto gap-2 py-1" style="white-space: nowrap;">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selecionarMesa(null, 'Balcão')">Balcão</button>
+                @foreach (var z in zonas)
+                {
+                    @foreach (var m in z.Mesas)
+                    {
+                        var btnColor = m.Estado == Menova.Domain.Sala.EstadoMesa.Livre ? "btn-outline-success" : "btn-outline-danger";
+                        <button type="button" class="btn btn-sm @btnColor" onclick="selecionarMesa('@m.Id', 'Mesa @m.Numero')">
+                            Mesa @m.Numero
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Pesquisa e Artigos -->
+    <div class="input-group mb-2">
+        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+        <input type="text" id="pwaPesquisa" class="form-control" placeholder="Procurar artigo..." onkeyup="filtrarPwaArtigos()" />
+    </div>
+
+    <div class="d-flex overflow-auto gap-1 mb-3 py-1" id="pwaCatPills">
+        <button type="button" class="btn btn-sm btn-dark active" onclick="filtrarPwaCat(null, this)">Todas</button>
+        @foreach (var cat in menu.Categorias)
+        {
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filtrarPwaCat('@cat.Id', this)">@cat.Nome</button>
+        }
+    </div>
+
+    <!-- Lista de Artigos para o Garçom -->
+    <div class="row g-2 mb-5" id="pwaArtigosContainer" style="padding-bottom: 70px;">
+        @foreach (var art in menu.Artigos)
+        {
+            var esgotado = art.EsgotadoManual || !art.Disponivel;
+            <div class="col-6 col-md-4 pwa-artigo-item" data-cat="@art.CategoriaId" data-nome="@art.Nome.ToLower()">
+                <div class="card h-100 border p-2 @(esgotado ? "opacity-50" : "")" 
+                     onclick="@(esgotado ? "" : $"adicionarItemPwa('{art.Id}', '{art.Nome.Replace("'", "\\'")}', {art.Preco.ToString(System.Globalization.CultureInfo.InvariantCulture)})")">
+                    <div class="d-flex justify-content-between">
+                        <span class="small font-monospace text-muted">@art.CodigoInterno</span>
+                        @if (esgotado)
+                        {
+                            <span class="badge bg-danger" style="font-size: 0.65rem;">86</span>
+                        }
+                    </div>
+                    <div class="fw-bold my-1 text-truncate" title="@art.Nome">@art.Nome</div>
+                    <div class="mt-auto fw-bold text-success">@art.Preco.ToString("N2") MT</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Barra Inferior Fixa do Carrinho / Comanda -->
+    <div class="fixed-bottom bg-white border-top shadow-lg p-2" style="z-index: 1040;">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <span class="small text-muted d-block" id="pwaCarrinhoResumo">0 artigos selecionados</span>
+                <span class="fw-bold fs-5 text-success" id="pwaCarrinhoTotal">0,00 MT</span>
+            </div>
+            <button type="button" class="btn text-white px-4 py-2 fw-bold" style="background-color: #6E1A33;" onclick="abrirModalComandaPwa()">
+                <i class="bi bi-receipt me-1"></i>Ver Comanda
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODO APRESENTAÇÃO AO CLIENTE ================= -->
+<div id="painelModoCliente" style="display: none;">
+    <div class="alert alert-info py-2 px-3 small d-flex justify-content-between align-items-center mb-3">
+        <span><i class="bi bi-info-circle-fill me-1"></i>Modo de Apresentação ao Cliente: fotografias, ingredientes e alérgenos.</span>
+        <button type="button" class="btn btn-sm btn-dark" onclick="alternarModo('garcom')">Sair do Modo Cliente</button>
+    </div>
+
+    <div class="row g-3">
+        @foreach (var art in menu.Artigos.Where(a => !a.EsgotadoManual && a.Disponivel))
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border shadow-sm">
+                    <img src="@art.ImagemPrincipal" class="card-img-top" alt="@art.Nome" style="height: 180px; object-fit: cover;" onerror="this.src='/menova_logo_0f.png';" />
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h5 class="fw-bold mb-0">@art.Nome</h5>
+                            <span class="fs-5 fw-bold text-success">@art.Preco.ToString("N2") MT</span>
+                        </div>
+                        <div class="small text-muted mb-2">@art.DescricaoCurta</div>
+
+                        @if (art.Alergenios != null && art.Alergenios.Any())
+                        {
+                            <div class="mt-2">
+                                <span class="badge bg-warning text-dark me-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Contém: @string.Join(", ", art.Alergenios)</span>
+                            </div>
+                        }
+
+                        @if (art.Etiquetas != null && art.Etiquetas.Any())
+                        {
+                            <div class="mt-1">
+                                @foreach (var et in art.Etiquetas)
+                                {
+                                    <span class="badge bg-light text-secondary border me-1">@et</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal da Comanda Garçom -->
+<div class="modal fade" id="modalComandaPwa" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #6E1A33;">
+                <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>Comanda <span id="pwaModalMesaNome"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="pwaModalItens" class="list-group list-group-flush mb-3"></div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Observações:</label>
+                    <input type="text" id="pwaModalObs" class="form-control form-control-sm" placeholder="Ex: Pouco sal, carne ao ponto..." />
+                </div>
+                <div class="d-flex justify-content-between align-items-center fw-bold fs-5">
+                    <span>Total a Pagar:</span>
+                    <span class="text-success" id="pwaModalTotal">0,00 MT</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
+                <button type="button" class="btn text-white" style="background-color: #6E1A33;" onclick="enviarComandaPwa()">
+                    <i class="bi bi-send-fill me-1"></i>Enviar Comanda
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    let mesaSelecionada = null;
+    let mesaNomeSelecionada = "Balcão";
+    let itensPwa = [];
+    let catPwaAtual = null;
+
+    function alternarModo(modo) {
+        if (modo === 'cliente') {
+            document.getElementById('painelModoGarcom').style.display = 'none';
+            document.getElementById('painelModoCliente').style.display = 'block';
+            document.getElementById('btnModoCliente').className = 'btn btn-sm btn-dark active';
+            document.getElementById('btnModoGarcom').className = 'btn btn-sm btn-outline-dark';
+        } else {
+            document.getElementById('painelModoGarcom').style.display = 'block';
+            document.getElementById('painelModoCliente').style.display = 'none';
+            document.getElementById('btnModoGarcom').className = 'btn btn-sm btn-dark active';
+            document.getElementById('btnModoCliente').className = 'btn btn-sm btn-outline-dark';
+        }
+    }
+
+    function selecionarMesa(id, nome) {
+        mesaSelecionada = id;
+        mesaNomeSelecionada = nome;
+        document.getElementById('labelMesaAtiva').textContent = nome;
+    }
+
+    function filtrarPwaCat(catId, btn) {
+        catPwaAtual = catId;
+        document.querySelectorAll('#pwaCatPills button').forEach(b => {
+            b.classList.remove('btn-dark', 'active');
+            b.classList.add('btn-outline-secondary');
+        });
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-dark', 'active');
+        filtrarPwaArtigos();
+    }
+
+    function filtrarPwaArtigos() {
+        const termo = document.getElementById('pwaPesquisa').value.toLowerCase().trim();
+        document.querySelectorAll('.pwa-artigo-item').forEach(card => {
+            const cat = card.getAttribute('data-cat');
+            const nome = card.getAttribute('data-nome');
+            const matchCat = !catPwaAtual || cat === catPwaAtual;
+            const matchTermo = !termo || nome.includes(termo);
+            card.style.display = (matchCat && matchTermo) ? '' : 'none';
+        });
+    }
+
+    function adicionarItemPwa(id, nome, preco) {
+        const existente = itensPwa.find(i => i.id === id);
+        if (existente) existente.quantidade++;
+        else itensPwa.push({ id: id, nome: nome, preco: preco, quantidade: 1, notas: '' });
+        atualizarBarraPwa();
+    }
+
+    function atualizarBarraPwa() {
+        const totalQtd = itensPwa.reduce((acc, i) => acc + i.quantidade, 0);
+        const totalVal = itensPwa.reduce((acc, i) => acc + (i.preco * i.quantidade), 0);
+        document.getElementById('pwaCarrinhoResumo').textContent = totalQtd + ' artigo(s) para ' + mesaNomeSelecionada;
+        document.getElementById('pwaCarrinhoTotal').textContent = totalVal.toFixed(2) + ' MT';
+    }
+
+    function abrirModalComandaPwa() {
+        if (itensPwa.length === 0) {
+            alert('A comanda está vazia.');
+            return;
+        }
+
+        document.getElementById('pwaModalMesaNome').textContent = `(${mesaNomeSelecionada})`;
+        const container = document.getElementById('pwaModalItens');
+        let html = '';
+        let total = 0;
+
+        itensPwa.forEach(item => {
+            const sub = item.preco * item.quantidade;
+            total += sub;
+            html += `
+                <div class="list-group-item px-0 py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">${item.quantidade}x ${item.nome}</span>
+                        <span>${sub.toFixed(2)} MT</span>
+                    </div>
+                </div>`;
+        });
+
+        container.innerHTML = html;
+        document.getElementById('pwaModalTotal').textContent = total.toFixed(2) + ' MT';
+        new bootstrap.Modal(document.getElementById('modalComandaPwa')).show();
+    }
+
+    async function enviarComandaPwa() {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const obs = document.getElementById('pwaModalObs').value;
+        const idempotencyKey = 'menova-pwa-' + Date.now();
+
+        const payload = {
+            MesaId: mesaSelecionada,
+            Observacoes: obs,
+            Itens: itensPwa.map(i => ({ ArtigoId: i.id, Quantidade: i.quantidade, Notas: i.notas }))
+        };
+
+        try {
+            const resp = await fetch('/pedidos/criar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token,
+                    'Idempotency-Key': idempotencyKey
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await resp.json();
+            if (data.sucesso) {
+                bootstrap.Modal.getInstance(document.getElementById('modalComandaPwa')).hide();
+                itensPwa = [];
+                atualizarBarraPwa();
+                alert('Comanda enviada com sucesso para a cozinha!');
+            } else {
+                alert(data.mensagem || 'Erro ao enviar comanda.');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Erro de comunicação.');
+        }
+    }
+
+    // Registar Service Worker PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker Menova registado:', reg.scope))
+                .catch(err => console.log('Falha ao registar Service Worker:', err));
+        });
+    }
+</script>
+}

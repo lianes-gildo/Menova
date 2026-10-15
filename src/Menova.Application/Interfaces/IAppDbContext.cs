@@ -46,6 +46,13 @@ public interface IAppDbContext
     DbSet<ArtigoGrupoOpcoes> ArtigosGruposOpcoes { get; }
     DbSet<MenuVersao> MenuVersao { get; }
 
+    // Pedidos e Contas
+    DbSet<Menova.Domain.Pedidos.Conta> Contas { get; }
+    DbSet<Menova.Domain.Pedidos.Pedido> Pedidos { get; }
+    DbSet<Menova.Domain.Pedidos.ItemPedido> ItensPedido { get; }
+    DbSet<Menova.Domain.Pedidos.ItemPedidoOpcao> ItensPedidoOpcoes { get; }
+    DbSet<Menova.Domain.Pedidos.ChaveIdempotencia> ChavesIdempotencia { get; }
+
     DatabaseFacade Database { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

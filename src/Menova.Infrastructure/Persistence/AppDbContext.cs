@@ -6,6 +6,7 @@ using Menova.Domain.Configuracao;
 using Menova.Domain.Estacoes;
 using Menova.Domain.Identity;
 using Menova.Domain.Menu;
+using Menova.Domain.Pedidos;
 using Menova.Domain.Sala;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -58,6 +59,13 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<Opcao> Opcoes => Set<Opcao>();
     public DbSet<ArtigoGrupoOpcoes> ArtigosGruposOpcoes => Set<ArtigoGrupoOpcoes>();
     public DbSet<MenuVersao> MenuVersao => Set<MenuVersao>();
+
+    // Pedidos e Contas
+    public DbSet<Conta> Contas => Set<Conta>();
+    public DbSet<Pedido> Pedidos => Set<Pedido>();
+    public DbSet<ItemPedido> ItensPedido => Set<ItemPedido>();
+    public DbSet<ItemPedidoOpcao> ItensPedidoOpcoes => Set<ItemPedidoOpcao>();
+    public DbSet<ChaveIdempotencia> ChavesIdempotencia => Set<ChaveIdempotencia>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -691,6 +699,149 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(e => e.Id).ValueGeneratedNever().HasColumnName("id");
             entity.Property(e => e.Versao).HasColumnName("versao");
             entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+        });
+
+        // 29. Conta
+        modelBuilder.Entity<Conta>(entity =>
+        {
+            entity.ToTable("contas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Numero).HasMaxLength(50).IsRequired().HasColumnName("numero");
+            entity.HasIndex(e => e.Numero).IsUnique();
+            entity.Property(e => e.MesaId).HasColumnName("mesa_id");
+            entity.Property(e => e.Estado).HasConversion<int>().HasColumnName("estado");
+            entity.Property(e => e.TotalBruto).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("total_bruto");
+            entity.Property(e => e.TotalDesconto).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("total_desconto");
+            entity.Property(e => e.TotalIva).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("total_iva");
+            entity.Property(e => e.TotalLiquido).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("total_liquido");
+            entity.Property(e => e.Observacoes).HasMaxLength(255).HasColumnName("observacoes");
+            entity.Property(e => e.FechadaEm).HasColumnName("fechada_em");
+            entity.Property(e => e.FechadaPor).HasMaxLength(50).HasColumnName("fechada_por");
+
+            entity.HasOne(e => e.Mesa)
+                  .WithMany()
+                  .HasForeignKey(e => e.MesaId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+
+            entity.HasIndex(e => e.Estado);
+            entity.HasIndex(e => e.MesaId);
+        });
+
+        // 30. Pedido
+        modelBuilder.Entity<Pedido>(entity =>
+        {
+            entity.ToTable("pedidos");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ContaId).HasColumnName("conta_id");
+            entity.Property(e => e.NumeroSequencial).HasDefaultValue(1).HasColumnName("numero_sequencial");
+            entity.Property(e => e.Estado).HasConversion<int>().HasColumnName("estado");
+            entity.Property(e => e.Observacoes).HasMaxLength(255).HasColumnName("observacoes");
+
+            entity.HasOne(e => e.Conta)
+                  .WithMany(c => c.Pedidos)
+                  .HasForeignKey(e => e.ContaId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+
+            entity.HasIndex(e => e.ContaId);
+            entity.HasIndex(e => e.Estado);
+        });
+
+        // 31. ItemPedido
+        modelBuilder.Entity<ItemPedido>(entity =>
+        {
+            entity.ToTable("itens_pedido");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.PedidoId).HasColumnName("pedido_id");
+            entity.Property(e => e.ArtigoId).HasColumnName("artigo_id");
+            entity.Property(e => e.NomeArtigo).HasMaxLength(150).IsRequired().HasColumnName("nome_artigo");
+            entity.Property(e => e.Quantidade).HasPrecision(18, 3).HasDefaultValue(1.000m).HasColumnName("quantidade");
+            entity.Property(e => e.PrecoUnitario).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("preco_unitario");
+            entity.Property(e => e.TaxaIva).HasPrecision(5, 2).HasDefaultValue(16.00m).HasColumnName("taxa_iva");
+            entity.Property(e => e.Subtotal).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("subtotal");
+            entity.Property(e => e.TotalIva).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("total_iva");
+            entity.Property(e => e.TotalLiquido).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("total_liquido");
+            entity.Property(e => e.EstacaoId).HasColumnName("estacao_id");
+            entity.Property(e => e.Estado).HasConversion<int>().HasColumnName("estado");
+            entity.Property(e => e.Notas).HasMaxLength(255).HasColumnName("notas");
+            entity.Property(e => e.Anulado).HasDefaultValue(false).HasColumnName("anulado");
+            entity.Property(e => e.AnuladoMotivo).HasMaxLength(255).HasColumnName("anulado_motivo");
+            entity.Property(e => e.AnuladoPor).HasMaxLength(50).HasColumnName("anulado_por");
+            entity.Property(e => e.AnuladoEm).HasColumnName("anulado_em");
+
+            entity.HasOne(e => e.Pedido)
+                  .WithMany(p => p.Itens)
+                  .HasForeignKey(e => e.PedidoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Artigo)
+                  .WithMany()
+                  .HasForeignKey(e => e.ArtigoId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Estacao)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstacaoId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
+            entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
+            entity.Property(e => e.AtualizadoPor).HasMaxLength(50).HasColumnName("atualizado_por");
+            entity.Property(e => e.Versao).IsConcurrencyToken().HasColumnName("versao");
+
+            entity.HasIndex(e => e.PedidoId);
+            entity.HasIndex(e => e.EstacaoId);
+            entity.HasIndex(e => e.Estado);
+        });
+
+        // 32. ItemPedidoOpcao
+        modelBuilder.Entity<ItemPedidoOpcao>(entity =>
+        {
+            entity.ToTable("itens_pedido_opcoes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ItemPedidoId).HasColumnName("item_pedido_id");
+            entity.Property(e => e.OpcaoId).HasColumnName("opcao_id");
+            entity.Property(e => e.NomeOpcao).HasMaxLength(100).IsRequired().HasColumnName("nome_opcao");
+            entity.Property(e => e.DeltaPreco).HasPrecision(18, 4).HasDefaultValue(0.00m).HasColumnName("delta_preco");
+
+            entity.HasOne(e => e.ItemPedido)
+                  .WithMany(i => i.OpcoesSelecionadas)
+                  .HasForeignKey(e => e.ItemPedidoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Opcao)
+                  .WithMany()
+                  .HasForeignKey(e => e.OpcaoId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // 33. ChaveIdempotencia
+        modelBuilder.Entity<ChaveIdempotencia>(entity =>
+        {
+            entity.ToTable("chaves_idempotencia");
+            entity.HasKey(e => e.Chave);
+            entity.Property(e => e.Chave).HasMaxLength(128).HasColumnName("chave");
+            entity.Property(e => e.ResultadoJson).HasColumnType("jsonb").IsRequired().HasColumnName("resultado_json");
+            entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
+            entity.Property(e => e.ExpiraEm).HasColumnName("expira_em");
+
+            entity.HasIndex(e => e.ExpiraEm);
         });
     }
 

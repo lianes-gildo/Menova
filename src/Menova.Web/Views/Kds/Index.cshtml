@@ -1,0 +1,242 @@
+@model List<Menova.Application.DTOs.TicketKdsDto>
+@using Menova.Application.DTOs
+@using Menova.Domain.Estacoes
+@using Menova.Domain.Pedidos
+@{
+    ViewData["Title"] = "Ecrã de Preparação (KDS)";
+    var estacoes = (List<EstacaoPreparacao>)ViewBag.Estacoes;
+    Guid? estacaoSel = (Guid?)ViewBag.EstacaoSelecionada;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-fire me-2"></i>Ecrã de Preparação (KDS)</h3>
+        <p class="text-muted small mb-0">Gestão visual de comandas em tempo real na cozinha e no bar.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="btnAudioToggle" onclick="toggleAudio()">
+            <i class="bi bi-volume-up-fill me-1" id="iconAudio"></i>Som: <span id="labelAudio">Ligado</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-dark" onclick="toggleFullscreen()">
+            <i class="bi bi-arrows-fullscreen me-1"></i>Ecrã Completo
+        </button>
+    </div>
+</div>
+
+<!-- Filtros de Estação -->
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a href="/kds" class="btn btn-sm @(!estacaoSel.HasValue ? "btn-dark active fw-bold" : "btn-outline-secondary")">
+        Todas as Estações
+    </a>
+    @foreach (var est in estacoes)
+    {
+        <a href="/kds?estacaoId=@est.Id" class="btn btn-sm @(estacaoSel.HasValue && estacaoSel.Value == est.Id ? "btn-dark active fw-bold" : "btn-outline-secondary")">
+            @est.Nome
+        </a>
+    }
+</div>
+
+<!-- Grelha de Tickets KDS -->
+<div class="row g-3" id="kdsTicketsGrid">
+    @if (Model == null || !Model.Any())
+    {
+        <div class="col-12 text-center py-5 text-muted" id="kdsVazio">
+            <i class="bi bi-check-circle fs-1 text-success d-block mb-2"></i>
+            Não existem pedidos pendentes de preparação.
+        </div>
+    }
+    else
+    {
+        @foreach (var t in Model)
+        {
+            var borderClass = t.Urgencia switch
+            {
+                UrgenciaKds.Normal => "border-success",
+                UrgenciaKds.Atencao => "border-warning",
+                UrgenciaKds.Urgente => "border-danger shadow",
+                _ => "border-secondary"
+            };
+
+            var headerClass = t.Urgencia switch
+            {
+                UrgenciaKds.Normal => "bg-success text-white",
+                UrgenciaKds.Atencao => "bg-warning text-dark",
+                UrgenciaKds.Urgente => "bg-danger text-white",
+                _ => "bg-secondary text-white"
+            };
+
+            <div class="col-sm-6 col-md-4 col-lg-3 ticket-col" id="ticket-@t.PedidoId">
+                <div class="card h-100 border-2 @borderClass shadow-sm">
+                    <div class="card-header @headerClass py-2 d-flex justify-content-between align-items-center">
+                        <div class="fw-bold fs-6">
+                            @(t.MesaNumero != null ? $"Mesa {t.MesaNumero}" : "Balcão")
+                        </div>
+                        <div class="small fw-bold">
+                            <i class="bi bi-clock me-1"></i><span class="timer-minutos" data-inicio="@t.CriadoEm.ToString("o")">@t.MinutosDecorridos m</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-2 d-flex flex-column">
+                        <div class="small text-muted mb-2 d-flex justify-content-between">
+                            <span>Ticket #@t.NumeroSequencial</span>
+                            <span>@t.CriadoEm.ToString("HH:mm")</span>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(t.Observacoes))
+                        {
+                            <div class="alert alert-warning py-1 px-2 small mb-2">
+                                <i class="bi bi-info-circle me-1"></i>@t.Observacoes
+                            </div>
+                        }
+
+                        <div class="list-group list-group-flush mb-3 flex-grow-1">
+                            @foreach (var item in t.Itens)
+                            {
+                                var badgeItem = item.Estado switch
+                                {
+                                    EstadoItemPedido.Pendente => "bg-secondary",
+                                    EstadoItemPedido.EmPreparacao => "bg-warning text-dark",
+                                    EstadoItemPedido.Pronto => "bg-success",
+                                    _ => "bg-dark"
+                                };
+
+                                <div class="list-group-item px-0 py-2 border-bottom d-flex justify-content-between align-items-center" 
+                                     id="kds-item-@item.ItemId"
+                                     style="cursor: pointer;"
+                                     onclick="bumpItem('@item.ItemId', @((int)item.Estado))">
+                                    <div>
+                                        <div class="fw-bold">
+                                            <span class="badge bg-light text-dark border me-1">@item.Quantidade.ToString("0.###")x</span>
+                                            @item.NomeArtigo
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(item.Notas))
+                                        {
+                                            <div class="small text-danger fw-bold"><i class="bi bi-arrow-return-right me-1"></i>@item.Notas</div>
+                                        }
+                                        @if (item.Opcoes != null && item.Opcoes.Any())
+                                        {
+                                            <div class="small text-muted">+ @string.Join(", ", item.Opcoes)</div>
+                                        }
+                                    </div>
+                                    <span class="badge @badgeItem" id="kds-item-badge-@item.ItemId">@item.Estado.ToString()</span>
+                                </div>
+                            }
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-dark w-100 mt-auto py-2 fw-bold" onclick="bumpTicket('@t.PedidoId')">
+                            <i class="bi bi-check2-all me-1"></i>Concluir Ticket
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    let audioAtivo = true;
+    const audioChime = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"+Array(300).join("120"));
+
+    function toggleAudio() {
+        audioAtivo = !audioAtivo;
+        document.getElementById('labelAudio').textContent = audioAtivo ? 'Ligado' : 'Silenciado';
+        document.getElementById('iconAudio').className = audioAtivo ? 'bi bi-volume-up-fill me-1' : 'bi bi-volume-mute-fill me-1';
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => console.log(err));
+        } else {
+            document.exitFullscreen().catch(err => console.log(err));
+        }
+    }
+
+    async function bumpItem(itemId, estadoAtual) {
+        let proximoEstado = 2; // EmPreparacao
+        if (estadoAtual === 1) proximoEstado = 2;
+        else if (estadoAtual === 2) proximoEstado = 3; // Pronto
+        else if (estadoAtual === 3) proximoEstado = 4; // Entregue
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        try {
+            const resp = await fetch(`/kds/itens/${itemId}/bump`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ NovoEstado: proximoEstado })
+            });
+            const data = await resp.json();
+            if (data.sucesso) {
+                if (proximoEstado === 4) {
+                    const row = document.getElementById('kds-item-' + itemId);
+                    if (row) row.remove();
+                } else {
+                    const badge = document.getElementById('kds-item-badge-' + itemId);
+                    if (badge) {
+                        badge.textContent = proximoEstado === 2 ? 'EmPreparacao' : 'Pronto';
+                        badge.className = proximoEstado === 2 ? 'badge bg-warning text-dark' : 'badge bg-success';
+                    }
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function bumpTicket(pedidoId) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        try {
+            const resp = await fetch(`/kds/tickets/${pedidoId}/bump`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            });
+            const data = await resp.json();
+            if (data.sucesso) {
+                const card = document.getElementById('ticket-' + pedidoId);
+                if (card) card.remove();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Ouvir novos pedidos em tempo real via SignalR
+    document.addEventListener("DOMContentLoaded", function () {
+        if (typeof signalR !== "undefined") {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hub/menova")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("NovoPedido", function (data) {
+                if (audioAtivo) {
+                    audioChime.play().catch(e => console.log('Audio autoplay blocked'));
+                }
+                // Recarrega o painel KDS automaticamente
+                setTimeout(() => window.location.reload(), 500);
+            });
+
+            connection.start()
+                .then(() => {
+                    connection.invoke("JuntarSala", "kds_geral").catch(err => console.error(err));
+                })
+                .catch(err => console.error("Erro ao ligar SignalR no KDS:", err));
+        }
+
+        // Timer de minutos decorridos atualizado a cada minuto
+        setInterval(function () {
+            document.querySelectorAll('.timer-minutos').forEach(span => {
+                const inicio = new Date(span.getAttribute('data-inicio'));
+                const agora = new Date();
+                const min = Math.floor((agora - inicio) / 60000);
+                span.textContent = min + ' m';
+            });
+        }, 60000);
+    });
+</script>
+}

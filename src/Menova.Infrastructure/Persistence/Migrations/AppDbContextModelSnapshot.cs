@@ -1377,6 +1377,358 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.ToTable("opcoes", (string)null);
                 });
 
+            modelBuilder.Entity("Menova.Domain.Pedidos.ChaveIdempotencia", b =>
+                {
+                    b.Property<string>("Chave")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("chave");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<DateTime>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expira_em");
+
+                    b.Property<string>("ResultadoJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("resultado_json");
+
+                    b.HasKey("Chave");
+
+                    b.HasIndex("ExpiraEm");
+
+                    b.ToTable("chaves_idempotencia", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.Conta", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer")
+                        .HasColumnName("estado");
+
+                    b.Property<DateTime?>("FechadaEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fechada_em");
+
+                    b.Property<string>("FechadaPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("fechada_por");
+
+                    b.Property<Guid?>("MesaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("mesa_id");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("numero");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("observacoes");
+
+                    b.Property<decimal>("TotalBruto")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("total_bruto");
+
+                    b.Property<decimal>("TotalDesconto")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("total_desconto");
+
+                    b.Property<decimal>("TotalIva")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("total_iva");
+
+                    b.Property<decimal>("TotalLiquido")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("total_liquido");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Estado");
+
+                    b.HasIndex("MesaId");
+
+                    b.HasIndex("Numero")
+                        .IsUnique();
+
+                    b.ToTable("contas", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.ItemPedido", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Anulado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("anulado");
+
+                    b.Property<DateTime?>("AnuladoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("anulado_em");
+
+                    b.Property<string>("AnuladoMotivo")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("anulado_motivo");
+
+                    b.Property<string>("AnuladoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("anulado_por");
+
+                    b.Property<Guid>("ArtigoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artigo_id");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<Guid?>("EstacaoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("estacao_id");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer")
+                        .HasColumnName("estado");
+
+                    b.Property<string>("NomeArtigo")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nome_artigo");
+
+                    b.Property<string>("Notas")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("notas");
+
+                    b.Property<Guid>("PedidoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("pedido_id");
+
+                    b.Property<decimal>("PrecoUnitario")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("preco_unitario");
+
+                    b.Property<decimal>("Quantidade")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)")
+                        .HasDefaultValue(1.000m)
+                        .HasColumnName("quantidade");
+
+                    b.Property<decimal>("Subtotal")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("subtotal");
+
+                    b.Property<decimal>("TaxaIva")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasDefaultValue(16.00m)
+                        .HasColumnName("taxa_iva");
+
+                    b.Property<decimal>("TotalIva")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("total_iva");
+
+                    b.Property<decimal>("TotalLiquido")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("total_liquido");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArtigoId");
+
+                    b.HasIndex("EstacaoId");
+
+                    b.HasIndex("Estado");
+
+                    b.HasIndex("PedidoId");
+
+                    b.ToTable("itens_pedido", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.ItemPedidoOpcao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("DeltaPreco")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("delta_preco");
+
+                    b.Property<Guid>("ItemPedidoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("item_pedido_id");
+
+                    b.Property<string>("NomeOpcao")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome_opcao");
+
+                    b.Property<Guid>("OpcaoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("opcao_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemPedidoId");
+
+                    b.HasIndex("OpcaoId");
+
+                    b.ToTable("itens_pedido_opcoes", (string)null);
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.Pedido", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("atualizado_por");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conta_id");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("CriadoPor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criado_por");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer")
+                        .HasColumnName("estado");
+
+                    b.Property<int>("NumeroSequencial")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("numero_sequencial");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("observacoes");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("versao");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("Estado");
+
+                    b.ToTable("pedidos", (string)null);
+                });
+
             modelBuilder.Entity("Menova.Domain.Sala.ContaMesa", b =>
                 {
                     b.Property<Guid>("ContaId")
@@ -1755,6 +2107,72 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.Navigation("Grupo");
                 });
 
+            modelBuilder.Entity("Menova.Domain.Pedidos.Conta", b =>
+                {
+                    b.HasOne("Menova.Domain.Sala.Mesa", "Mesa")
+                        .WithMany()
+                        .HasForeignKey("MesaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Mesa");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.ItemPedido", b =>
+                {
+                    b.HasOne("Menova.Domain.Menu.Artigo", "Artigo")
+                        .WithMany()
+                        .HasForeignKey("ArtigoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Menova.Domain.Estacoes.EstacaoPreparacao", "Estacao")
+                        .WithMany()
+                        .HasForeignKey("EstacaoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Menova.Domain.Pedidos.Pedido", "Pedido")
+                        .WithMany("Itens")
+                        .HasForeignKey("PedidoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Artigo");
+
+                    b.Navigation("Estacao");
+
+                    b.Navigation("Pedido");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.ItemPedidoOpcao", b =>
+                {
+                    b.HasOne("Menova.Domain.Pedidos.ItemPedido", "ItemPedido")
+                        .WithMany("OpcoesSelecionadas")
+                        .HasForeignKey("ItemPedidoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Menova.Domain.Menu.Opcao", "Opcao")
+                        .WithMany()
+                        .HasForeignKey("OpcaoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ItemPedido");
+
+                    b.Navigation("Opcao");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.Pedido", b =>
+                {
+                    b.HasOne("Menova.Domain.Pedidos.Conta", "Conta")
+                        .WithMany("Pedidos")
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conta");
+                });
+
             modelBuilder.Entity("Menova.Domain.Sala.ContaMesa", b =>
                 {
                     b.HasOne("Menova.Domain.Sala.Mesa", "Mesa")
@@ -1838,6 +2256,21 @@ namespace Menova.Infrastructure.Persistence.Migrations
                     b.Navigation("ArtigosGruposOpcoes");
 
                     b.Navigation("Opcoes");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.Conta", b =>
+                {
+                    b.Navigation("Pedidos");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.ItemPedido", b =>
+                {
+                    b.Navigation("OpcoesSelecionadas");
+                });
+
+            modelBuilder.Entity("Menova.Domain.Pedidos.Pedido", b =>
+                {
+                    b.Navigation("Itens");
                 });
 
             modelBuilder.Entity("Menova.Domain.Sala.Mesa", b =>

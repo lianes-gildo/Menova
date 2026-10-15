@@ -1,0 +1,315 @@
+@using Menova.Application.DTOs
+@{
+    ViewData["Title"] = "Nova Comanda";
+    var zonas = (List<ZonaDto>)ViewBag.Zonas;
+    var menu = (MenuCompletoDto)ViewBag.Menu;
+    Guid? mesaSelecionadaId = (Guid?)ViewBag.MesaSelecionadaId;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <div class="d-flex align-items-center">
+            <a href="/pedidos" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Voltar</a>
+            <div>
+                <h3 class="mb-0 fw-bold" style="color: #6E1A33;">Lançar Nova Comanda</h3>
+                <p class="text-muted small mb-0">Seleção de artigos e envio em tempo real para a cozinha/bar.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <div class="d-inline-flex align-items-center">
+            <label class="form-label fw-bold me-2 mb-0">Destino:</label>
+            <select id="selectMesa" class="form-select w-auto">
+                <option value="">-- Balcão / Takeaway --</option>
+                @foreach (var z in zonas)
+                {
+                    <optgroup label="@z.Nome">
+                        @foreach (var m in z.Mesas)
+                        {
+                            if (mesaSelecionadaId.HasValue && mesaSelecionadaId.Value == m.Id)
+                            {
+                                <option value="@m.Id" selected>Mesa @m.Numero (@m.EstadoDescricao)</option>
+                            }
+                            else
+                            {
+                                <option value="@m.Id">Mesa @m.Numero (@m.EstadoDescricao)</option>
+                            }
+                        }
+                    </optgroup>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Coluna da Esquerda: Catálogo do Menu -->
+    <div class="col-lg-7">
+        <div class="card border shadow-sm mb-3">
+            <div class="card-body p-3">
+                <div class="input-group mb-3">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="inputPesquisaArtigo" class="form-control" placeholder="Procurar artigo por nome ou código..." onkeyup="filtrarArtigos()" />
+                </div>
+
+                <!-- Categorias Pills -->
+                <div class="d-flex flex-wrap gap-1 mb-3" id="categoriaPills">
+                    <button type="button" class="btn btn-sm btn-dark active" onclick="filtrarCategoria(null, this)">Todas</button>
+                    @foreach (var cat in menu.Categorias)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filtrarCategoria('@cat.Id', this)">@cat.Nome</button>
+                    }
+                </div>
+
+                <!-- Grelha de Artigos -->
+                <div class="row g-2" id="gridArtigos" style="max-height: 540px; overflow-y: auto;">
+                    @foreach (var art in menu.Artigos)
+                    {
+                        var esgotado = art.EsgotadoManual || !art.Disponivel;
+                        <div class="col-sm-6 col-md-4 artigo-card-col" data-cat="@art.CategoriaId" data-nome="@art.Nome.ToLower()" data-cod="@art.CodigoInterno.ToLower()">
+                            <div class="card h-100 border p-2 @(esgotado ? "bg-light opacity-50 cursor-not-allowed" : "cursor-pointer")" 
+                                 onclick="@(esgotado ? "" : $"adicionarItem('{art.Id}', '{art.Nome.Replace("'", "\\'")}', {art.Preco.ToString(System.Globalization.CultureInfo.InvariantCulture)})")">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <span class="badge bg-light text-dark border small font-monospace">@art.CodigoInterno</span>
+                                    @if (esgotado)
+                                    {
+                                        <span class="badge bg-danger">Esgotado (86)</span>
+                                    }
+                                </div>
+                                <div class="fw-bold my-1 text-truncate" title="@art.Nome">@art.Nome</div>
+                                <div class="mt-auto d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-success">@art.Preco.ToString("N2") MT</span>
+                                    @if (!esgotado)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-plus-lg"></i></button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coluna da Direita: Ticket da Comanda -->
+    <div class="col-lg-5">
+        <div class="card border shadow-sm">
+            <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-receipt me-2"></i>Comanda a Enviar</h5>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="limparComanda()"><i class="bi bi-trash me-1"></i>Limpar</button>
+            </div>
+            <div class="card-body p-3">
+                <div id="comandaItens" style="min-height: 250px; max-height: 380px; overflow-y: auto;">
+                    <div id="comandaVazia" class="text-center py-5 text-muted">
+                        <i class="bi bi-cart3 fs-1 text-muted d-block mb-2"></i>
+                        Selecione artigos no menu para adicionar à comanda.
+                    </div>
+                </div>
+
+                <hr class="my-3" />
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Observações do Pedido:</label>
+                    <input type="text" id="inputObservacoesPedido" class="form-control form-control-sm" placeholder="Ex: Mesa VIP, servir tudo junto..." />
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-muted">Subtotal:</span>
+                    <span class="fw-bold" id="totalComanda">0,00 MT</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="small text-muted">IVA (16% incluído):</span>
+                    <span class="small text-muted" id="ivaComanda">0,00 MT</span>
+                </div>
+
+                <button type="button" id="btnEnviarComanda" class="btn w-100 py-3 text-white fw-bold fs-6" style="background-color: #6E1A33;" onclick="enviarComanda()" disabled>
+                    <i class="bi bi-send-fill me-2"></i>Enviar para a Cozinha / Bar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    let itensComanda = [];
+    let categoriaAtual = null;
+
+    function filtrarCategoria(catId, btn) {
+        categoriaAtual = catId;
+        document.querySelectorAll('#categoriaPills button').forEach(b => {
+            b.classList.remove('btn-dark', 'active');
+            b.classList.add('btn-outline-secondary');
+        });
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-dark', 'active');
+        filtrarArtigos();
+    }
+
+    function filtrarArtigos() {
+        const termo = document.getElementById('inputPesquisaArtigo').value.toLowerCase().trim();
+        const cards = document.querySelectorAll('.artigo-card-col');
+
+        cards.forEach(card => {
+            const cat = card.getAttribute('data-cat');
+            const nome = card.getAttribute('data-nome');
+            const cod = card.getAttribute('data-cod');
+
+            const matchCat = !categoriaAtual || cat === categoriaAtual;
+            const matchTermo = !termo || nome.includes(termo) || cod.includes(termo);
+
+            if (matchCat && matchTermo) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    function adicionarItem(id, nome, preco) {
+        const existente = itensComanda.find(i => i.id === id);
+        if (existente) {
+            existente.quantidade++;
+        } else {
+            itensComanda.push({
+                id: id,
+                nome: nome,
+                preco: preco,
+                quantidade: 1,
+                notas: ''
+            });
+        }
+        renderizarComanda();
+    }
+
+    function alterarQtd(id, delta) {
+        const item = itensComanda.find(i => i.id === id);
+        if (!item) return;
+
+        item.quantidade += delta;
+        if (item.quantidade <= 0) {
+            itensComanda = itensComanda.filter(i => i.id !== id);
+        }
+        renderizarComanda();
+    }
+
+    function atualizarNotas(id, valor) {
+        const item = itensComanda.find(i => i.id === id);
+        if (item) item.notas = valor;
+    }
+
+    function removerItem(id) {
+        itensComanda = itensComanda.filter(i => i.id !== id);
+        renderizarComanda();
+    }
+
+    function limparComanda() {
+        itensComanda = [];
+        renderizarComanda();
+    }
+
+    function renderizarComanda() {
+        const container = document.getElementById('comandaItens');
+        const btnEnviar = document.getElementById('btnEnviarComanda');
+
+        if (itensComanda.length === 0) {
+            container.innerHTML = `
+                <div id="comandaVazia" class="text-center py-5 text-muted">
+                    <i class="bi bi-cart3 fs-1 text-muted d-block mb-2"></i>
+                    Selecione artigos no menu para adicionar à comanda.
+                </div>`;
+            document.getElementById('totalComanda').textContent = '0,00 MT';
+            document.getElementById('ivaComanda').textContent = '0,00 MT';
+            btnEnviar.disabled = true;
+            return;
+        }
+
+        btnEnviar.disabled = false;
+        let html = '<div class="list-group list-group-flush">';
+        let total = 0;
+
+        itensComanda.forEach(item => {
+            const sub = item.preco * item.quantidade;
+            total += sub;
+
+            html += `
+                <div class="list-group-item px-0 py-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="fw-bold">${item.nome}</div>
+                        <div class="fw-bold text-end">${sub.toFixed(2)} MT</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="input-group input-group-sm w-auto">
+                            <button type="button" class="btn btn-outline-secondary py-0 px-2" onclick="alterarQtd('${item.id}', -1)">-</button>
+                            <span class="input-group-text py-0 px-2 bg-white fw-bold">${item.quantidade}</span>
+                            <button type="button" class="btn btn-outline-secondary py-0 px-2" onclick="alterarQtd('${item.id}', 1)">+</button>
+                        </div>
+                        <input type="text" class="form-control form-control-sm mx-2" placeholder="Notas (ex: sem cebola)" 
+                               value="${item.notas}" oninput="atualizarNotas('${item.id}', this.value)" />
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removerItem('${item.id}')"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                </div>`;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+
+        const iva = total - (total / 1.16);
+        document.getElementById('totalComanda').textContent = total.toFixed(2) + ' MT';
+        document.getElementById('ivaComanda').textContent = iva.toFixed(2) + ' MT';
+    }
+
+    async function enviarComanda() {
+        if (itensComanda.length === 0) return;
+
+        const mesaIdVal = document.getElementById('selectMesa').value;
+        const mesaId = mesaIdVal ? mesaIdVal : null;
+        const observacoes = document.getElementById('inputObservacoesPedido').value;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const idempotencyKey = 'menova-cmd-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+
+        const payload = {
+            MesaId: mesaId,
+            Observacoes: observacoes,
+            Itens: itensComanda.map(i => ({
+                ArtigoId: i.id,
+                Quantidade: i.quantidade,
+                Notas: i.notas
+            }))
+        };
+
+        const btn = document.getElementById('btnEnviarComanda');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>A enviar...';
+
+        try {
+            const resp = await fetch('/pedidos/criar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token,
+                    'Idempotency-Key': idempotencyKey
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await resp.json();
+            if (data.sucesso) {
+                window.location.href = '/pedidos/detalhes/' + data.contaId;
+            } else {
+                alert(data.mensagem || 'Erro ao enviar comanda.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Enviar para a Cozinha / Bar';
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Falha na ligação com o servidor.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Enviar para a Cozinha / Bar';
+        }
+    }
+</script>
+}

@@ -1,0 +1,266 @@
+@model Menova.Application.DTOs.ContaDto
+@using Menova.Application.Security
+@inject Menova.Application.Interfaces.ICurrentUserService CurrentUser
+@{
+    ViewData["Title"] = $"Conta {Model.Numero}";
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <div class="d-flex align-items-center">
+            <a href="/pedidos" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Voltar</a>
+            <div>
+                <h3 class="mb-0 fw-bold" style="color: #6E1A33;">
+                    Conta @Model.Numero 
+                    <span class="badge @(Model.Estado == Menova.Domain.Pedidos.EstadoConta.Aberta ? "bg-success" : "bg-secondary") fs-6 ms-2">
+                        @Model.EstadoDescricao
+                    </span>
+                </h3>
+                <p class="text-muted small mb-0">
+                    @(Model.MesaNumero != null ? $"Mesa {Model.MesaNumero} ({Model.ZonaNome})" : "Balcão / Takeaway") | Aberta em @Model.CriadoEm.ToString("dd/MM/yyyy HH:mm") por @Model.CriadoPor
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        @if (Model.Estado == Menova.Domain.Pedidos.EstadoConta.Aberta)
+        {
+            @if (Model.MesaId.HasValue)
+            {
+                <a href="/pedidos/nova-comanda?mesaId=@Model.MesaId" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-plus-lg me-1"></i>Adicionar Artigos
+                </a>
+            }
+            @if (CurrentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar))
+            {
+                <a href="/caixa?contaId=@Model.Id" class="btn text-white py-2 px-3" style="background-color: #6E1A33;">
+                    <i class="bi bi-cash-stack me-1"></i>Cobrar Conta
+                </a>
+            }
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Lista de Itens dos Pedidos -->
+    <div class="col-lg-8">
+        <div class="card border shadow-sm">
+            <div class="card-header bg-light py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>Artigos Consumidos</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Artigo</th>
+                            <th class="text-center">Qtd</th>
+                            <th class="text-end">Preço Unit.</th>
+                            <th class="text-end">Total (MZN)</th>
+                            <th class="text-center">Estado</th>
+                            @if (Model.Estado == Menova.Domain.Pedidos.EstadoConta.Aberta && CurrentUser.TemPermissao(PermissoesCatalogo.ItensAnular))
+                            {
+                                <th class="text-end">Anular</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Pedidos.Any() || !Model.Pedidos.SelectMany(p => p.Itens).Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    Nenhum artigo adicionado nesta conta.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var p in Model.Pedidos)
+                            {
+                                <tr class="table-light">
+                                    <td colspan="6" class="py-1 px-3 small fw-bold text-muted">
+                                        <i class="bi bi-ticket-perforated me-1"></i>Comanda #@p.NumeroSequencial às @p.CriadoEm.ToString("HH:mm") por @p.CriadoPor
+                                    </td>
+                                </tr>
+                                @foreach (var item in p.Itens)
+                                {
+                                    <tr class="@(item.Anulado ? "opacity-50 text-decoration-line-through table-danger" : "")">
+                                        <td>
+                                            <div class="fw-bold">@item.NomeArtigo</div>
+                                            @if (!string.IsNullOrEmpty(item.Notas))
+                                            {
+                                                <div class="small text-muted"><i class="bi bi-chat-left-dots me-1"></i>@item.Notas</div>
+                                            }
+                                            @if (item.Opcoes != null && item.Opcoes.Any())
+                                            {
+                                                <div class="small text-muted">+ @string.Join(", ", item.Opcoes)</div>
+                                            }
+                                            @if (item.Anulado)
+                                            {
+                                                <div class="small text-danger fw-bold"><i class="bi bi-x-circle me-1"></i>Anulado: @item.AnuladoMotivo</div>
+                                            }
+                                        </td>
+                                        <td class="text-center fw-bold">@item.Quantidade.ToString("0.###")</td>
+                                        <td class="text-end">@item.PrecoUnitario.ToString("N2") MT</td>
+                                        <td class="text-end fw-bold">@item.TotalLiquido.ToString("N2") MT</td>
+                                        <td class="text-center">
+                                            @if (item.Anulado)
+                                            {
+                                                <span class="badge bg-danger">Anulado</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@item.EstadoDescricao</span>
+                                            }
+                                        </td>
+                                        @if (Model.Estado == Menova.Domain.Pedidos.EstadoConta.Aberta && CurrentUser.TemPermissao(PermissoesCatalogo.ItensAnular))
+                                        {
+                                            <td class="text-end">
+                                                @if (!item.Anulado)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" title="Anular Item"
+                                                            onclick="abrirModalAnularItem('@item.Id', '@item.NomeArtigo.Replace("'", "\\'")')">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo de Totais e Ações -->
+    <div class="col-lg-4">
+        <div class="card border shadow-sm mb-3">
+            <div class="card-header bg-light py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-calculator me-2"></i>Resumo da Conta</h5>
+            </div>
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Subtotal (s/ IVA):</span>
+                    <span>@Model.TotalBruto.ToString("N2") MT</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">IVA (16% Moçambique):</span>
+                    <span>@Model.TotalIva.ToString("N2") MT</span>
+                </div>
+                @if (Model.TotalDesconto > 0)
+                {
+                    <div class="d-flex justify-content-between mb-2 text-danger">
+                        <span>Desconto:</span>
+                        <span>- @Model.TotalDesconto.ToString("N2") MT</span>
+                    </div>
+                }
+                <hr class="my-2" />
+                <div class="d-flex justify-content-between align-items-center my-3">
+                    <span class="fs-5 fw-bold">Total a Pagar:</span>
+                    <span class="fs-4 fw-bold text-success">@Model.TotalLiquido.ToString("N2") MT</span>
+                </div>
+
+                @if (Model.Estado == Menova.Domain.Pedidos.EstadoConta.Aberta)
+                {
+                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.ItensAnular))
+                    {
+                        <hr class="my-3" />
+                        <button type="button" class="btn btn-outline-danger w-100" onclick="confirmarAnularConta('@Model.Id', '@Model.Numero')">
+                            <i class="bi bi-x-octagon me-1"></i>Anular Conta Inteira
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Anular Item -->
+<div class="modal fade" id="modalAnularItem" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Anular Artigo da Comanda</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalAnularItemId" />
+                <p>Tem a certeza que deseja anular o artigo <strong id="modalAnularItemNome"></strong>?</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motivo da Anulação *</label>
+                    <input type="text" id="modalAnularItemMotivo" class="form-control" placeholder="Ex: Cliente desistiu, erro de digitação..." required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">PIN de Supervisor (se já em preparação)</label>
+                    <input type="password" id="modalAnularItemPin" class="form-control" placeholder="PIN de 4 a 6 dígitos" maxlength="6" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="executarAnularItem()">Confirmar Anulação</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="formAnularConta" method="post" action="/pedidos/anular-conta/@Model.Id" style="display:none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="motivo" id="inputMotivoAnularConta" />
+</form>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    function abrirModalAnularItem(id, nome) {
+        document.getElementById('modalAnularItemId').value = id;
+        document.getElementById('modalAnularItemNome').textContent = nome;
+        document.getElementById('modalAnularItemMotivo').value = '';
+        document.getElementById('modalAnularItemPin').value = '';
+        new bootstrap.Modal(document.getElementById('modalAnularItem')).show();
+    }
+
+    async function executarAnularItem() {
+        const id = document.getElementById('modalAnularItemId').value;
+        const motivo = document.getElementById('modalAnularItemMotivo').value.trim();
+        const pin = document.getElementById('modalAnularItemPin').value.trim();
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        if (!motivo) {
+            alert('O motivo é obrigatório.');
+            return;
+        }
+
+        try {
+            const resp = await fetch('/pedidos/anular-item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ ItemId: id, Motivo: motivo, PinSupervisor: pin || null })
+            });
+
+            const data = await resp.json();
+            if (data.sucesso) {
+                window.location.reload();
+            } else {
+                alert(data.mensagem || 'Erro ao anular item.');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Falha na comunicação com o servidor.');
+        }
+    }
+
+    function confirmarAnularConta(contaId, numero) {
+        const motivo = prompt(`Tem a certeza que deseja anular a Conta ${numero}? Digite o motivo:`);
+        if (motivo && motivo.trim().length > 0) {
+            document.getElementById('inputMotivoAnularConta').value = motivo.trim();
+            document.getElementById('formAnularConta').submit();
+        }
+    }
+</script>
+}

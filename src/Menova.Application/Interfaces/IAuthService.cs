@@ -5,6 +5,7 @@ public interface IPinService
     string HashPin(string pin, string salt);
     bool VerificarPin(string pin, string salt, string hashArmazenado);
     string GerarSalt();
+    Task<bool> ValidarPinSupervisorAsync(string pin, CancellationToken cancellationToken = default);
 }
 
 public record ResultadoLogin(

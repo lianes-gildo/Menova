@@ -45,6 +45,11 @@ public static class DependencyInjection
         services.AddScoped<IMenuService, MenuService>();
         services.AddScoped<ISalaService, SalaService>();
 
+        // Pedidos, Contas e KDS
+        services.AddScoped<IContaService, ContaService>();
+        services.AddScoped<IPedidoService, PedidoService>();
+        services.AddScoped<IKdsService, KdsService>();
+
         return services;
     }
 }
