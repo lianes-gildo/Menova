@@ -81,6 +81,7 @@ public class RelatoriosController : Controller
     }
 
     [HttpGet("exportar/csv")]
+    [Authorize(Policy = PermissoesCatalogo.RelatoriosExportar)]
     public async Task<IActionResult> ExportarCsv(DateTime? inicio = null, DateTime? fim = null)
     {
         var dataFim = fim ?? DateTime.UtcNow;
@@ -93,6 +94,7 @@ public class RelatoriosController : Controller
     }
 
     [HttpGet("exportar/excel")]
+    [Authorize(Policy = PermissoesCatalogo.RelatoriosExportar)]
     public async Task<IActionResult> ExportarExcel(DateTime? inicio = null, DateTime? fim = null)
     {
         var dataFim = fim ?? DateTime.UtcNow;
@@ -105,6 +107,7 @@ public class RelatoriosController : Controller
     }
 
     [HttpGet("exportar/pdf")]
+    [Authorize(Policy = PermissoesCatalogo.RelatoriosExportar)]
     public async Task<IActionResult> ExportarPdf(DateTime? inicio = null, DateTime? fim = null)
     {
         var dataFim = fim ?? DateTime.UtcNow;

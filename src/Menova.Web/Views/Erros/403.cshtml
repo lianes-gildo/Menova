@@ -1,13 +1,18 @@
+@using Menova.Application.Security
 @{
     Layout = "_LayoutLogin";
     ViewData["Title"] = "Acesso Negado (403)";
+    var perfil = (string?)ViewBag.Perfil ?? "";
+    var isGarcom = User.IsInRole(PerfisSistema.Garcom) || string.Equals(perfil, "GARCOM", StringComparison.OrdinalIgnoreCase);
+    var isCozinha = User.IsInRole(PerfisSistema.CozinhaBar) || string.Equals(perfil, "COZINHA", StringComparison.OrdinalIgnoreCase);
+    var isCaixa = User.IsInRole(PerfisSistema.Caixa) || string.Equals(perfil, "CAIXA", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="text-center">
     <div class="display-1 fw-bold mb-2" style="color: var(--mv-erro);">403</div>
     <h4 class="fw-bold mb-3" style="color: var(--mv-vinho-900);">Acesso Negado</h4>
     <p class="text-muted small mb-4">
-        O seu perfil atual (<strong>@ViewBag.Perfil</strong>) não dispõe de permissões para aceder a este recurso.
+        O seu perfil atual (<strong>@(string.IsNullOrWhiteSpace(perfil) ? "Sem Perfil" : perfil)</strong>) não dispõe de permissões para aceder a este recurso.
     </p>
 
     <div class="alert alert-light border small text-muted mb-4 text-start">
@@ -15,33 +20,43 @@
         <div class="mt-2 text-xs">ID de Correlação: <code>@ViewBag.CorrelacaoId</code></div>
     </div>
 
-    <div class="d-flex gap-2">
-        <a href="javascript:history.back()" class="btn btn-outline-secondary flex-fill">
-            <i class="bi bi-arrow-left me-1"></i> Voltar
-        </a>
-        @if (string.Equals((string?)ViewBag.Perfil, "GARCOM", StringComparison.OrdinalIgnoreCase))
+    <div class="d-grid gap-2">
+        @if (isGarcom)
         {
-            <a href="/garcom" class="btn btn-primary flex-fill">
+            <a href="/garcom" class="btn btn-primary py-2 fw-semibold">
                 <i class="bi bi-phone-fill me-1"></i> Ir para o App Garçom
             </a>
         }
-        else if (string.Equals((string?)ViewBag.Perfil, "COZINHA", StringComparison.OrdinalIgnoreCase))
+        else if (isCozinha)
         {
-            <a href="/kds" class="btn btn-primary flex-fill">
+            <a href="/kds" class="btn btn-primary py-2 fw-semibold">
                 <i class="bi bi-fire me-1"></i> Ir para Cozinha / KDS
             </a>
         }
-        else if (string.Equals((string?)ViewBag.Perfil, "CAIXA", StringComparison.OrdinalIgnoreCase))
+        else if (isCaixa)
         {
-            <a href="/caixa" class="btn btn-primary flex-fill">
+            <a href="/caixa" class="btn btn-primary py-2 fw-semibold">
                 <i class="bi bi-cash-stack me-1"></i> Ir para o Caixa
             </a>
         }
         else
         {
-            <a href="/dashboard" class="btn btn-primary flex-fill">
+            <a href="/dashboard" class="btn btn-primary py-2 fw-semibold">
                 <i class="bi bi-house me-1"></i> Painel Inicial
             </a>
         }
+
+        <div class="row g-2">
+            <div class="col-6">
+                <a href="javascript:history.back()" class="btn btn-outline-secondary w-100 py-2">
+                    <i class="bi bi-arrow-left me-1"></i> Voltar
+                </a>
+            </div>
+            <div class="col-6">
+                <a href="/logout" class="btn btn-outline-danger w-100 py-2">
+                    <i class="bi bi-box-arrow-right me-1"></i> Sair
+                </a>
+            </div>
+        </div>
     </div>
 </div>

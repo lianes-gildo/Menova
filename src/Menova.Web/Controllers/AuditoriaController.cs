@@ -66,6 +66,7 @@ public class AuditoriaController : Controller
     }
 
     [HttpPost("verificar")]
+    [Authorize(Policy = PermissoesCatalogo.AuditoriaVerificarIntegridade)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Verificar()
     {

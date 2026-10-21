@@ -27,7 +27,7 @@ public class DashboardController : Controller
     [HttpGet("dashboard")]
     public async Task<IActionResult> Index()
     {
-        // Redirecionamento inteligente para perfis estritamente operacionais
+        // 1. Redirecionamento inteligente para perfis estritamente operacionais
         if (User.IsInRole(PerfisSistema.Garcom) && !User.IsInRole(PerfisSistema.Administrador) && !User.IsInRole(PerfisSistema.Gerente))
         {
             return RedirectToAction("Index", "Garcom");
@@ -41,6 +41,25 @@ public class DashboardController : Controller
         if (User.IsInRole(PerfisSistema.Caixa) && !User.IsInRole(PerfisSistema.Administrador) && !User.IsInRole(PerfisSistema.Gerente))
         {
             return RedirectToAction("Index", "Caixa");
+        }
+
+        // 2. Proteção de Painel Executivo / Financeiro: utilizadores sem PainelVer são direcionados ao seu posto
+        if (!_currentUser.TemPermissao(PermissoesCatalogo.PainelVer))
+        {
+            if (_currentUser.TemPermissao(PermissoesCatalogo.ContasAbrir))
+            {
+                return RedirectToAction("Index", "Garcom");
+            }
+            if (_currentUser.TemPermissao(PermissoesCatalogo.CaixaAbrir) || _currentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar))
+            {
+                return RedirectToAction("Index", "Caixa");
+            }
+            if (_currentUser.TemPermissao(PermissoesCatalogo.CozinhaVer))
+            {
+                return RedirectToAction("Index", "Kds");
+            }
+
+            return RedirectToAction("AcessoNegado", "Erros");
         }
 
         var restaurante = await _context.Restaurante.FirstOrDefaultAsync();

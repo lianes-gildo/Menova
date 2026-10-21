@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Menova.Web.Controllers;
 
-[Authorize]
+[Authorize(Policy = PermissoesCatalogo.CaixaAbrir)]
 [Route("caixa")]
 public class CaixaController : Controller
 {
@@ -88,6 +88,7 @@ public class CaixaController : Controller
     }
 
     [HttpPost("fechar")]
+    [Authorize(Policy = PermissoesCatalogo.CaixaFechar)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Fechar(FecharCaixaDto dto)
     {
@@ -106,6 +107,7 @@ public class CaixaController : Controller
     }
 
     [HttpPost("movimento")]
+    [Authorize(Policy = PermissoesCatalogo.CaixaMovimentos)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Movimento(MovimentoCaixaEntradaDto dto)
     {
@@ -140,6 +142,7 @@ public class CaixaController : Controller
     }
 
     [HttpGet("pagamento/{contaId:guid}")]
+    [Authorize(Policy = PermissoesCatalogo.CaixaCobrar)]
     public async Task<IActionResult> Pagamento(Guid contaId)
     {
         var conta = await _contaService.GetContaPorIdAsync(contaId);
@@ -177,6 +180,7 @@ public class CaixaController : Controller
     }
 
     [HttpPost("pagamento")]
+    [Authorize(Policy = PermissoesCatalogo.CaixaCobrar)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ProcessarPagamento(PagamentoEntradaDto dto, bool imprimirRecibo = true)
     {
@@ -239,6 +243,7 @@ public class CaixaController : Controller
     }
 
     [HttpPost("x/{sessaoId:guid}/imprimir")]
+    [Authorize(Policy = PermissoesCatalogo.CaixaReimprimir)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ImprimirRelatorioX(Guid sessaoId)
     {
@@ -262,6 +267,7 @@ public class CaixaController : Controller
     }
 
     [HttpPost("fecho-z/{sessaoId:guid}")]
+    [Authorize(Policy = PermissoesCatalogo.CaixaFechar)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EmitirFechoZ(Guid sessaoId)
     {
@@ -294,6 +300,7 @@ public class CaixaController : Controller
     }
 
     [HttpGet("z/{documentoZId:guid}")]
+    [Authorize(Policy = PermissoesCatalogo.ZVer)]
     public async Task<IActionResult> DocumentoZ(Guid documentoZId)
     {
         var docZ = await _fechoZService.ObterZPorIdAsync(documentoZId);
@@ -308,6 +315,7 @@ public class CaixaController : Controller
     }
 
     [HttpPost("z/{documentoZId:guid}/reimprimir")]
+    [Authorize(Policy = PermissoesCatalogo.CaixaReimprimir)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ReimprimirZ(Guid documentoZId)
     {
@@ -330,6 +338,7 @@ public class CaixaController : Controller
     }
 
     [HttpGet("historico-z")]
+    [Authorize(Policy = PermissoesCatalogo.ZVer)]
     public async Task<IActionResult> HistoricoZ()
     {
         var lista = await _fechoZService.ObterHistoricoZAsync();

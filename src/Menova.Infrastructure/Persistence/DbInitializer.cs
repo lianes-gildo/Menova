@@ -79,19 +79,18 @@ public static class DbInitializer
 
             var todasPermissoes = await context.Permissoes.ToListAsync();
 
-            // Admin tem todas
-            await AtribuirPermissoesAsync(context, adminPerfil.Id, todasPermissoes.Select(p => p.Codigo));
+            // Admin tem todas as permissões
+            await SincronizarPermissoesAsync(context, adminPerfil.Id, todasPermissoes.Select(p => p.Codigo));
 
-            // Gerente tem todas exceto gerir administradores e restaurar backups
+            // Gerente tem todas exceto gerir administradores/perfis e restaurar backups
             var permissoesGerente = todasPermissoes
                 .Where(p => p.Codigo != PermissoesCatalogo.BackupsRestaurar && p.Codigo != PermissoesCatalogo.PerfisGerir)
                 .Select(p => p.Codigo);
-            await AtribuirPermissoesAsync(context, gerentePerfil.Id, permissoesGerente);
+            await SincronizarPermissoesAsync(context, gerentePerfil.Id, permissoesGerente);
 
-            // Caixa
+            // Operador de Caixa: exclusivo operações de caixa, cobrança, emissão Z e consulta de menu/mesas
             var permissoesCaixa = new[]
             {
-                PermissoesCatalogo.PainelVer,
                 PermissoesCatalogo.CaixaAbrir,
                 PermissoesCatalogo.CaixaCobrar,
                 PermissoesCatalogo.CaixaFechar,
@@ -106,12 +105,11 @@ public static class DbInitializer
                 PermissoesCatalogo.ItensEnviar,
                 PermissoesCatalogo.MenuVer
             };
-            await AtribuirPermissoesAsync(context, caixaPerfil.Id, permissoesCaixa);
+            await SincronizarPermissoesAsync(context, caixaPerfil.Id, permissoesCaixa);
 
-            // Garçom
+            // Garçom: exclusivo salão, mesas, envio de pedidos e consulta de artigos/esgotados
             var permissoesGarcom = new[]
             {
-                PermissoesCatalogo.PainelVer,
                 PermissoesCatalogo.MesasVer,
                 PermissoesCatalogo.ContasAbrir,
                 PermissoesCatalogo.ContasVerTodas,
@@ -121,18 +119,17 @@ public static class DbInitializer
                 PermissoesCatalogo.MenuVer,
                 PermissoesCatalogo.ArtigosEsgotar
             };
-            await AtribuirPermissoesAsync(context, garcomPerfil.Id, permissoesGarcom);
+            await SincronizarPermissoesAsync(context, garcomPerfil.Id, permissoesGarcom);
 
-            // Cozinha
+            // Cozinha e Bar: exclusivo ecrã KDS de preparação e controlo de esgotados 86
             var permissoesCozinha = new[]
             {
-                PermissoesCatalogo.PainelVer,
                 PermissoesCatalogo.CozinhaVer,
                 PermissoesCatalogo.CozinhaOperar,
                 PermissoesCatalogo.ArtigosEsgotar,
                 PermissoesCatalogo.MenuVer
             };
-            await AtribuirPermissoesAsync(context, cozinhaPerfil.Id, permissoesCozinha);
+            await SincronizarPermissoesAsync(context, cozinhaPerfil.Id, permissoesCozinha);
 
             // 5. Semear Restaurante Único (Padrão Moçambique)
             var restaurante = await context.Restaurante.FirstOrDefaultAsync();
@@ -305,6 +302,43 @@ public static class DbInitializer
                 await context.SaveChangesAsync();
             }
 
+            // 6.4 Semear Utilizador Gerente Inicial
+            var gerenteUser = await context.Utilizadores
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.NomeUtilizador.ToLower() == "gerente1");
+
+            if (gerenteUser == null)
+            {
+                gerenteUser = new Utilizador
+                {
+                    NomeUtilizador = "gerente1",
+                    NomeCompleto = "Gerente de Operação 01",
+                    Email = "gerente1@menova.mz",
+                    Telefone = "+258 84 555 6666",
+                    Foto = "default.jpg",
+                    Ativo = true,
+                    DeveAlterarPalavraPasse = false,
+                    SeloSeguranca = Guid.NewGuid().ToString("N"),
+                    HashPin = GerarHashPin("5555")
+                };
+                gerenteUser.HashPalavraPasse = passwordHasher.HashPassword(gerenteUser, "Gerente@2026");
+                context.Utilizadores.Add(gerenteUser);
+                await context.SaveChangesAsync();
+
+                context.UtilizadoresPerfis.Add(new UtilizadorPerfil
+                {
+                    UtilizadorId = gerenteUser.Id,
+                    PerfilId = gerentePerfil.Id
+                });
+                await context.SaveChangesAsync();
+                logger.LogInformation("Utilizador gerente1 inicial criado com sucesso (PIN: 5555, Palavra-passe: Gerente@2026).");
+            }
+            else
+            {
+                gerenteUser.HashPin = GerarHashPin("5555");
+                await context.SaveChangesAsync();
+            }
+
             // 7. Semear Menu, Sala, Estações e Artigos Padrão
             await SemearMenuESalaAsync(context, logger);
 
@@ -318,16 +352,25 @@ public static class DbInitializer
         }
     }
 
-    private static async Task AtribuirPermissoesAsync(AppDbContext context, Guid perfilId, IEnumerable<string> codigos)
+    private static async Task SincronizarPermissoesAsync(AppDbContext context, Guid perfilId, IEnumerable<string> codigosEsperados)
     {
+        var listaEsperada = codigosEsperados.Distinct().ToList();
         var atuais = await context.PerfisPermissoes
             .Where(pp => pp.PerfilId == perfilId)
-            .Select(pp => pp.PermissaoCodigo)
             .ToListAsync();
 
-        var paraInserir = codigos
-            .Distinct()
-            .Except(atuais)
+        var codigosAtuais = atuais.Select(pp => pp.PermissaoCodigo).ToList();
+
+        // 1. Remover permissões que já não devem pertencer ao perfil
+        var paraRemover = atuais.Where(pp => !listaEsperada.Contains(pp.PermissaoCodigo)).ToList();
+        if (paraRemover.Any())
+        {
+            context.PerfisPermissoes.RemoveRange(paraRemover);
+        }
+
+        // 2. Inserir novas permissões em falta
+        var paraInserir = listaEsperada
+            .Except(codigosAtuais)
             .Select(cod => new PerfilPermissao
             {
                 PerfilId = perfilId,

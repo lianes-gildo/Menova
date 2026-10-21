@@ -32,11 +32,40 @@ public class MenovaClaimsTransformation : IClaimsTransformation
             return principal;
         }
 
+        // 1. Sincronizar Perfis / Roles atribuídos ao utilizador
+        var cacheRolesKey = $"user_roles_{userId}";
+        if (!_cache.TryGetValue<List<string>>(cacheRolesKey, out var roles))
+        {
+            roles = await _context.UtilizadoresPerfis
+                .Where(up => up.UtilizadorId == userId && up.Perfil.Ativo)
+                .Select(up => up.Perfil.Codigo)
+                .Distinct()
+                .ToListAsync();
+
+            _cache.Set(cacheRolesKey, roles, TimeSpan.FromMinutes(10));
+        }
+
+        if (roles != null)
+        {
+            foreach (var role in roles)
+            {
+                if (!identity.HasClaim(ClaimTypes.Role, role))
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Role, role));
+                }
+                if (!identity.HasClaim("perfil", role))
+                {
+                    identity.AddClaim(new Claim("perfil", role));
+                }
+            }
+        }
+
+        // 2. Sincronizar Permissões Granulares
         var cacheKey = $"user_permissions_{userId}";
         if (!_cache.TryGetValue<List<string>>(cacheKey, out var permissoes))
         {
             permissoes = await _context.UtilizadoresPerfis
-                .Where(up => up.UtilizadorId == userId)
+                .Where(up => up.UtilizadorId == userId && up.Perfil.Ativo)
                 .SelectMany(up => up.Perfil.PerfisPermissoes.Select(pp => pp.PermissaoCodigo))
                 .Distinct()
                 .ToListAsync();

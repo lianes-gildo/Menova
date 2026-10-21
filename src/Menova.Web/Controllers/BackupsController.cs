@@ -32,6 +32,7 @@ public class BackupsController : Controller
     }
 
     [HttpPost("criar")]
+    [Authorize(Policy = PermissoesCatalogo.BackupsExecutar)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(string? motivo = null)
     {
@@ -99,6 +100,7 @@ public class BackupsController : Controller
     }
 
     [HttpPost("eliminar/{nomeFicheiro}")]
+    [Authorize(Policy = PermissoesCatalogo.BackupsExecutar)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Eliminar(string nomeFicheiro)
     {
