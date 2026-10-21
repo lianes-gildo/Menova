@@ -1,6 +1,11 @@
 @model List<Menova.Application.DTOs.ZonaDto>
 @using Menova.Domain.Sala
+@using Menova.Domain.Identity
 @{
+    if (User.IsInRole(PerfisSistema.Garcom))
+    {
+        Layout = "_LayoutGarcom";
+    }
     ViewData["Title"] = "Gestão de Salão e Mesas";
     var totalMesas = Model.Sum(z => z.TotalMesas);
     var ocupadas = Model.Sum(z => z.MesasOcupadas);

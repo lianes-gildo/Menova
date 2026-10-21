@@ -87,6 +87,18 @@ public class AuthService : IAuthService
         // Sucesso na autenticação
         utilizador.RegistarSucessoLogin();
 
+        // 1. Invalidar sessões anteriores (Garantir 1 única sessão ativa por utilizador)
+        var sessoesAnteriores = await _context.SessoesUtilizador
+            .Where(s => s.UtilizadorId == utilizador.Id && !s.Revogada)
+            .ToListAsync(cancellationToken);
+        foreach (var s in sessoesAnteriores)
+        {
+            s.Revogada = true;
+        }
+
+        // 2. Gerar novo Selo de Segurança único para invalidar outros dispositivos
+        utilizador.SeloSeguranca = Guid.NewGuid().ToString("N");
+
         var sessao = new SessaoUtilizador
         {
             UtilizadorId = utilizador.Id,
@@ -116,7 +128,8 @@ public class AuthService : IAuthService
             UtilizadorId: utilizador.Id,
             NomeCompleto: utilizador.NomeCompleto,
             NomeUtilizador: utilizador.NomeUtilizador,
-            PerfilCodigo: perfilPrincipal);
+            PerfilCodigo: perfilPrincipal,
+            SeloSeguranca: utilizador.SeloSeguranca);
     }
 
     public async Task<ResultadoLogin> AutenticarPinAsync(
@@ -189,6 +202,18 @@ public class AuthService : IAuthService
         // Sucesso na autenticação por PIN
         utilizador.RegistarSucessoLogin();
 
+        // 1. Invalidar sessões anteriores (Garantir 1 única sessão ativa por utilizador)
+        var sessoesAnteriores = await _context.SessoesUtilizador
+            .Where(s => s.UtilizadorId == utilizador.Id && !s.Revogada)
+            .ToListAsync(cancellationToken);
+        foreach (var s in sessoesAnteriores)
+        {
+            s.Revogada = true;
+        }
+
+        // 2. Gerar novo Selo de Segurança único para invalidar outros dispositivos
+        utilizador.SeloSeguranca = Guid.NewGuid().ToString("N");
+
         var sessao = new SessaoUtilizador
         {
             UtilizadorId = utilizador.Id,
@@ -219,7 +244,8 @@ public class AuthService : IAuthService
             UtilizadorId: utilizador.Id,
             NomeCompleto: utilizador.NomeCompleto,
             NomeUtilizador: utilizador.NomeUtilizador,
-            PerfilCodigo: perfilPrincipal);
+            PerfilCodigo: perfilPrincipal,
+            SeloSeguranca: utilizador.SeloSeguranca);
     }
 
     public async Task<(bool Sucesso, string? MensagemErro)> AlterarPalavraPasseAsync(

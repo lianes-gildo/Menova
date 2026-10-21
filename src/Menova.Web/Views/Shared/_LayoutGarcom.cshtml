@@ -84,9 +84,9 @@
 <body class="d-flex flex-column min-vh-100">
     <!-- Barra Superior Móvel -->
     <header class="garcom-navbar d-flex justify-content-between align-items-center">
-        <div class="garcom-brand user-select-none" style="cursor: default;">
-            <img src="~/icons/icon-180.png" alt="Menova" />
-            <span class="fs-5">Menova <span class="fw-normal opacity-75 fs-6">Garçom</span></span>
+        <div class="garcom-brand user-select-none d-flex align-items-center gap-2" style="cursor: default;">
+            <img src="~/menova_logo_0f.png" alt="Menova" style="height: 28px !important; max-height: 28px !important; width: auto !important; max-width: 125px !important; object-fit: contain !important; display: block !important;" />
+            <span class="badge bg-white-subtle text-white border border-white-subtle px-2 py-0 fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.04em;">ATENDIMENTO</span>
         </div>
         
         <div class="d-flex align-items-center gap-2">
@@ -99,10 +99,10 @@
                     <i class="bi bi-person-circle me-1"></i>@(CurrentUser.NomeCompleto?.Split(' ')[0] ?? CurrentUser.NomeUtilizador)
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><h6 class="dropdown-header">Garçom: @CurrentUser.NomeUtilizador</h6></li>
-                    <li><a class="dropdown-item" href="/garcom"><i class="bi bi-phone me-2"></i>App Garçom</a></li>
-                    <li><a class="dropdown-item" href="/mesas"><i class="bi bi-layout-wtf me-2"></i>Salão e Mesas</a></li>
-                    <li><a class="dropdown-item" href="/pedidos"><i class="bi bi-receipt me-2"></i>Pedidos e Comandas</a></li>
+                    <li><h6 class="dropdown-header">Colaborador: @CurrentUser.NomeUtilizador</h6></li>
+                    <li><a class="dropdown-item" href="/garcom"><i class="bi bi-phone me-2"></i>Ementa &amp; Pedido</a></li>
+                    <li><a class="dropdown-item" href="/mesas"><i class="bi bi-layout-wtf me-2"></i>Salão &amp; Mesas</a></li>
+                    <li><a class="dropdown-item" href="/pedidos"><i class="bi bi-receipt me-2"></i>Comandas Ativas</a></li>
                     <li><a class="dropdown-item" href="/app"><i class="bi bi-download me-2"></i>Instalar Aplicação</a></li>
                     @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
                     {
@@ -121,6 +121,24 @@
             </div>
         </div>
     </header>
+
+    <!-- Subnav Coeso e Estruturado do Garçom (Unificado em todo o sistema) -->
+    @{
+        var ctrlAtual = ViewContext.RouteData.Values["Controller"]?.ToString();
+    }
+    <nav class="bg-white border-bottom shadow-sm px-2 py-1 sticky-top" style="top: 48px; z-index: 1025;">
+        <div class="d-flex align-items-center justify-content-center gap-2">
+            <a href="/garcom" class="btn btn-sm @(ctrlAtual == "Garcom" ? "text-white" : "btn-light border") px-3 py-1 fw-semibold rounded-pill" style="@(ctrlAtual == "Garcom" ? "background-color: #6E1A33; border-color: #6E1A33;" : "")">
+                <i class="bi bi-phone-fill me-1"></i>Ementa &amp; Pedido
+            </a>
+            <a href="/mesas" class="btn btn-sm @(ctrlAtual == "Mesas" ? "text-white" : "btn-light border") px-3 py-1 fw-semibold rounded-pill" style="@(ctrlAtual == "Mesas" ? "background-color: #6E1A33; border-color: #6E1A33;" : "")">
+                <i class="bi bi-layout-wtf me-1"></i>Salão &amp; Mesas
+            </a>
+            <a href="/pedidos" class="btn btn-sm @(ctrlAtual == "Pedidos" ? "text-white" : "btn-light border") px-3 py-1 fw-semibold rounded-pill" style="@(ctrlAtual == "Pedidos" ? "background-color: #6E1A33; border-color: #6E1A33;" : "")">
+                <i class="bi bi-receipt-cutoff me-1"></i>Comandas
+            </a>
+        </div>
+    </nav>
 
     <!-- Contentor de Toasts de Notificação (Substitui alerts do navegador) -->
     <div class="toast-container-mobile" id="mobileToastContainer">

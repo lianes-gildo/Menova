@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Claims;
 using FluentValidation;
 using Menova.Application.DTOs;
 using Menova.Application.Interfaces;
@@ -8,6 +9,7 @@ using Menova.Infrastructure.Persistence;
 using Menova.Web.Middlewares;
 using Menova.Web.Security;
 using Menova.Web.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
@@ -60,7 +62,7 @@ builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
 // 6. Utilizador Atual
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-// 7. Autenticação por Cookies
+// 7. Autenticação por Cookies com Controlo de Sessão Única e Expiração por Inatividade
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -75,7 +77,43 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LogoutPath = "/auth/logout";
         options.AccessDeniedPath = "/erros/acesso-negado";
         options.SlidingExpiration = true;
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(15); // 15 minutos de inatividade
+
+        // Validação Estrita de Sessão Concorrente: 2 ou mais dispositivos não podem partilhar a mesma sessão
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnValidatePrincipal = async context =>
+            {
+                var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var seloClaim = context.Principal?.FindFirst("selo_seguranca")?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || string.IsNullOrEmpty(seloClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync();
+                    return;
+                }
+
+                var db = context.HttpContext.RequestServices.GetRequiredService<IAppDbContext>();
+                var utilizador = await db.Utilizadores
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == userId && !u.EstaEliminado);
+
+                if (utilizador == null || !utilizador.Ativo || utilizador.SeloSeguranca != seloClaim)
+                {
+                    // Invalidado por novo login noutro dispositivo ou conta desativada
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync();
+                    context.Response.Cookies.Append("menova_logout_motivo", "sessao_duplicada", new CookieOptions
+                    {
+                        Path = "/",
+                        HttpOnly = false,
+                        SameSite = SameSiteMode.Lax,
+                        MaxAge = TimeSpan.FromSeconds(30)
+                    });
+                }
+            }
+        };
     });
 
 // 7. Autorização Menova por Políticas Granulares

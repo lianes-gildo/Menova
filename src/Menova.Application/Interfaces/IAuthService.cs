@@ -17,7 +17,8 @@ public record ResultadoLogin(
     Guid? UtilizadorId = null,
     string? NomeCompleto = null,
     string? NomeUtilizador = null,
-    string? PerfilCodigo = null);
+    string? PerfilCodigo = null,
+    string? SeloSeguranca = null);
 
 public interface IAuthService
 {

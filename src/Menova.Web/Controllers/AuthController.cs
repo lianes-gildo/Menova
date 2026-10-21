@@ -35,9 +35,25 @@ public class AuthController : Controller
     [HttpHead("login")]
     [HttpHead("/login")]
     [AllowAnonymous]
-    public IActionResult Login(string? returnUrl = null)
+    public IActionResult Login(string? returnUrl = null, string? motivo = null)
     {
-        if (User.Identity?.IsAuthenticated == true)
+        // 1. Verificar se há notificação de logout por concorrência ou inatividade
+        if (string.IsNullOrEmpty(motivo) && Request.Cookies.TryGetValue("menova_logout_motivo", out var cookieMotivo))
+        {
+            motivo = cookieMotivo;
+            Response.Cookies.Delete("menova_logout_motivo");
+        }
+
+        if (motivo == "sessao_duplicada")
+        {
+            ViewBag.AlertaMotivo = "A sua sessão foi encerrada porque foi iniciada sessão noutro dispositivo. Não é permitida a utilização simultânea da mesma conta em múltiplos dispositivos.";
+        }
+        else if (motivo == "inactividade")
+        {
+            ViewBag.AlertaMotivo = "A sua sessão expirou automaticamente por inatividade (15 minutos). Por favor, inicie sessão novamente.";
+        }
+
+        if (User.Identity?.IsAuthenticated == true && string.IsNullOrEmpty(motivo))
         {
             return RedirectToAction("Index", "Dashboard");
         }
@@ -75,21 +91,22 @@ public class AuthController : Controller
             return View(model);
         }
 
-        // Criar claims e autenticar com Cookie
+        // Criar claims e autenticar com Cookie contendo Selo de Segurança único
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, resultado.UtilizadorId!.Value.ToString()),
             new(ClaimTypes.Name, resultado.NomeUtilizador!),
             new("nome_completo", resultado.NomeCompleto ?? resultado.NomeUtilizador!),
             new(ClaimTypes.Role, resultado.PerfilCodigo ?? "OPERADOR"),
-            new("deve_alterar_palavra_passe", resultado.DeveAlterarPalavraPasse ? "true" : "false")
+            new("deve_alterar_palavra_passe", resultado.DeveAlterarPalavraPasse ? "true" : "false"),
+            new("selo_seguranca", resultado.SeloSeguranca ?? string.Empty)
         };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var authProperties = new AuthenticationProperties
         {
             IsPersistent = model.LembrarMe,
-            ExpiresUtc = model.LembrarMe ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddMinutes(30)
+            ExpiresUtc = model.LembrarMe ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddMinutes(15)
         };
 
         await HttpContext.SignInAsync(
@@ -130,21 +147,22 @@ public class AuthController : Controller
             return RedirectToAction(nameof(Login), new { returnUrl, modo = "pin" });
         }
 
-        // Criar claims e autenticar com Cookie
+        // Criar claims e autenticar com Cookie com Selo de Segurança único
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, resultado.UtilizadorId!.Value.ToString()),
             new(ClaimTypes.Name, resultado.NomeUtilizador!),
             new("nome_completo", resultado.NomeCompleto ?? resultado.NomeUtilizador!),
             new(ClaimTypes.Role, resultado.PerfilCodigo ?? "GARCOM"),
-            new("deve_alterar_palavra_passe", "false")
+            new("deve_alterar_palavra_passe", "false"),
+            new("selo_seguranca", resultado.SeloSeguranca ?? string.Empty)
         };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var authProperties = new AuthenticationProperties
         {
             IsPersistent = true,
-            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(12)
+            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(15)
         };
 
         await HttpContext.SignInAsync(
@@ -153,6 +171,14 @@ public class AuthController : Controller
             authProperties);
 
         return RedirecionarPorPerfil(resultado.PerfilCodigo, returnUrl);
+    }
+
+    [HttpGet("heartbeat")]
+    [HttpPost("heartbeat")]
+    [Authorize]
+    public IActionResult Heartbeat()
+    {
+        return Ok(new { ativo = true, timestamp = DateTime.UtcNow });
     }
 
     private IActionResult RedirecionarPorPerfil(string? perfilCodigo, string? returnUrl)

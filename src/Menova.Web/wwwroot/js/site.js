@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initToasts();
     initConfirmModals();
     initAutoTablePagination();
+    initInactivityWatchdog();
 });
 
 // 1. Controlo da Barra Lateral (Sidebar) com Persistência e Suporte Móvel
@@ -398,3 +399,126 @@ window.refreshTablePagination = function (tableId) {
     const el = typeof tableId === 'string' ? document.getElementById(tableId) : tableId;
     if (el && el._refreshPagination) el._refreshPagination();
 };
+
+// =========================================================================
+// 7. Controlo de Inatividade e Sessão Única Concorrente (Senior Security)
+// =========================================================================
+function initInactivityWatchdog() {
+    // Não executar no ecrã de login
+    if (document.body.classList.contains('login-page') || window.location.pathname.startsWith('/auth/login')) {
+        return;
+    }
+
+    const INACTIVITY_TIMEOUT_SEC = 15 * 60; // 15 minutos (tempo de expiração automática)
+    const WARNING_TIMEOUT_SEC = 13 * 60;    // 13 minutos (aviso prévio de 2 minutos)
+    const HEARTBEAT_INTERVAL_SEC = 4 * 60; // Heartbeat a cada 4 minutos de atividade real
+
+    let idleSeconds = 0;
+    let secondsSinceLastHeartbeat = 0;
+    let warningModalInstance = null;
+
+    function resetActivity() {
+        idleSeconds = 0;
+        if (warningModalInstance) {
+            warningModalInstance.hide();
+            warningModalInstance = null;
+        }
+    }
+
+    // Monitorizar toques, cliques e teclas do utilizador
+    const events = ['mousedown', 'mousemove', 'keypress', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(evt => {
+        window.addEventListener(evt, resetActivity, { passive: true });
+    });
+
+    function getOrCreateWarningModal() {
+        let modalEl = document.getElementById('inactivityWarningModal');
+        if (!modalEl) {
+            modalEl = document.createElement('div');
+            modalEl.id = 'inactivityWarningModal';
+            modalEl.className = 'modal fade';
+            modalEl.setAttribute('tabindex', '-1');
+            modalEl.setAttribute('aria-hidden', 'true');
+            modalEl.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content shadow border-0 rounded-4">
+                        <div class="modal-header border-0 pb-0" style="background-color: #FAF7F8;">
+                            <h5 class="modal-title fw-bold text-danger d-flex align-items-center">
+                                <i class="bi bi-clock-history me-2"></i>Aviso de Inatividade
+                            </h5>
+                        </div>
+                        <div class="modal-body py-3">
+                            <p class="mb-1 text-dark fw-medium">
+                                A sua sessão irá expirar dentro de <strong><span id="inactivityCountdown">120</span> segundos</strong> por inatividade para sua segurança.
+                            </p>
+                            <p class="small text-muted mb-0">Toque no ecrã ou clique no botão abaixo para continuar a trabalhar.</p>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn text-white w-100 py-2 fw-semibold" id="btnContinuarSessao" style="background-color: #6E1A33; border-radius: 8px;">
+                                <i class="bi bi-arrow-repeat me-1"></i>Continuar Sessão
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalEl);
+
+            const btnContinuar = modalEl.querySelector('#btnContinuarSessao');
+            if (btnContinuar) {
+                btnContinuar.addEventListener('click', () => {
+                    resetActivity();
+                    enviarHeartbeat();
+                });
+            }
+        }
+        return modalEl;
+    }
+
+    function enviarHeartbeat() {
+        secondsSinceLastHeartbeat = 0;
+        fetch('/auth/heartbeat', {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(res => {
+            if (res.status === 401 || res.redirected) {
+                // Sessão foi invalidada noutro dispositivo
+                window.location.href = '/auth/login?motivo=sessao_duplicada';
+            }
+        }).catch(() => {});
+    }
+
+    // Cronómetro de inatividade a cada 1 segundo
+    setInterval(() => {
+        idleSeconds++;
+        secondsSinceLastHeartbeat++;
+
+        // Se o utilizador esteve ativo e passaram 4 minutos, renovar sessão com heartbeat
+        if (idleSeconds < WARNING_TIMEOUT_SEC && secondsSinceLastHeartbeat >= HEARTBEAT_INTERVAL_SEC) {
+            enviarHeartbeat();
+        }
+
+        // Verificar se outra sessão tomou conta (cookie de motivo gerado pelo servidor)
+        if (document.cookie.includes('menova_logout_motivo=sessao_duplicada')) {
+            window.location.href = '/auth/login?motivo=sessao_duplicada';
+            return;
+        }
+
+        // Aviso prévio de inatividade (13 minutos atingidos)
+        if (idleSeconds >= WARNING_TIMEOUT_SEC && idleSeconds < INACTIVITY_TIMEOUT_SEC) {
+            const restantes = INACTIVITY_TIMEOUT_SEC - idleSeconds;
+            const modalEl = getOrCreateWarningModal();
+            const countEl = modalEl.querySelector('#inactivityCountdown');
+            if (countEl) countEl.textContent = restantes;
+
+            if (!warningModalInstance && typeof bootstrap !== 'undefined') {
+                warningModalInstance = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+                warningModalInstance.show();
+            }
+        }
+
+        // Tempo limite de inatividade atingido (15 minutos)
+        if (idleSeconds >= INACTIVITY_TIMEOUT_SEC) {
+            window.location.href = '/auth/login?motivo=inactividade';
+        }
+    }, 1000);
+}

@@ -1,7 +1,12 @@
 @model List<Menova.Application.DTOs.ContaDto>
 @using Menova.Application.Security
+@using Menova.Domain.Identity
 @inject Menova.Application.Interfaces.ICurrentUserService CurrentUser
 @{
+    if (User.IsInRole(PerfisSistema.Garcom))
+    {
+        Layout = "_LayoutGarcom";
+    }
     ViewData["Title"] = "Gestão de Pedidos e Contas";
     var totalValorAberto = Model.Sum(c => c.TotalLiquido);
 }

@@ -99,11 +99,11 @@
             <span class="badge bg-danger rounded-pill ms-1" id="badgeCozinhaCount" style="display: none;">0</span>
         </button>
     </div>
-    <div class="btn-group" role="group">
-        <button type="button" class="btn btn-sm btn-dark active" id="btnModoGarcom" onclick="alternarModo('garcom')">
+    <div class="btn-group shadow-sm" role="group">
+        <button type="button" class="btn btn-sm btn-wine active" id="btnModoGarcom" onclick="alternarModo('garcom')">
             <i class="bi bi-person-badge me-1"></i>Garçom
         </button>
-        <button type="button" class="btn btn-sm btn-outline-dark" id="btnModoCliente" onclick="alternarModo('cliente')">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnModoCliente" onclick="alternarModo('cliente')">
             <i class="bi bi-eye-fill me-1"></i>Apresentação
         </button>
     </div>
@@ -164,7 +164,7 @@
 
     <!-- Abas de Categorias de Artigos -->
     <div class="pills-scroll mb-2 py-1" id="pwaCatPills">
-        <button type="button" class="btn btn-sm btn-dark active px-3 py-1 fw-semibold rounded-pill" onclick="filtrarPwaCat(null, this)">
+        <button type="button" class="btn btn-sm btn-wine active px-3 py-1 fw-semibold rounded-pill shadow-sm" onclick="filtrarPwaCat(null, this)">
             Todas as Categorias
         </button>
         @foreach (var cat in menu.Categorias)
@@ -534,13 +534,13 @@
         if (modo === 'cliente') {
             document.getElementById('painelModoGarcom').style.display = 'none';
             document.getElementById('painelModoCliente').style.display = 'block';
-            document.getElementById('btnModoCliente').className = 'btn btn-sm btn-dark active';
-            document.getElementById('btnModoGarcom').className = 'btn btn-sm btn-outline-dark';
+            document.getElementById('btnModoCliente').className = 'btn btn-sm btn-wine active';
+            document.getElementById('btnModoGarcom').className = 'btn btn-sm btn-outline-secondary';
         } else {
             document.getElementById('painelModoGarcom').style.display = 'block';
             document.getElementById('painelModoCliente').style.display = 'none';
-            document.getElementById('btnModoGarcom').className = 'btn btn-sm btn-dark active';
-            document.getElementById('btnModoCliente').className = 'btn btn-sm btn-outline-dark';
+            document.getElementById('btnModoGarcom').className = 'btn btn-sm btn-wine active';
+            document.getElementById('btnModoCliente').className = 'btn btn-sm btn-outline-secondary';
         }
     }
 
@@ -579,11 +579,11 @@
     function filtrarPwaCat(catId, btn) {
         catPwaAtual = catId;
         document.querySelectorAll('#pwaCatPills button').forEach(b => {
-            b.classList.remove('btn-dark', 'active');
+            b.classList.remove('btn-wine', 'active', 'shadow-sm');
             b.classList.add('btn-outline-secondary');
         });
         btn.classList.remove('btn-outline-secondary');
-        btn.classList.add('btn-dark', 'active');
+        btn.classList.add('btn-wine', 'active', 'shadow-sm');
         filtrarPwaArtigos();
     }
 

@@ -580,3 +580,25 @@ a:hover {
     border-bottom-left-radius: var(--mv-radius);
     border-bottom-right-radius: var(--mv-radius);
 }
+
+/* Botões Vinho Oficiais Menova */
+.btn-wine {
+    background-color: var(--mv-vinho-900) !important;
+    border-color: var(--mv-vinho-900) !important;
+    color: #ffffff !important;
+}
+.btn-wine:hover, .btn-wine:focus, .btn-wine:active {
+    background-color: var(--mv-vinho-800) !important;
+    border-color: var(--mv-vinho-800) !important;
+    color: #ffffff !important;
+}
+.btn-outline-wine {
+    color: var(--mv-vinho-900) !important;
+    border-color: var(--mv-vinho-900) !important;
+    background-color: transparent !important;
+}
+.btn-outline-wine:hover, .btn-outline-wine:focus, .btn-outline-wine:active {
+    background-color: var(--mv-vinho-900) !important;
+    color: #ffffff !important;
+}
+
