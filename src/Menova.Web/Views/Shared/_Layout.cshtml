@@ -12,23 +12,23 @@
     <meta name="theme-color" content="#6E1A33" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
     <div class="app-layout">
         <!-- Barra Superior Conectada no Topo (Logótipo Estável + Menu Dropdown + Horário) -->
         <header class="app-topbar" id="appTopbar">
-            <div class="topbar-left">
-                <button class="btn-sidebar-toggle" id="sidebarToggleBtn" title="Alternar barra lateral" type="button" aria-label="Alternar menu lateral">
+            <div class="topbar-left d-flex align-items-center gap-2">
+                <button class="btn-sidebar-toggle me-1" id="sidebarToggleBtn" title="Alternar barra lateral" type="button" aria-label="Alternar menu lateral">
                     <i class="bi bi-list fs-5" id="sidebarToggleIcon"></i>
                 </button>
 
                 <!-- Logótipo Menova (Div, NUNCA link - sistema e não site) -->
-                <div class="topbar-brand user-select-none d-flex align-items-center" style="cursor: default;" title="Menova Restaurante">
-                    <img src="~/menova_logo_0f.png" alt="Menova Restaurante" class="topbar-brand-logo" />
+                <div class="topbar-brand user-select-none d-flex align-items-center" style="cursor: default; height: 38px; max-height: 38px; overflow: hidden;" title="Menova Restaurante">
+                    <img src="~/menova_logo_0f.png" alt="Menova" class="topbar-brand-logo" style="height: 34px !important; max-height: 34px !important; width: auto !important; max-width: 140px !important; object-fit: contain !important; display: block !important;" />
                 </div>
 
-                <nav aria-label="breadcrumb" class="d-none d-lg-block border-start ps-3 ms-1">
+                <nav aria-label="breadcrumb" class="d-none d-lg-block border-start ps-3 ms-2">
                     <ol class="breadcrumb mb-0 py-0" style="font-size: 0.85rem;">
                         <li class="breadcrumb-item text-secondary fw-medium">Menova</li>
                         @if (ViewData["Title"] != null)
@@ -339,7 +339,7 @@
     <!-- Scripts 100% Locais -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/signalr/signalr.min.js"></script>
-    <script src="~/js/site.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
