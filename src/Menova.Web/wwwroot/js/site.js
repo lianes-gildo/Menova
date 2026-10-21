@@ -1,5 +1,6 @@
 // Menova - JavaScript Modular do Painel (Sem Frameworks Pesados, 100% Offline)
 document.addEventListener('DOMContentLoaded', function () {
+    initAppModeDetection();
     initSidebar();
     initClock();
     initToasts();
@@ -7,6 +8,26 @@ document.addEventListener('DOMContentLoaded', function () {
     initAutoTablePagination();
     initInactivityWatchdog();
 });
+
+// Deteção Inteligente de Modo Aplicação / Atalho PWA Instalado
+function initAppModeDetection() {
+    const isStandalone = window.navigator.standalone === true ||
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.matchMedia('(display-mode: minimal-ui)').matches ||
+        document.referrer.includes('android-app://') ||
+        window.location.search.includes('source=pwa') ||
+        sessionStorage.getItem('menova_app_mode') === 'true';
+
+    if (isStandalone) {
+        sessionStorage.setItem('menova_app_mode', 'true');
+        document.documentElement.classList.add('in-standalone-app');
+        if (document.body) document.body.classList.add('in-standalone-app');
+        document.querySelectorAll('.pwa-install-menu-item, .pwa-hide-in-app').forEach(el => {
+            el.style.setProperty('display', 'none', 'important');
+        });
+    }
+}
 
 // 1. Controlo da Barra Lateral (Sidebar) com Persistência e Suporte Móvel
 function initSidebar() {

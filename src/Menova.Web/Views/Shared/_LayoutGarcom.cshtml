@@ -84,16 +84,11 @@
 <body class="d-flex flex-column min-vh-100" style="max-width: 100vw; overflow-x: hidden;">
     <!-- Barra Superior Móvel -->
     <header class="garcom-navbar d-flex justify-content-between align-items-center">
-        <div class="garcom-brand user-select-none d-flex align-items-center gap-2" style="cursor: default; min-width: 0;">
-            <img src="~/menova_logo_0f.png" alt="Menova" style="height: 26px !important; max-height: 26px !important; width: auto !important; max-width: 105px !important; object-fit: contain !important; display: block !important;" />
-            <span class="badge bg-white-subtle text-white border border-white-subtle px-2 py-0 fw-semibold d-none d-sm-inline-block" style="font-size: 0.65rem; letter-spacing: 0.04em;">ATENDIMENTO</span>
+        <div class="garcom-brand user-select-none d-flex align-items-center" style="cursor: default; min-width: 0;">
+            <img src="~/menova_logo_0f.png" alt="Menova" style="height: 38px !important; max-height: 38px !important; width: auto !important; max-width: 160px !important; object-fit: contain !important; display: block !important;" />
         </div>
         
         <div class="d-flex align-items-center gap-2 flex-shrink-0">
-            <a href="/app" class="btn btn-sm btn-outline-light py-1 px-2" title="Instalar App no Telemóvel">
-                <i class="bi bi-download"></i>
-            </a>
-            
             <div class="dropdown">
                 <button class="btn btn-sm btn-outline-light dropdown-toggle py-1 px-2 d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-person-circle me-1"></i>
@@ -104,7 +99,7 @@
                     <li><a class="dropdown-item" href="/garcom"><i class="bi bi-phone me-2"></i>Ementa &amp; Pedido</a></li>
                     <li><a class="dropdown-item" href="/mesas"><i class="bi bi-layout-wtf me-2"></i>Salão &amp; Mesas</a></li>
                     <li><a class="dropdown-item" href="/pedidos"><i class="bi bi-receipt me-2"></i>Comandas Ativas</a></li>
-                    <li><a class="dropdown-item" href="/app"><i class="bi bi-download me-2"></i>Instalar Aplicação</a></li>
+                    <li class="pwa-install-menu-item"><a class="dropdown-item" href="/app"><i class="bi bi-download me-2"></i>Instalar Aplicação</a></li>
                     @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
                     {
                         <li><a class="dropdown-item" href="/dashboard"><i class="bi bi-grid-1x2 me-2"></i>Painel Principal</a></li>

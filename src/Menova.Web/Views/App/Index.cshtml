@@ -73,18 +73,29 @@
                 <span>Adicionar ao Ecrã Principal (Instalação Direta)</span>
             </button>
 
+            <!-- Opção 2: Descarregar Ficheiro APK Nativo Android -->
+            <div class="mb-3">
+                <a href="/app/download/android" class="btn btn-outline-dark py-2 px-3 w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-between" style="min-height: 48px;">
+                    <div class="d-flex align-items-center text-truncate">
+                        <i class="bi bi-download text-success me-2 fs-5"></i>
+                        <span class="text-truncate">Descarregar Pacote Android (.apk)</span>
+                    </div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-2">APK Nativo</span>
+                </a>
+                <small class="text-muted d-block mt-1 ps-1" style="font-size: 0.78rem;">
+                    <i class="bi bi-shield-check me-1 text-success"></i>Instalação direta para smartphones e tablets Android (sem necessidade de loja Google Play).
+                </small>
+            </div>
+
             <!-- Acesso Imediato ao Terminal de Garçom -->
             <div class="mb-3">
-                <a href="/garcom" class="btn btn-outline-dark py-2 px-3 w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-between" style="min-height: 48px;">
+                <a href="/garcom" class="btn btn-outline-secondary py-2 px-3 w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-between" style="min-height: 48px;">
                     <div class="d-flex align-items-center text-truncate">
-                        <i class="bi bi-box-arrow-up-right text-success me-2 fs-5"></i>
-                        <span class="text-truncate">Abrir Terminal de Salão Diretamente</span>
+                        <i class="bi bi-box-arrow-up-right text-danger me-2 fs-5" style="color: #6E1A33 !important;"></i>
+                        <span class="text-truncate">Abrir Terminal de Salão no Navegador</span>
                     </div>
                     <span class="badge bg-light text-secondary border ms-2">Abrir Agora</span>
                 </a>
-                <small class="text-muted d-block mt-1 ps-1" style="font-size: 0.78rem;">
-                    <i class="bi bi-check-circle me-1 text-success"></i>Funciona 100% no navegador sem necessidade de ficheiros externos.
-                </small>
             </div>
 
             <!-- Instruções Rápidas Android -->
@@ -148,10 +159,10 @@
                 </div>
                 <p class="small text-muted mb-2">Instala o atalho através do sistema de perfis Apple WebClip:</p>
                 
-                <a href="/app/download/ios" download="MenovaGarcom.mobileconfig" target="_top" class="btn btn-outline-dark py-2 px-3 w-100 fw-semibold rounded-3 mb-2 d-flex align-items-center justify-content-between" style="min-height: 48px;">
+                <a href="/app/download/ios" class="btn btn-outline-dark py-2 px-3 w-100 fw-semibold rounded-3 mb-2 d-flex align-items-center justify-content-between" style="min-height: 48px;">
                     <div class="d-flex align-items-center text-truncate">
                         <i class="bi bi-apple me-2 fs-5"></i>
-                        <span class="text-truncate">Descarregar Atalho iOS (.mobileconfig)</span>
+                        <span class="text-truncate">Instalar Atalho iOS (.mobileconfig)</span>
                     </div>
                     <span class="badge bg-light text-secondary border ms-2">Perfil Apple</span>
                 </a>
@@ -202,13 +213,36 @@
                 </div>
             </div>
 
-            <div class="mb-3">
-                <a href="/app/download/crt" download="menova-root.crt" class="btn btn-outline-primary py-2 px-3 w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-between" style="min-height: 48px;">
+            <!-- Opção 1: iPhone e iPad (Instalação Direta via Perfil Apple) -->
+            <div class="mb-2">
+                <a href="/app/download/cert-ios" class="btn btn-outline-dark py-2 px-3 w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-between" style="min-height: 48px;">
+                    <div class="d-flex align-items-center text-truncate">
+                        <i class="bi bi-apple me-2 fs-5"></i>
+                        <span class="text-truncate">Instalar Certificado no iPhone / iPad</span>
+                    </div>
+                    <span class="badge bg-light text-dark border ms-2">Perfil iOS</span>
+                </a>
+            </div>
+
+            <!-- Opção 2: Android e Windows (Formato Binário DER X.509) -->
+            <div class="mb-2">
+                <a href="/app/download/crt" class="btn btn-outline-primary py-2 px-3 w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-between" style="min-height: 48px;">
                     <div class="d-flex align-items-center text-truncate">
                         <i class="bi bi-shield-lock-fill text-primary me-2 fs-5"></i>
-                        <span class="text-truncate">Descarregar Certificado Raiz (.crt)</span>
+                        <span class="text-truncate">Descarregar Certificado para Android (.crt)</span>
                     </div>
-                    <span class="badge bg-light text-primary border ms-2">X.509</span>
+                    <span class="badge bg-light text-primary border ms-2">Android / Win</span>
+                </a>
+            </div>
+
+            <!-- Opção 3: Formato PEM / Linux / Avançado -->
+            <div class="mb-3">
+                <a href="/app/download/pem" class="btn btn-outline-secondary py-2 px-3 w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-between" style="min-height: 44px;">
+                    <div class="d-flex align-items-center text-truncate">
+                        <i class="bi bi-file-earmark-lock me-2 fs-5"></i>
+                        <span class="text-truncate">Descarregar em formato PEM (.pem)</span>
+                    </div>
+                    <span class="badge bg-light text-secondary border ms-2">PEM / Linux</span>
                 </a>
             </div>
 

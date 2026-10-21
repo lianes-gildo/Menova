@@ -682,3 +682,18 @@ a:hover {
     color: #ffffff !important;
 }
 
+/* Ocultação Inteligente de Instalação quando já em Modo App / Atalho PWA */
+@media all and (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+    .pwa-install-menu-item,
+    .pwa-hide-in-app {
+        display: none !important;
+    }
+}
+
+html.in-standalone-app .pwa-install-menu-item,
+html.in-standalone-app .pwa-hide-in-app,
+body.in-standalone-app .pwa-install-menu-item,
+body.in-standalone-app .pwa-hide-in-app {
+    display: none !important;
+}
+
