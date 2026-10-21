@@ -6,21 +6,75 @@ document.addEventListener('DOMContentLoaded', function () {
     initConfirmModals();
 });
 
-// 1. Controlo da Barra Lateral (Sidebar) com Persistência
+// 1. Controlo da Barra Lateral (Sidebar) com Persistência e Suporte Móvel
 function initSidebar() {
     const sidebar = document.getElementById('appSidebar');
     const toggleBtn = document.getElementById('sidebarToggleBtn');
+    const backdrop = document.getElementById('sidebarBackdrop');
     if (!sidebar || !toggleBtn) return;
 
-    const savedState = localStorage.getItem('menova_sidebar_collapsed');
-    if (savedState === 'true') {
-        sidebar.classList.add('collapsed');
+    function isMobile() {
+        return window.innerWidth < 992;
+    }
+
+    function applyState(collapsed) {
+        const icon = toggleBtn.querySelector('i');
+        if (collapsed) {
+            sidebar.classList.add('collapsed');
+            toggleBtn.classList.add('active');
+            if (icon) icon.className = 'bi bi-text-indent-left fs-5';
+            toggleBtn.setAttribute('title', 'Expandir menu lateral');
+        } else {
+            sidebar.classList.remove('collapsed');
+            toggleBtn.classList.remove('active');
+            if (icon) icon.className = 'bi bi-list fs-5';
+            toggleBtn.setAttribute('title', 'Recolher menu lateral');
+        }
+    }
+
+    // Inicialização apenas se desktop
+    if (!isMobile()) {
+        const savedState = localStorage.getItem('menova_sidebar_collapsed') === 'true';
+        applyState(savedState);
     }
 
     toggleBtn.addEventListener('click', function () {
-        sidebar.classList.toggle('collapsed');
-        const isCollapsed = sidebar.classList.contains('collapsed');
-        localStorage.setItem('menova_sidebar_collapsed', isCollapsed);
+        if (isMobile()) {
+            const isOpen = sidebar.classList.contains('mobile-open');
+            if (isOpen) {
+                sidebar.classList.remove('mobile-open');
+                toggleBtn.classList.remove('active');
+                if (backdrop) backdrop.classList.remove('show');
+            } else {
+                sidebar.classList.add('mobile-open');
+                toggleBtn.classList.add('active');
+                if (backdrop) backdrop.classList.add('show');
+            }
+        } else {
+            const isCollapsed = !sidebar.classList.contains('collapsed');
+            applyState(isCollapsed);
+            localStorage.setItem('menova_sidebar_collapsed', isCollapsed);
+        }
+    });
+
+    if (backdrop) {
+        backdrop.addEventListener('click', function () {
+            sidebar.classList.remove('mobile-open');
+            toggleBtn.classList.remove('active');
+            backdrop.classList.remove('show');
+        });
+    }
+
+    // Fechar ao navegar num item no ecrã móvel
+    const menuLinks = sidebar.querySelectorAll('.sidebar-item a');
+    menuLinks.forEach(link => {
+        link.addEventListener('click', function () {
+            if (isMobile()) {
+                sidebar.classList.remove('mobile-open');
+                toggleBtn.classList.remove('active');
+                if (backdrop) backdrop.classList.remove('show');
+            }
+        });
     });
 }
 

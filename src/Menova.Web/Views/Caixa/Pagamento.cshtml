@@ -58,6 +58,7 @@
                         <thead class="table-light sticky-top">
                             <tr>
                                 <th>Artigo</th>
+                                <th class="text-center">Estado</th>
                                 <th class="text-center">Qtd</th>
                                 <th class="text-end">Preço</th>
                                 <th class="text-end">Total</th>
@@ -66,17 +67,32 @@
                         <tbody>
                             @{
                                 var itensConta = conta.Pedidos.SelectMany(p => p.Itens).Where(i => !i.Anulado).ToList();
+                                var itensNaoEntregues = itensConta.Where(i => i.Estado != Menova.Domain.Pedidos.EstadoItemPedido.Entregue).ToList();
                             }
                             @if (!itensConta.Any())
                             {
                                 <tr>
-                                    <td colspan="4" class="text-center py-4 text-muted">Nenhum artigo ativo nesta conta.</td>
+                                    <td colspan="5" class="text-center py-4 text-muted">Nenhum artigo ativo nesta conta.</td>
                                 </tr>
                             }
                             else
                             {
                                 @foreach (var item in itensConta)
                                 {
+                                    var badgeItem = item.Estado switch
+                                    {
+                                        Menova.Domain.Pedidos.EstadoItemPedido.Entregue => "bg-success",
+                                        Menova.Domain.Pedidos.EstadoItemPedido.Pronto => "bg-info text-dark",
+                                        Menova.Domain.Pedidos.EstadoItemPedido.EmPreparacao => "bg-primary",
+                                        _ => "bg-secondary"
+                                    };
+                                    var estadoDesc = item.Estado switch
+                                    {
+                                        Menova.Domain.Pedidos.EstadoItemPedido.Entregue => "Entregue",
+                                        Menova.Domain.Pedidos.EstadoItemPedido.Pronto => "Pronto Cozinha",
+                                        Menova.Domain.Pedidos.EstadoItemPedido.EmPreparacao => "A Preparar",
+                                        _ => "Pendente"
+                                    };
                                     <tr>
                                         <td>
                                             <div class="fw-bold">@item.NomeArtigo</div>
@@ -84,6 +100,9 @@
                                             {
                                                 <div class="text-muted" style="font-size: 0.75rem;">+ @string.Join(", ", item.Opcoes)</div>
                                             }
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge @badgeItem" style="font-size: 0.68rem;">@estadoDesc</span>
                                         </td>
                                         <td class="text-center">@item.Quantidade.ToString("0.##")</td>
                                         <td class="text-end text-muted">@item.PrecoUnitario.ToString("N2")</td>
@@ -255,12 +274,31 @@
                     </div>
 
                     <!-- Opção de Impressão Térmica -->
-                    <div class="form-check mb-4">
+                    <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" name="imprimirRecibo" id="chkImprimir" value="true" checked>
                         <label class="form-check-label small" for="chkImprimir">
                             <i class="bi bi-printer me-1"></i>Imprimir recibo térmico imediatamente após confirmação
                         </label>
                     </div>
+
+                    @if (itensNaoEntregues.Any())
+                    {
+                        <div class="alert alert-warning border-warning p-3 mb-3">
+                            <div class="d-flex align-items-center mb-1">
+                                <i class="bi bi-exclamation-triangle-fill text-warning fs-5 me-2"></i>
+                                <strong class="text-dark small">Aviso de Fluxo Operacional:</strong>
+                            </div>
+                            <p class="small text-muted mb-2">
+                                Existem <strong>@itensNaoEntregues.Count artigo(s)</strong> ainda não entregues ao cliente pela cozinha.
+                            </p>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="checkPrePago" onchange="alternarPrePago(this)">
+                                <label class="form-check-label small fw-bold text-dark" for="checkPrePago">
+                                    Liquidar antecipadamente em modo Pré-Pago (Takeaway / Balcão)
+                                </label>
+                            </div>
+                        </div>
+                    }
 
                     <button type="button" class="btn text-white w-100 py-3 fs-5 fw-bold shadow-sm" style="background-color: #6E1A33;" onclick="abrirConfirmacaoPagamento()">
                         <i class="bi bi-check2-circle me-2"></i>Confirmar Pagamento
@@ -282,6 +320,10 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
+                <div class="alert alert-warning py-2 px-3 small mb-3" id="modalAvisoPrePago" style="display: none;">
+                    <i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i>
+                    <strong>Atenção ao Fluxo:</strong> A mesa ainda tem artigos a preparar na cozinha. A liquidação será confirmada em regime Pré-Pago.
+                </div>
                 <p class="text-muted mb-3">Por favor verifique os valores antes de submeter a liquidação:</p>
                 <div class="bg-light p-3 rounded-3 border mb-3">
                     <div class="d-flex justify-content-between mb-2">
@@ -317,6 +359,13 @@
 
 @section Scripts {
 <script>
+    let totalNaoEntregues = @itensNaoEntregues.Count;
+    let ehPrePago = false;
+
+    function alternarPrePago(cb) {
+        ehPrePago = cb.checked;
+    }
+
     function abrirConfirmacaoPagamento() {
         const inputValor = document.getElementById('inputValor');
         const inputRecebido = document.getElementById('inputValorRecebido');
@@ -344,11 +393,13 @@
         const lblValor = document.getElementById('modalConfirmValor');
         const lblTroco = document.getElementById('modalConfirmTroco');
         const rowTroco = document.getElementById('modalConfirmTrocoRow');
+        const avisoPrePago = document.getElementById('modalAvisoPrePago');
 
         if (lblMetodo) lblMetodo.textContent = metodoNome;
         if (lblValor) lblValor.textContent = valor.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
         if (lblTroco) lblTroco.textContent = troco.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
         if (rowTroco) rowTroco.style.display = (metodoNome === 'Numerário' && troco > 0) ? 'flex' : 'none';
+        if (avisoPrePago) avisoPrePago.style.display = (totalNaoEntregues > 0) ? 'block' : 'none';
 
         new bootstrap.Modal(document.getElementById('modalConfirmarPagamento')).show();
     }

@@ -70,8 +70,8 @@ public class DashboardController : Controller
         // 3. Cálculos Reais de Estatísticas do Restaurante
         var agoraLocal = _dateTimeService.NowLocal;
         var inicioHojeLocal = agoraLocal.Date;
-        var inicioHojeUtc = inicioHojeLocal.AddHours(-2); // Horário de Moçambique UTC+2
-        var fimHojeUtc = inicioHojeUtc.AddDays(1);
+        var inicioHojeUtc = DateTime.SpecifyKind(inicioHojeLocal.AddHours(-2), DateTimeKind.Utc); // Horário de Moçambique UTC+2 convertido para UTC
+        var fimHojeUtc = DateTime.SpecifyKind(inicioHojeUtc.AddDays(1), DateTimeKind.Utc);
 
         var totalVendasHoje = await _context.Pagamentos
             .Where(p => p.CriadoEm >= inicioHojeUtc && p.CriadoEm < fimHojeUtc)

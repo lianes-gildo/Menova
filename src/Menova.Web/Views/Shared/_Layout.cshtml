@@ -1,19 +1,4 @@
 @inject ICurrentUserService CurrentUser
-@{
-    var homeUrl = "/dashboard";
-    if (User.IsInRole(PerfisSistema.Garcom) && !User.IsInRole(PerfisSistema.Administrador) && !User.IsInRole(PerfisSistema.Gerente))
-    {
-        homeUrl = "/garcom";
-    }
-    else if (User.IsInRole(PerfisSistema.CozinhaBar) && !User.IsInRole(PerfisSistema.Administrador) && !User.IsInRole(PerfisSistema.Gerente))
-    {
-        homeUrl = "/kds";
-    }
-    else if (User.IsInRole(PerfisSistema.Caixa) && !User.IsInRole(PerfisSistema.Administrador) && !User.IsInRole(PerfisSistema.Gerente))
-    {
-        homeUrl = "/caixa";
-    }
-}
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -30,17 +15,89 @@
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
-    <div class="app-wrapper">
-        <!-- Sidebar Esquerda -->
-        <aside class="app-sidebar" id="appSidebar">
-            <div class="sidebar-header">
-                <a href="@homeUrl" class="d-flex align-items-center text-decoration-none">
-                    <img src="~/menova_logo_0f.png" alt="Menova" class="sidebar-logo" />
-                </a>
+    <div class="app-layout">
+        <!-- Barra Superior Conectada no Topo (Logótipo Estável + Menu Dropdown + Horário) -->
+        <header class="app-topbar" id="appTopbar">
+            <div class="topbar-left">
+                <button class="btn-sidebar-toggle" id="sidebarToggleBtn" title="Alternar barra lateral" type="button" aria-label="Alternar menu lateral">
+                    <i class="bi bi-list fs-5" id="sidebarToggleIcon"></i>
+                </button>
+
+                <!-- Logótipo Menova (Div, NUNCA link - sistema e não site) -->
+                <div class="topbar-brand user-select-none d-flex align-items-center" style="cursor: default;" title="Menova Restaurante">
+                    <img src="~/menova_logo_0f.png" alt="Menova Restaurante" class="topbar-brand-logo" />
+                </div>
+
+                <nav aria-label="breadcrumb" class="d-none d-lg-block border-start ps-3 ms-1">
+                    <ol class="breadcrumb mb-0 py-0" style="font-size: 0.85rem;">
+                        <li class="breadcrumb-item text-secondary fw-medium">Menova</li>
+                        @if (ViewData["Title"] != null)
+                        {
+                            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">@ViewData["Title"]</li>
+                        }
+                    </ol>
+                </nav>
             </div>
 
-            <ul class="sidebar-menu">
-                <li class="sidebar-section-title">Operação</li>
+            <div class="topbar-right">
+                <!-- Relógio Local Maputo -->
+                <div class="server-clock d-none d-sm-flex">
+                    <i class="bi bi-clock"></i>
+                    <span id="serverClockDisplay">--:--:--</span>
+                </div>
+
+                <!-- Perfil do Utilizador Autenticado -->
+                <div class="dropdown">
+                    <a class="user-profile-menu dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="~/default.jpg" alt="Foto de perfil" class="user-avatar" />
+                        <div class="d-none d-md-flex flex-column text-start">
+                            <span class="fw-semibold text-dark" style="font-size: 0.85rem;">@CurrentUser.NomeCompleto</span>
+                            <span class="badge badge-vinho" style="font-size: 0.65rem;">@CurrentUser.PerfilCodigo</span>
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li><h6 class="dropdown-header">Sessão: @CurrentUser.NomeUtilizador</h6></li>
+                        @if (User.IsInRole(PerfisSistema.Garcom))
+                        {
+                            <li><a class="dropdown-item" href="/garcom"><i class="bi bi-phone me-2"></i>App Garçom</a></li>
+                        }
+                        @if (User.IsInRole(PerfisSistema.Caixa))
+                        {
+                            <li><a class="dropdown-item" href="/caixa"><i class="bi bi-cash-stack me-2"></i>Caixa &amp; Sessões</a></li>
+                        }
+                        @if (User.IsInRole(PerfisSistema.CozinhaBar))
+                        {
+                            <li><a class="dropdown-item" href="/kds"><i class="bi bi-fire me-2"></i>Cozinha / KDS</a></li>
+                        }
+                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
+                        {
+                            <li><a class="dropdown-item" href="/dashboard"><i class="bi bi-grid-1x2 me-2"></i>Painel Principal</a></li>
+                        }
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="Auth" asp-action="AlterarPalavraPasse">
+                                <i class="bi bi-key me-2"></i>Alterar palavra-passe
+                            </a>
+                        </li>
+                        <li>
+                            <form asp-controller="Auth" asp-action="Logout" method="post" id="logoutForm" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Terminar sessão
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contentor Principal (Sidebar Vinho + Conteúdo) -->
+        <div class="app-wrapper">
+            <!-- Sidebar Esquerda (Recolhe SOMENTE o menu vinho, nunca a logo) -->
+            <aside class="app-sidebar" id="appSidebar">
+                <ul class="sidebar-menu">
+                    <li class="sidebar-section-title">Operação</li>
 
                 @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
                 {
@@ -207,89 +264,21 @@
             </ul>
         </aside>
 
-        <!-- Área Principal -->
+        <!-- Backdrop Móvel para fechar menu ao tocar fora -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <!-- Área Principal de Conteúdo -->
         <div class="app-main">
-            <!-- Barra Superior -->
-            <header class="app-topbar">
-                <div class="topbar-left">
-                    <button class="btn-sidebar-toggle" id="sidebarToggleBtn" title="Alternar barra lateral" type="button">
-                        <i class="bi bi-list fs-5"></i>
-                    </button>
-                    <nav aria-label="breadcrumb" class="d-none d-md-block">
-                        <ol class="breadcrumb mb-0 py-0" style="font-size: 0.85rem;">
-                            <li class="breadcrumb-item"><a href="@homeUrl">Menova</a></li>
-                            @if (ViewData["Title"] != null)
-                            {
-                                <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
-                            }
-                        </ol>
-                    </nav>
-                </div>
-
-                <div class="topbar-right">
-                    <!-- Relógio Local Maputo -->
-                    <div class="server-clock d-none d-sm-flex">
-                        <i class="bi bi-clock"></i>
-                        <span id="serverClockDisplay">--:--:--</span>
-                    </div>
-
-                    <!-- Perfil do Utilizador Autenticado -->
-                    <div class="dropdown">
-                        <a class="user-profile-menu dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="~/default.jpg" alt="Foto de perfil" class="user-avatar" />
-                            <div class="d-none d-md-flex flex-column text-start">
-                                <span class="fw-semibold text-dark" style="font-size: 0.85rem;">@CurrentUser.NomeCompleto</span>
-                                <span class="badge badge-vinho" style="font-size: 0.65rem;">@CurrentUser.PerfilCodigo</span>
-                            </div>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                            <li><h6 class="dropdown-header">Sessão: @CurrentUser.NomeUtilizador</h6></li>
-                            @if (User.IsInRole(PerfisSistema.Garcom))
-                            {
-                                <li><a class="dropdown-item" href="/garcom"><i class="bi bi-phone me-2"></i>App Garçom</a></li>
-                            }
-                            @if (User.IsInRole(PerfisSistema.Caixa))
-                            {
-                                <li><a class="dropdown-item" href="/caixa"><i class="bi bi-cash-stack me-2"></i>Caixa &amp; Sessões</a></li>
-                            }
-                            @if (User.IsInRole(PerfisSistema.CozinhaBar))
-                            {
-                                <li><a class="dropdown-item" href="/kds"><i class="bi bi-fire me-2"></i>Cozinha / KDS</a></li>
-                            }
-                            @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
-                            {
-                                <li><a class="dropdown-item" href="/dashboard"><i class="bi bi-grid-1x2 me-2"></i>Painel Principal</a></li>
-                            }
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" asp-controller="Auth" asp-action="AlterarPalavraPasse">
-                                    <i class="bi bi-key me-2"></i>Alterar palavra-passe
-                                </a>
-                            </li>
-                            <li>
-                                <form asp-controller="Auth" asp-action="Logout" method="post" id="logoutForm" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="bi bi-box-arrow-right me-2"></i>Terminar sessão
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Conteúdo da Página -->
             <main class="app-content">
                 @RenderBody()
             </main>
 
-            <!-- Rodapé Discreto -->
             <footer class="py-2 px-4 bg-white border-top text-end" style="font-size: 0.75rem; color: var(--mv-texto-suave);">
-
+                &copy; @DateTime.UtcNow.Year Menova Restaurante &bull; Sistema Integrado de Gestão
             </footer>
         </div>
     </div>
+</div>
 
     <!-- Container de Notificações Toast -->
     <div class="toast-container">

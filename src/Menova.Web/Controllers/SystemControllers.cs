@@ -15,7 +15,7 @@ public class ErrosController : Controller
         _currentUserService = currentUserService;
     }
 
-    [HttpGet("404")]
+    [Route("404")]
     public IActionResult NaoEncontrado()
     {
         Response.StatusCode = 404;
@@ -23,8 +23,8 @@ public class ErrosController : Controller
         return View("404");
     }
 
-    [HttpGet("403")]
-    [HttpGet("acesso-negado")]
+    [Route("403")]
+    [Route("acesso-negado")]
     public IActionResult AcessoNegado()
     {
         Response.StatusCode = 403;
@@ -33,7 +33,7 @@ public class ErrosController : Controller
         return View("403");
     }
 
-    [HttpGet("500")]
+    [Route("500")]
     public IActionResult ErroServidor()
     {
         Response.StatusCode = 500;
@@ -41,7 +41,7 @@ public class ErrosController : Controller
         return View("500");
     }
 
-    [HttpGet("400")]
+    [Route("400")]
     public IActionResult PedidoInvalido()
     {
         Response.StatusCode = 400;
