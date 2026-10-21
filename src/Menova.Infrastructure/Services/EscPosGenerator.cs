@@ -8,11 +8,11 @@ public class EscPosGenerator
     private readonly int _larguraColunas;
     private readonly Encoding _encoding;
 
-    public EscPosGenerator(int larguraColunas = 42)
+    public EscPosGenerator(int larguraColunas = 32)
     {
-        _larguraColunas = larguraColunas;
+        // Se largura não especificada ou inválida, assumir 32 colunas (padrão universal 58mm)
+        _larguraColunas = (larguraColunas >= 24 && larguraColunas <= 64) ? larguraColunas : 32;
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        // CodePage 860 (Português de Portugal/Moçambique) ou 850
         try
         {
             _encoding = Encoding.GetEncoding(860);
@@ -39,15 +39,25 @@ public class EscPosGenerator
 
     private string AlinharLinha(string esquerda, string direita)
     {
-        var espacoDisponivel = _larguraColunas - direita.Length;
-        if (espacoDisponivel < 1) espacoDisponivel = 1;
+        direita = direita?.Trim() ?? string.Empty;
+        esquerda = esquerda?.Trim() ?? string.Empty;
 
-        if (esquerda.Length > espacoDisponivel)
+        // Se o valor da direita por si só já preenche ou excede a largura
+        if (direita.Length >= _larguraColunas)
         {
-            esquerda = esquerda.Substring(0, espacoDisponivel);
+            return direita.Substring(0, _larguraColunas);
         }
 
-        return esquerda.PadRight(espacoDisponivel) + direita;
+        var maxEsquerda = _larguraColunas - direita.Length - 1;
+        if (esquerda.Length > maxEsquerda && maxEsquerda > 0)
+        {
+            esquerda = esquerda.Substring(0, maxEsquerda);
+        }
+
+        var espacos = _larguraColunas - esquerda.Length - direita.Length;
+        if (espacos < 1) espacos = 1;
+
+        return esquerda + new string(' ', espacos) + direita;
     }
 
     public byte[] GerarTalaoConta(ContaDto conta, string restauranteNome, string nuit, string endereco, bool eSegundaVia = false)
@@ -63,14 +73,15 @@ public class EscPosGenerator
             ms.Write(ComandoNegritoDesligado);
         }
 
-        ms.Write(ComandoFonteDuplaAltura);
         ms.Write(ComandoNegritoLigado);
-        EscreverLinha(ms, restauranteNome);
-        ms.Write(ComandoFonteNormal);
+        EscreverLinha(ms, FormatarTextoCentro(restauranteNome));
         ms.Write(ComandoNegritoDesligado);
 
         EscreverLinha(ms, $"NUIT: {nuit}");
-        EscreverLinha(ms, endereco);
+        if (!string.IsNullOrWhiteSpace(endereco))
+        {
+            EscreverLinha(ms, FormatarTextoCentro(endereco));
+        }
         EscreverLinha(ms, Separador());
 
         ms.Write(ComandoAlinhamentoEsquerda);
@@ -89,9 +100,19 @@ public class EscPosGenerator
         var todosItens = conta.Pedidos.SelectMany(p => p.Itens).Where(i => !i.Anulado).ToList();
         foreach (var item in todosItens)
         {
-            var qtdTexto = $"{item.Quantidade:0.##}x {item.NomeArtigo}";
-            var precoTexto = $"{item.TotalLiquido:N2} MT";
-            EscreverLinha(ms, AlinharLinha(qtdTexto, precoTexto));
+            var qtdPreco = $"{item.Quantidade:0.##}x {item.PrecoUnitario:N2}";
+            var totalItem = $"{item.TotalLiquido:N2} MT";
+
+            // Se o nome do artigo for longo, imprime o nome na 1ª linha e quantidade/preço na 2ª
+            if (item.NomeArtigo.Length + totalItem.Length >= _larguraColunas - 1)
+            {
+                EscreverLinha(ms, item.NomeArtigo);
+                EscreverLinha(ms, AlinharLinha($"  {qtdPreco}", totalItem));
+            }
+            else
+            {
+                EscreverLinha(ms, AlinharLinha($"{item.Quantidade:0.##}x {item.NomeArtigo}", totalItem));
+            }
 
             if (item.Opcoes != null && item.Opcoes.Any())
             {
@@ -110,17 +131,15 @@ public class EscPosGenerator
             EscreverLinha(ms, AlinharLinha("DESCONTO:", $"-{conta.TotalDesconto:N2} MT"));
         }
         EscreverLinha(ms, AlinharLinha("IVA (16% Incl.):", $"{conta.TotalIva:N2} MT"));
-        ms.Write(ComandoFonteDuplaAltura);
         EscreverLinha(ms, AlinharLinha("TOTAL A PAGAR:", $"{conta.TotalLiquido:N2} MT"));
-        ms.Write(ComandoFonteNormal);
         ms.Write(ComandoNegritoDesligado);
         EscreverLinha(ms, Separador());
 
         ms.Write(ComandoAlinhamentoCentro);
         EscreverLinha(ms, "Talão de Consulta de Mesa");
         EscreverLinha(ms, "Não serve de fatura");
-        EscreverLinha(ms, "Menova POS - Moçambique");
-        EscreverLinha(ms, "\n\n");
+        EscreverLinha(ms, "Menova Restaurante");
+        EscreverLinha(ms, "\n");
         ms.Write(ComandoCortarPapel);
 
         return ms.ToArray();
@@ -139,14 +158,15 @@ public class EscPosGenerator
             ms.Write(ComandoNegritoDesligado);
         }
 
-        ms.Write(ComandoFonteDuplaAltura);
         ms.Write(ComandoNegritoLigado);
-        EscreverLinha(ms, restauranteNome);
-        ms.Write(ComandoFonteNormal);
+        EscreverLinha(ms, FormatarTextoCentro(restauranteNome));
         ms.Write(ComandoNegritoDesligado);
 
         EscreverLinha(ms, $"NUIT: {nuit}");
-        EscreverLinha(ms, endereco);
+        if (!string.IsNullOrWhiteSpace(endereco))
+        {
+            EscreverLinha(ms, FormatarTextoCentro(endereco));
+        }
         EscreverLinha(ms, Separador());
 
         ms.Write(ComandoNegritoLigado);
@@ -164,12 +184,15 @@ public class EscPosGenerator
         EscreverLinha(ms, $"Operador: {pagamento.CriadoPor}");
         EscreverLinha(ms, Separador());
 
-        EscreverLinha(ms, AlinharLinha("Método:", pagamento.MetodoDescricao));
-        EscreverLinha(ms, AlinharLinha("Valor Liquidado:", $"{pagamento.Valor:N2} MT"));
+        EscreverLinha(ms, AlinharLinha("Forma Pagamento:", pagamento.MetodoDescricao));
+        ms.Write(ComandoNegritoLigado);
+        EscreverLinha(ms, AlinharLinha("VALOR PAGO:", $"{pagamento.Valor:N2} MT"));
+        ms.Write(ComandoNegritoDesligado);
+
         if (pagamento.ValorRecebido > 0)
         {
             EscreverLinha(ms, AlinharLinha("Valor Entregue:", $"{pagamento.ValorRecebido:N2} MT"));
-            EscreverLinha(ms, AlinharLinha("Troco:", $"{pagamento.Troco:N2} MT"));
+            EscreverLinha(ms, AlinharLinha("Troco Entregue:", $"{pagamento.Troco:N2} MT"));
         }
         if (pagamento.Gorjeta > 0)
         {
@@ -181,24 +204,22 @@ public class EscPosGenerator
         }
 
         EscreverLinha(ms, Separador());
+        ms.Write(ComandoNegritoLigado);
         if (saldoRestante > 0)
         {
-            ms.Write(ComandoNegritoLigado);
             EscreverLinha(ms, AlinharLinha("SALDO RESTANTE:", $"{saldoRestante:N2} MT"));
-            ms.Write(ComandoNegritoDesligado);
         }
         else
         {
-            ms.Write(ComandoNegritoLigado);
-            EscreverLinha(ms, AlinharLinha("ESTADO CONTA:", "LIQUIDADA / FECHADA"));
-            ms.Write(ComandoNegritoDesligado);
+            EscreverLinha(ms, AlinharLinha("ESTADO CONTA:", "TOTALMENTE LIQUIDADA"));
         }
+        ms.Write(ComandoNegritoDesligado);
 
         EscreverLinha(ms, Separador());
         ms.Write(ComandoAlinhamentoCentro);
-        EscreverLinha(ms, "Obrigado pela sua visita!");
-        EscreverLinha(ms, "Menova POS - Moçambique");
-        EscreverLinha(ms, "\n\n");
+        EscreverLinha(ms, "Obrigado pela sua preferência!");
+        EscreverLinha(ms, "Volte Sempre!");
+        EscreverLinha(ms, "\n");
         ms.Write(ComandoCortarPapel);
 
         return ms.ToArray();
@@ -209,15 +230,13 @@ public class EscPosGenerator
         using var ms = new MemoryStream();
         ms.Write(ComandoInicializar);
         ms.Write(ComandoAlinhamentoCentro);
-        ms.Write(ComandoFonteDuplaAltura);
         ms.Write(ComandoNegritoLigado);
         EscreverLinha(ms, $"PEDIDO #{ticket.NumeroSequencial}");
-        ms.Write(ComandoFonteNormal);
         ms.Write(ComandoNegritoDesligado);
 
         EscreverLinha(ms, SeparadorDuplo());
         ms.Write(ComandoAlinhamentoEsquerda);
-        EscreverLinha(ms, $"Mesa: {ticket.MesaNumero ?? "Balcão"} ({ticket.ZonaNome ?? "Geral"})");
+        EscreverLinha(ms, $"Mesa: {ticket.MesaNumero ?? "Balcão"} ({ticket.ZonaNome ?? "Salão"})");
         EscreverLinha(ms, $"Hora: {ticket.CriadoEm.AddHours(2):HH:mm:ss}");
         if (!string.IsNullOrWhiteSpace(ticket.Observacoes))
         {
@@ -225,7 +244,6 @@ public class EscPosGenerator
         }
         EscreverLinha(ms, Separador());
 
-        ms.Write(ComandoFonteDuplaAltura);
         foreach (var item in ticket.Itens)
         {
             ms.Write(ComandoNegritoLigado);
@@ -244,10 +262,9 @@ public class EscPosGenerator
                 EscreverLinha(ms, $"  * NOTA: {item.Notas}");
             }
         }
-        ms.Write(ComandoFonteNormal);
 
         EscreverLinha(ms, SeparadorDuplo());
-        EscreverLinha(ms, "\n\n");
+        EscreverLinha(ms, "\n");
         ms.Write(ComandoCortarPapel);
 
         return ms.ToArray();
@@ -258,12 +275,10 @@ public class EscPosGenerator
         using var ms = new MemoryStream();
         ms.Write(ComandoInicializar);
         ms.Write(ComandoAlinhamentoCentro);
-        ms.Write(ComandoFonteDuplaAltura);
         ms.Write(ComandoNegritoLigado);
         EscreverLinha(ms, "RELATÓRIO X");
-        ms.Write(ComandoFonteNormal);
         ms.Write(ComandoNegritoDesligado);
-        EscreverLinha(ms, "(Consulta parcial de caixa)");
+        EscreverLinha(ms, "(Consulta Parcial de Turno)");
         EscreverLinha(ms, SeparadorDuplo());
 
         ms.Write(ComandoAlinhamentoEsquerda);
@@ -275,10 +290,10 @@ public class EscPosGenerator
 
         EscreverLinha(ms, AlinharLinha("Saldo Inicial:", $"{x.SaldoInicial:N2} MT"));
         EscreverLinha(ms, AlinharLinha("Total Vendas:", $"{x.TotalVendas:N2} MT"));
-        EscreverLinha(ms, AlinharLinha("Entradas/Suprimentos:", $"{x.TotalEntradas:N2} MT"));
+        EscreverLinha(ms, AlinharLinha("Entradas/Suprim.:", $"{x.TotalEntradas:N2} MT"));
         EscreverLinha(ms, AlinharLinha("Saídas/Sangrias:", $"{x.TotalSaidas:N2} MT"));
         ms.Write(ComandoNegritoLigado);
-        EscreverLinha(ms, AlinharLinha("Saldo Teórico Gaveta:", $"{x.SaldoEsperado:N2} MT"));
+        EscreverLinha(ms, AlinharLinha("Saldo Esperado:", $"{x.SaldoEsperado:N2} MT"));
         ms.Write(ComandoNegritoDesligado);
         EscreverLinha(ms, Separador());
 
@@ -298,7 +313,7 @@ public class EscPosGenerator
         EscreverLinha(ms, SeparadorDuplo());
         ms.Write(ComandoAlinhamentoCentro);
         EscreverLinha(ms, "Menova POS - Controlo Interno");
-        EscreverLinha(ms, "\n\n");
+        EscreverLinha(ms, "\n");
         ms.Write(ComandoCortarPapel);
 
         return ms.ToArray();
@@ -317,10 +332,8 @@ public class EscPosGenerator
             ms.Write(ComandoNegritoDesligado);
         }
 
-        ms.Write(ComandoFonteDuplaAltura);
         ms.Write(ComandoNegritoLigado);
         EscreverLinha(ms, $"TALÃO Z N.º {z.NumeroZ}");
-        ms.Write(ComandoFonteNormal);
         ms.Write(ComandoNegritoDesligado);
         EscreverLinha(ms, "FECHO DIÁRIO / TURNO DE CAIXA");
         EscreverLinha(ms, SeparadorDuplo());
@@ -329,16 +342,14 @@ public class EscPosGenerator
         EscreverLinha(ms, $"Caixa: {z.CaixaNome} (#{z.CaixaNumero})");
         EscreverLinha(ms, $"Data/Hora: {z.DataHora.AddHours(2):dd/MM/yyyy HH:mm:ss}");
         EscreverLinha(ms, $"Emitido Por: {z.EmitidoPor}");
-        EscreverLinha(ms, $"Documentos Emitidos: {z.TotalDocumentosFaturados}");
+        EscreverLinha(ms, $"Documentos Faturados: {z.TotalDocumentosFaturados}");
         EscreverLinha(ms, Separador());
 
         EscreverLinha(ms, AlinharLinha("Total Bruto:", $"{z.TotalBruto:N2} MT"));
         EscreverLinha(ms, AlinharLinha("Total Descontos:", $"{z.TotalDesconto:N2} MT"));
         EscreverLinha(ms, AlinharLinha("Total IVA (16%):", $"{z.TotalIva:N2} MT"));
         ms.Write(ComandoNegritoLigado);
-        ms.Write(ComandoFonteDuplaAltura);
         EscreverLinha(ms, AlinharLinha("TOTAL LÍQUIDO:", $"{z.TotalLiquido:N2} MT"));
-        ms.Write(ComandoFonteNormal);
         ms.Write(ComandoNegritoDesligado);
         EscreverLinha(ms, Separador());
 
@@ -357,13 +368,9 @@ public class EscPosGenerator
 
         EscreverLinha(ms, SeparadorDuplo());
         ms.Write(ComandoAlinhamentoCentro);
-        EscreverLinha(ms, "ASSINATURA CRIPTOGRÁFICA (SHA-256)");
-        EscreverLinha(ms, $"Hash: {z.Hash.Substring(0, Math.Min(32, z.Hash.Length))}...");
-        EscreverLinha(ms, $"Ant.: {z.HashAnterior.Substring(0, Math.Min(32, z.HashAnterior.Length))}...");
-        EscreverLinha(ms, Separador());
-        EscreverLinha(ms, "Processado por computador certificado");
-        EscreverLinha(ms, "Menova POS - Restaurante");
-        EscreverLinha(ms, "\n\n");
+        EscreverLinha(ms, "Processado por Sistema Certificado");
+        EscreverLinha(ms, "Menova Restaurante");
+        EscreverLinha(ms, "\n");
         ms.Write(ComandoCortarPapel);
 
         return ms.ToArray();
@@ -385,19 +392,24 @@ public class EscPosGenerator
         EscreverLinha(ms, $"Operador: {mov.CriadoPor}");
         EscreverLinha(ms, Separador());
 
-        ms.Write(ComandoFonteDuplaAltura);
         ms.Write(ComandoNegritoLigado);
         EscreverLinha(ms, AlinharLinha("VALOR:", $"{mov.Valor:N2} MT"));
-        ms.Write(ComandoFonteNormal);
         ms.Write(ComandoNegritoDesligado);
         EscreverLinha(ms, $"Motivo: {mov.Motivo}");
         EscreverLinha(ms, Separador());
 
         EscreverLinha(ms, "\nAssinatura: ___________________________");
-        EscreverLinha(ms, "\n\n");
+        EscreverLinha(ms, "\n");
         ms.Write(ComandoCortarPapel);
 
         return ms.ToArray();
+    }
+
+    private string FormatarTextoCentro(string texto)
+    {
+        texto = texto?.Trim() ?? string.Empty;
+        if (texto.Length >= _larguraColunas) return texto.Substring(0, _larguraColunas);
+        return texto;
     }
 
     private void EscreverLinha(MemoryStream ms, string texto)

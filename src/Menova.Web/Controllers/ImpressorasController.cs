@@ -144,6 +144,9 @@ public class ImpressorasController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        var col = Math.Clamp(impressora.LarguraColunas, 24, 64);
+        var separador = new string('-', col) + "\n";
+
         using var ms = new MemoryStream();
         // ESC @ inicializar
         ms.Write(new byte[] { 0x1B, 0x40 });
@@ -152,17 +155,17 @@ public class ImpressorasController : Controller
         // ESC E 1 (negrito)
         ms.Write(new byte[] { 0x1B, 0x45, 0x01 });
         ms.Write(Encoding.Latin1.GetBytes("MENOVA RESTAURANTE\n"));
-        ms.Write(Encoding.Latin1.GetBytes("SISTEMA DE GESTAO POS/ERP\n"));
+        ms.Write(Encoding.Latin1.GetBytes("SISTEMA DE GESTAO POS\n"));
         // ESC E 0 (fim negrito)
         ms.Write(new byte[] { 0x1B, 0x45, 0x00 });
-        ms.Write(Encoding.Latin1.GetBytes("------------------------------------------\n"));
-        ms.Write(Encoding.Latin1.GetBytes($"TESTE DE CONECTIVIDADE ESC/POS\n"));
+        ms.Write(Encoding.Latin1.GetBytes(separador));
+        ms.Write(Encoding.Latin1.GetBytes("TESTE DE COMUNICACAO ESC/POS\n"));
         ms.Write(Encoding.Latin1.GetBytes($"Impressora: {impressora.Nome}\n"));
         ms.Write(Encoding.Latin1.GetBytes($"Destino: {impressora.EnderecoIp}:{impressora.Porta}\n"));
-        ms.Write(Encoding.Latin1.GetBytes($"Largura: {impressora.LarguraColunas} colunas\n"));
-        ms.Write(Encoding.Latin1.GetBytes($"Data/Hora: {_dateTimeService.FormatarDataHora(_dateTimeService.NowLocal)} (CAT)\n"));
-        ms.Write(Encoding.Latin1.GetBytes("------------------------------------------\n"));
-        ms.Write(Encoding.Latin1.GetBytes("Comunicacao de rede efetuada com sucesso!\n\n\n\n"));
+        ms.Write(Encoding.Latin1.GetBytes($"Largura: {col} colunas\n"));
+        ms.Write(Encoding.Latin1.GetBytes($"Data/Hora: {_dateTimeService.FormatarDataHora(_dateTimeService.NowLocal)}\n"));
+        ms.Write(Encoding.Latin1.GetBytes(separador));
+        ms.Write(Encoding.Latin1.GetBytes("Impressao de teste bem-sucedida!\n\n"));
         
         if (impressora.CortarPapel)
         {

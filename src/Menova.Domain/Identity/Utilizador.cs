@@ -18,6 +18,8 @@ public class Utilizador : SoftDeletableEntity
     public bool DeveAlterarPalavraPasse { get; set; } = false;
     public string SeloSeguranca { get; set; } = Guid.NewGuid().ToString("N");
 
+    public bool EhRootAdmin => string.Equals(NomeUtilizador, "admin", StringComparison.OrdinalIgnoreCase);
+
     public ICollection<UtilizadorPerfil> UtilizadoresPerfis { get; set; } = new List<UtilizadorPerfil>();
     public ICollection<SessaoUtilizador> Sessoes { get; set; } = new List<SessaoUtilizador>();
     public ICollection<TentativaLogin> TentativasLogin { get; set; } = new List<TentativaLogin>();

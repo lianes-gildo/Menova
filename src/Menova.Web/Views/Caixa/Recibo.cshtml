@@ -1,0 +1,253 @@
+@using Menova.Application.DTOs
+@{
+    ViewData["Title"] = "Comprovativo de Pagamento";
+    var pagamento = (PagamentoDto)ViewBag.Pagamento;
+    var conta = (ContaDto)ViewBag.Conta;
+    var totalPago = (decimal)ViewBag.TotalPago;
+    var saldoRestante = (decimal)ViewBag.SaldoRestante;
+    var autoPrint = (bool)ViewBag.AutoPrint;
+    var dtService = (Menova.Application.Interfaces.IDateTimeService)ViewBag.DateTimeService;
+}
+
+<style>
+    /* Estilos de Impressão Térmica Direta do Navegador */
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #seccaoTalaoTermico, #seccaoTalaoTermico * {
+            visibility: visible;
+        }
+        #seccaoTalaoTermico {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 80mm !important;
+            margin: 0 !important;
+            padding: 2mm !important;
+            box-shadow: none !important;
+            border: none !important;
+            font-size: 11pt !important;
+            color: #000 !important;
+            background: #fff !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+
+    .recibo-termico-container {
+        max-width: 400px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        font-family: 'Courier New', Courier, monospace;
+        color: #111111;
+        line-height: 1.25;
+    }
+
+    .recibo-divider {
+        border-top: 1px dashed #666;
+        margin: 8px 0;
+    }
+    .recibo-divider-duplo {
+        border-top: 2px solid #222;
+        margin: 8px 0;
+    }
+</style>
+
+<div class="no-print mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h3 class="mb-0 fw-bold" style="color: #6E1A33;">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>Pagamento Liquidado com Sucesso!
+            </h3>
+            <p class="text-muted small mb-0">Comprovativo de liquidação da Conta @conta.Numero</p>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex flex-wrap justify-content-md-end gap-2">
+            <button type="button" onclick="imprimirTalaoNavegador()" class="btn text-white fw-bold py-2 px-3 shadow-sm" style="background-color: #6E1A33;">
+                <i class="bi bi-printer-fill me-1"></i>Imprimir Recibo Térmico
+            </button>
+            <a href="/pedidos" class="btn btn-outline-secondary py-2 px-3">
+                <i class="bi bi-receipt me-1"></i>Comandas
+            </a>
+            <a href="/caixa" class="btn btn-outline-dark py-2 px-3">
+                <i class="bi bi-cash-stack me-1"></i>Caixa
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm no-print mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<!-- Pré-visualização do Talão Térmico de Caixa -->
+<div class="d-flex justify-content-center">
+    <div class="card border shadow-sm p-4 recibo-termico-container" id="seccaoTalaoTermico">
+        <!-- Cabeçalho Restaurante -->
+        <div class="text-center mb-2">
+            <h5 class="fw-bold mb-1 text-uppercase">Menova Restaurante</h5>
+            <div class="small">NUIT: 400123456</div>
+            <div class="small">Av. Julius Nyerere, Maputo, Moçambique</div>
+        </div>
+
+        <div class="recibo-divider-duplo"></div>
+
+        <div class="text-center fw-bold small mb-1">RECIBO DE PAGAMENTO</div>
+
+        <div class="recibo-divider"></div>
+
+        <!-- Metadados da Operação -->
+        <div class="small">
+            <div class="d-flex justify-content-between">
+                <span>CONTA:</span>
+                <span class="fw-bold">@conta.Numero</span>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(conta.MesaNumero))
+            {
+                <div class="d-flex justify-content-between">
+                    <span>MESA:</span>
+                    <span>@conta.MesaNumero (@(conta.ZonaNome ?? "Salão"))</span>
+                </div>
+            }
+            <div class="d-flex justify-content-between">
+                <span>DATA/HORA:</span>
+                <span>@pagamento.CriadoEm.AddHours(2).ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>OPERADOR:</span>
+                <span>@pagamento.CriadoPor</span>
+            </div>
+        </div>
+
+        <div class="recibo-divider"></div>
+
+        <!-- Detalhe dos Artigos da Conta -->
+        <div class="small mb-1">
+            <div class="d-flex justify-content-between fw-bold mb-1">
+                <span>ARTIGO</span>
+                <span>TOTAL</span>
+            </div>
+            @{
+                var itensConta = conta.Pedidos.SelectMany(p => p.Itens).Where(i => !i.Anulado).ToList();
+            }
+            @foreach (var item in itensConta)
+            {
+                <div class="d-flex justify-content-between">
+                    <span class="text-truncate" style="max-width: 220px;">@item.Quantidade.ToString("0.##")x @item.NomeArtigo</span>
+                    <span>@item.TotalLiquido.ToString("N2") MT</span>
+                </div>
+            }
+        </div>
+
+        <div class="recibo-divider"></div>
+
+        <!-- Totais Fiscais -->
+        <div class="small">
+            <div class="d-flex justify-content-between">
+                <span>Subtotal (s/ IVA):</span>
+                <span>@((conta.TotalLiquido - conta.TotalIva).ToString("N2")) MT</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>IVA (16% Incluído):</span>
+                <span>@conta.TotalIva.ToString("N2") MT</span>
+            </div>
+            @if (conta.TotalDesconto > 0)
+            {
+                <div class="d-flex justify-content-between text-danger">
+                    <span>Desconto Concedido:</span>
+                    <span>-@conta.TotalDesconto.ToString("N2") MT</span>
+                </div>
+            }
+            <div class="d-flex justify-content-between fw-bold fs-6 mt-1 pt-1 border-top">
+                <span>TOTAL CONTA:</span>
+                <span>@conta.TotalLiquido.ToString("N2") MT</span>
+            </div>
+        </div>
+
+        <div class="recibo-divider-duplo"></div>
+
+        <!-- Detalhes do Pagamento Efetuado -->
+        <div class="small">
+            <div class="d-flex justify-content-between">
+                <span>Forma de Liquidação:</span>
+                <span class="fw-bold">@pagamento.MetodoDescricao</span>
+            </div>
+            <div class="d-flex justify-content-between fw-bold fs-6 my-1">
+                <span>VALOR LIQUIDADO:</span>
+                <span>@pagamento.Valor.ToString("N2") MT</span>
+            </div>
+            @if (pagamento.ValorRecebido > 0)
+            {
+                <div class="d-flex justify-content-between">
+                    <span>Valor Entregue:</span>
+                    <span>@pagamento.ValorRecebido.ToString("N2") MT</span>
+                </div>
+                <div class="d-flex justify-content-between fw-bold">
+                    <span>Troco Devolvido:</span>
+                    <span>@pagamento.Troco.ToString("N2") MT</span>
+                </div>
+            }
+            @if (pagamento.Gorjeta > 0)
+            {
+                <div class="d-flex justify-content-between">
+                    <span>Gorjeta de Equipa:</span>
+                    <span>@pagamento.Gorjeta.ToString("N2") MT</span>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(pagamento.Referencia))
+            {
+                <div class="d-flex justify-content-between">
+                    <span>Ref/Transação:</span>
+                    <span>@pagamento.Referencia</span>
+                </div>
+            }
+        </div>
+
+        <div class="recibo-divider"></div>
+
+        <!-- Estado da Conta -->
+        <div class="text-center small py-1">
+            @if (saldoRestante <= 0)
+            {
+                <div class="fw-bold text-success fs-6">*** CONTA TOTALMENTE FECHADA ***</div>
+            }
+            else
+            {
+                <div class="fw-bold text-danger">SALDO PENDENTE: @saldoRestante.ToString("N2") MT</div>
+            }
+        </div>
+
+        <div class="recibo-divider"></div>
+
+        <!-- Rodapé Agradecimento -->
+        <div class="text-center small mt-1">
+            <div>Obrigado pela sua visita!</div>
+            <div>Volte Sempre!</div>
+            <div class="text-muted mt-1" style="font-size: 0.7rem;">Processado por Sistema Certificado</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function imprimirTalaoNavegador() {
+            window.print();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (autoPrint)
+            {
+                <text>
+                setTimeout(function () {
+                    window.print();
+                }, 400);
+                </text>
+            }
+        });
+    </script>
+}

@@ -262,7 +262,7 @@
                         </label>
                     </div>
 
-                    <button type="submit" class="btn text-white w-100 py-3 fs-5 fw-bold" style="background-color: #6E1A33;">
+                    <button type="button" class="btn text-white w-100 py-3 fs-5 fw-bold shadow-sm" style="background-color: #6E1A33;" onclick="abrirConfirmacaoPagamento()">
                         <i class="bi bi-check2-circle me-2"></i>Confirmar Pagamento
                     </button>
                 </form>
@@ -271,8 +271,97 @@
     </div>
 </div>
 
+<!-- Modal de Confirmação do Próprio Sistema (Sem alert/confirm nativo) -->
+<div class="modal fade" id="modalConfirmarPagamento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header text-white" style="background-color: #6E1A33;">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-shield-check me-2"></i>Confirmar Liquidação de Conta
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-3">Por favor verifique os valores antes de submeter a liquidação:</p>
+                <div class="bg-light p-3 rounded-3 border mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Conta:</span>
+                        <span class="fw-bold font-monospace">@conta.Numero</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Forma de Pagamento:</span>
+                        <span class="badge bg-secondary" id="modalConfirmMetodoNome">Numerário</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 fs-5 fw-bold" style="color: #6E1A33;">
+                        <span>Valor a Cobrar:</span>
+                        <span id="modalConfirmValor">0,00 MT</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-success fw-bold" id="modalConfirmTrocoRow">
+                        <span>Troco a Entregar:</span>
+                        <span id="modalConfirmTroco">0,00 MT</span>
+                    </div>
+                </div>
+                <div class="alert alert-info py-2 px-3 small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>Após a confirmação, o talão térmico será emitido e a conta atualizada.
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Voltar e Ajustar</button>
+                <button type="button" id="btnSubmeterPagamentoFinal" onclick="submeterPagamentoConfirmado()" class="btn text-white fw-bold px-4" style="background-color: #6E1A33;">
+                    <i class="bi bi-check2-circle me-1"></i>Confirmar e Liquidar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
+    function abrirConfirmacaoPagamento() {
+        const inputValor = document.getElementById('inputValor');
+        const inputRecebido = document.getElementById('inputValorRecebido');
+        const radioMetodo = document.querySelector('input[name="Metodo"]:checked');
+
+        const valor = parseFloat(inputValor ? inputValor.value : 0) || 0;
+        const recebido = parseFloat(inputRecebido ? inputRecebido.value : 0) || 0;
+
+        if (valor <= 0) {
+            mostrarToast('Introduza um valor válido para cobrança.', 'erro');
+            return;
+        }
+
+        let metodoNome = 'Numerário';
+        if (radioMetodo) {
+            const val = radioMetodo.value;
+            if (val === '2') metodoNome = 'POS / Cartão';
+            else if (val === '3') metodoNome = 'M-Pesa';
+            else if (val === '4') metodoNome = 'e-Mola';
+        }
+
+        const troco = Math.max(0, recebido - valor);
+
+        const lblMetodo = document.getElementById('modalConfirmMetodoNome');
+        const lblValor = document.getElementById('modalConfirmValor');
+        const lblTroco = document.getElementById('modalConfirmTroco');
+        const rowTroco = document.getElementById('modalConfirmTrocoRow');
+
+        if (lblMetodo) lblMetodo.textContent = metodoNome;
+        if (lblValor) lblValor.textContent = valor.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
+        if (lblTroco) lblTroco.textContent = troco.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
+        if (rowTroco) rowTroco.style.display = (metodoNome === 'Numerário' && troco > 0) ? 'flex' : 'none';
+
+        new bootstrap.Modal(document.getElementById('modalConfirmarPagamento')).show();
+    }
+
+    function submeterPagamentoConfirmado() {
+        const btn = document.getElementById('btnSubmeterPagamentoFinal');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>A liquidar...';
+        }
+        document.getElementById('formPagamento').submit();
+    }
+
     function ajustarMetodo(metodo) {
         const secNumerario = document.getElementById('seccaoNumerario');
         const secReferencia = document.getElementById('seccaoReferencia');

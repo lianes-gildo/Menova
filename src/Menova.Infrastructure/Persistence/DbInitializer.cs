@@ -763,7 +763,7 @@ public static class DbInitializer
                 Nome = "Impressora Térmica Balcão (ESC/POS)",
                 EnderecoIp = "192.168.1.200",
                 Porta = 9100,
-                LarguraColunas = 42,
+                LarguraColunas = 32,
                 Ativa = true,
                 CortarPapel = true,
                 AbrirGaveta = false

@@ -40,9 +40,9 @@ function initClock() {
             hour12: false
         };
         try {
-            clockEl.textContent = new Intl.DateTimeFormat('pt-PT', options).format(now) + ' (CAT)';
+            clockEl.textContent = new Intl.DateTimeFormat('pt-PT', options).format(now);
         } catch {
-            clockEl.textContent = now.toTimeString().split(' ')[0] + ' (CAT)';
+            clockEl.textContent = now.toTimeString().split(' ')[0];
         }
     }
 

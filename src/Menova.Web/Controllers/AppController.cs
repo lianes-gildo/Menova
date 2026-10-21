@@ -42,17 +42,7 @@ public class AppController : Controller
     [HttpHead("download/android")]
     public IActionResult DownloadAndroid()
     {
-        var apkPath = Path.Combine(_env.WebRootPath, "downloads", "MenovaGarcom.apk");
-        if (!System.IO.File.Exists(apkPath))
-        {
-            _logger.LogWarning("Ficheiro MenovaGarcom.apk não encontrado em {Path}. A gerar ficheiro dinâmico...", apkPath);
-            return NotFound("Ficheiro de instalação Android temporariamente indisponível.");
-        }
-
-        var bytes = System.IO.File.ReadAllBytes(apkPath);
-        Response.Headers.ContentLength = bytes.Length;
-
-        return File(bytes, "application/vnd.android.package-archive", "MenovaGarcom.apk", enableRangeProcessing: true);
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet("download/ios")]

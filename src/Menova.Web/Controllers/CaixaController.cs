@@ -19,6 +19,7 @@ public class CaixaController : Controller
     private readonly IContaService _contaService;
     private readonly ICurrentUserService _currentUser;
     private readonly IDateTimeService _dateTimeService;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<CaixaController> _logger;
 
     public CaixaController(
@@ -29,6 +30,7 @@ public class CaixaController : Controller
         IContaService contaService,
         ICurrentUserService currentUser,
         IDateTimeService dateTimeService,
+        IServiceScopeFactory scopeFactory,
         ILogger<CaixaController> logger)
     {
         _caixaService = caixaService;
@@ -38,6 +40,7 @@ public class CaixaController : Controller
         _contaService = contaService;
         _currentUser = currentUser;
         _dateTimeService = dateTimeService;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -115,18 +118,21 @@ public class CaixaController : Controller
         {
             var mov = await _caixaService.RegistarMovimentoAsync(dto, _currentUser.NomeUtilizador);
 
-            // Imprimir comprovativo em segundo plano
+            // Imprimir comprovativo em segundo plano com escopo isolado
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    var sessao = await _caixaService.ObterSessaoPorIdAsync(dto.SessaoCaixaId);
-                    var bytes = _impressaoService.GerarComprovativoMovimento(mov, sessao?.CaixaNome ?? "Caixa");
-                    await _impressaoService.EnviarParaImpressoraAsync(null, bytes, TipoDocumentoImpressao.MovimentoCaixa);
+                    using var scope = _scopeFactory.CreateScope();
+                    var scopedCaixa = scope.ServiceProvider.GetRequiredService<ICaixaService>();
+                    var scopedImpressao = scope.ServiceProvider.GetRequiredService<IImpressaoService>();
+                    var sessao = await scopedCaixa.ObterSessaoPorIdAsync(dto.SessaoCaixaId);
+                    var bytes = scopedImpressao.GerarComprovativoMovimento(mov, sessao?.CaixaNome ?? "Caixa");
+                    await scopedImpressao.EnviarParaImpressoraAsync(null, bytes, TipoDocumentoImpressao.MovimentoCaixa);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Erro ao imprimir comprovativo de movimento");
+                    _logger.LogWarning(ex, "Aviso ao imprimir comprovativo de movimento em segundo plano");
                 }
             });
 
@@ -198,12 +204,14 @@ public class CaixaController : Controller
                 {
                     try
                     {
-                        var bytes = _impressaoService.GerarReciboPagamento(conta, pagamento, saldoRestante);
-                        await _impressaoService.EnviarParaImpressoraAsync(null, bytes, TipoDocumentoImpressao.TalaoConta);
+                        using var scope = _scopeFactory.CreateScope();
+                        var scopedImpressao = scope.ServiceProvider.GetRequiredService<IImpressaoService>();
+                        var bytes = scopedImpressao.GerarReciboPagamento(conta, pagamento, saldoRestante);
+                        await scopedImpressao.EnviarParaImpressoraAsync(null, bytes, TipoDocumentoImpressao.TalaoConta);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Erro ao imprimir recibo");
+                        _logger.LogWarning(ex, "Aviso ao imprimir recibo na impressora de rede em segundo plano");
                     }
                 });
             }
@@ -211,12 +219,7 @@ public class CaixaController : Controller
             TempData["Sucesso"] = $"Pagamento de {_dateTimeService.FormatarMoeda(pagamento.Valor)} liquidado com sucesso via {pagamento.MetodoDescricao}." +
                 (pagamento.Troco > 0 ? $" Troco a entregar: {_dateTimeService.FormatarMoeda(pagamento.Troco)}." : "");
 
-            if (saldoRestante <= 0)
-            {
-                return RedirectToAction("Index", "Pedidos");
-            }
-
-            return RedirectToAction(nameof(Pagamento), new { contaId = dto.ContaId });
+            return RedirectToAction(nameof(Recibo), new { pagamentoId = pagamento.Id, autoPrint = imprimirRecibo });
         }
         catch (Exception ex)
         {
@@ -224,6 +227,38 @@ public class CaixaController : Controller
             TempData["Erro"] = ex.Message;
             return RedirectToAction(nameof(Pagamento), new { contaId = dto.ContaId });
         }
+    }
+
+    [HttpGet("recibo/{pagamentoId:guid}")]
+    [Authorize(Policy = PermissoesCatalogo.CaixaCobrar)]
+    public async Task<IActionResult> Recibo(Guid pagamentoId, bool autoPrint = false)
+    {
+        var pagamento = await _pagamentoService.ObterPagamentoPorIdAsync(pagamentoId);
+        if (pagamento == null)
+        {
+            TempData["Erro"] = "Comprovativo de pagamento não encontrado.";
+            return RedirectToAction("Index", "Pedidos");
+        }
+
+        var conta = await _contaService.GetContaPorIdAsync(pagamento.ContaId);
+        if (conta == null)
+        {
+            TempData["Erro"] = "Conta associada não encontrada.";
+            return RedirectToAction("Index", "Pedidos");
+        }
+
+        var todosPagamentos = await _pagamentoService.ObterPagamentosPorContaAsync(conta.Id);
+        var totalPago = todosPagamentos.Sum(p => p.Valor);
+        var saldoRestante = Math.Max(0, conta.TotalLiquido - totalPago);
+
+        ViewBag.Pagamento = pagamento;
+        ViewBag.Conta = conta;
+        ViewBag.TotalPago = totalPago;
+        ViewBag.SaldoRestante = saldoRestante;
+        ViewBag.AutoPrint = autoPrint;
+        ViewBag.DateTimeService = _dateTimeService;
+
+        return View();
     }
 
     [HttpGet("x/{sessaoId:guid}")]
@@ -279,12 +314,14 @@ public class CaixaController : Controller
             {
                 try
                 {
-                    var bytes = _impressaoService.GerarTalaoZ(z);
-                    await _impressaoService.EnviarParaImpressoraAsync(null, bytes, TipoDocumentoImpressao.TalaoZ);
+                    using var scope = _scopeFactory.CreateScope();
+                    var scopedImpressao = scope.ServiceProvider.GetRequiredService<IImpressaoService>();
+                    var bytes = scopedImpressao.GerarTalaoZ(z);
+                    await scopedImpressao.EnviarParaImpressoraAsync(null, bytes, TipoDocumentoImpressao.TalaoZ);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Erro ao imprimir talão Z");
+                    _logger.LogWarning(ex, "Aviso ao imprimir talão Z na impressora em segundo plano");
                 }
             });
 

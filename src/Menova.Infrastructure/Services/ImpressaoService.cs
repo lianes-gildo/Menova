@@ -17,7 +17,7 @@ public class ImpressaoService : IImpressaoService
     {
         _context = context;
         _logger = logger;
-        _generator = new EscPosGenerator(larguraColunas: 42);
+        _generator = new EscPosGenerator(larguraColunas: 32);
     }
 
     public async Task<List<ImpressoraDto>> ObterImpressorasAsync(CancellationToken ct = default)

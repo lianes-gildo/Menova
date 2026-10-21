@@ -1,129 +1,169 @@
 @inject ICurrentUserService CurrentUser
 @{
-    ViewData["Title"] = "Painel Inicial";
+    ViewData["Title"] = "Painel de Gestão";
+    var vendasHoje = (decimal)(ViewBag.VendasHoje ?? 0.00m);
+    var contasPagasHoje = (int)(ViewBag.ContasPagasHoje ?? 0);
+    var mesasOcupadas = (int)(ViewBag.MesasOcupadas ?? 0);
+    var totalMesas = (int)(ViewBag.TotalMesas ?? 0);
+    var pedidosCozinha = (int)(ViewBag.PedidosCozinha ?? 0);
+    var comandasAbertas = (int)(ViewBag.ComandasAbertas ?? 0);
+    var totalArtigos = (int)(ViewBag.TotalArtigos ?? 0);
+    var sessoesCaixa = (int)(ViewBag.SessoesCaixaAbertas ?? 0);
+    var totalUtilizadores = (int)(ViewBag.TotalUtilizadores ?? 0);
 }
 
-<div class="page-header">
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
-        <h1 class="page-title">@ViewBag.RestauranteNome</h1>
+        <h1 class="page-title mb-1">@ViewBag.RestauranteNome</h1>
         <div class="text-muted small">
-            NUIT: <strong>@ViewBag.RestauranteNuit</strong> &middot; Fuso Horário: <strong>@ViewBag.FusoHorario (CAT)</strong> &middot; Moeda: <strong>@ViewBag.Moeda</strong>
+            NUIT: <strong>@ViewBag.RestauranteNuit</strong> &middot; Moeda: <strong>@ViewBag.Moeda</strong> &middot; Horário Oficial: <strong>@ViewBag.HoraLocal</strong>
         </div>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         @if (CurrentUser.TemPermissao(PermissoesCatalogo.ContasAbrir))
         {
             <a href="/pedidos" class="btn btn-outline-primary">
-                <i class="bi bi-plus-lg me-1"></i> Nova Comanda
+                <i class="bi bi-receipt me-1"></i> Comandas (@comandasAbertas)
             </a>
         }
         @if (CurrentUser.TemPermissao(PermissoesCatalogo.CaixaAbrir) || CurrentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar))
         {
             <a href="/caixa" class="btn btn-primary">
-                <i class="bi bi-cash-stack me-1"></i> Gestão de Caixa
+                <i class="bi bi-cash-stack me-1"></i> Caixa
+                @if (sessoesCaixa > 0)
+                {
+                    <span class="badge bg-success ms-1">@sessoesCaixa Aberto</span>
+                }
             </a>
         }
     </div>
 </div>
 
-<!-- Cartões de Resumo Operacional (KPI Cards) -->
+<!-- Cartões de Resumo Operacional com Números e Dados Reais -->
 <div class="row g-3 mb-4">
+    <!-- Vendas de Hoje -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card h-100">
+        <div class="card h-100 border shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="p-3 me-3 bg-light border text-primary" style="font-size: 1.5rem;">
-                    <i class="bi bi-currency-exchange" style="color: var(--mv-vinho-700);"></i>
+                <div class="p-3 me-3 rounded-3 text-white" style="background-color: #6E1A33; font-size: 1.5rem;">
+                    <i class="bi bi-currency-exchange"></i>
                 </div>
                 <div>
                     <div class="text-muted small fw-semibold">Vendas de Hoje</div>
-                    <div class="fs-4 fw-bold" style="color: var(--mv-vinho-900);">0,00 @ViewBag.Moeda</div>
-                    <span class="badge badge-vinho">0 contas pagas</span>
+                    <div class="fs-4 fw-bold" style="color: #6E1A33;">@vendasHoje.ToString("N2") @ViewBag.Moeda</div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                        <i class="bi bi-check2 me-1"></i>@contasPagasHoje conta(s) liquidada(s)
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Ocupação de Mesas -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card h-100">
+        <div class="card h-100 border shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="p-3 me-3 bg-light border text-primary" style="font-size: 1.5rem;">
-                    <i class="bi bi-layout-wtf" style="color: var(--mv-vinho-700);"></i>
+                <div class="p-3 me-3 rounded-3 text-white bg-primary" style="font-size: 1.5rem;">
+                    <i class="bi bi-grid-3x3-gap"></i>
                 </div>
                 <div>
                     <div class="text-muted small fw-semibold">Mesas Ocupadas</div>
-                    <div class="fs-4 fw-bold" style="color: var(--mv-vinho-900);">0 / 0</div>
-                    <span class="badge badge-sucesso">Salão disponível</span>
+                    <div class="fs-4 fw-bold text-dark">@mesasOcupadas / @totalMesas</div>
+                    @if (mesasOcupadas > 0)
+                    {
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                            @mesasOcupadas mesa(s) em atendimento
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-light text-muted border">Salão disponível</span>
+                    }
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Pedidos em Cozinha -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card h-100">
+        <div class="card h-100 border shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="p-3 me-3 bg-light border text-primary" style="font-size: 1.5rem;">
-                    <i class="bi bi-fire" style="color: var(--mv-vinho-700);"></i>
+                <div class="p-3 me-3 rounded-3 text-white bg-warning" style="font-size: 1.5rem;">
+                    <i class="bi bi-fire"></i>
                 </div>
                 <div>
-                    <div class="text-muted small fw-semibold">Pedidos na Cozinha</div>
-                    <div class="fs-4 fw-bold" style="color: var(--mv-vinho-900);">0</div>
-                    <span class="badge badge-aviso">Tempo médio: 0 min</span>
+                    <div class="text-muted small fw-semibold">Cozinha / KDS</div>
+                    <div class="fs-4 fw-bold text-dark">@pedidosCozinha</div>
+                    @if (pedidosCozinha > 0)
+                    {
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                            Em preparação ativa
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">Sem pedidos pendentes</span>
+                    }
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Comandas Abertas em Salão -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card h-100">
+        <div class="card h-100 border shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="p-3 me-3 bg-light border text-primary" style="font-size: 1.5rem;">
-                    <i class="bi bi-shield-lock-fill" style="color: var(--mv-vinho-700);"></i>
+                <div class="p-3 me-3 rounded-3 text-white bg-secondary" style="font-size: 1.5rem;">
+                    <i class="bi bi-journal-text"></i>
                 </div>
                 <div>
-                    <div class="text-muted small fw-semibold">Auditoria Criptográfica</div>
-                    <div class="fs-4 fw-bold text-success">Íntegra</div>
-                    <span class="badge badge-sucesso">Cadeia SHA-256 ativa</span>
+                    <div class="text-muted small fw-semibold">Comandas em Aberto</div>
+                    <div class="fs-4 fw-bold text-dark">@comandasAbertas</div>
+                    <span class="badge bg-secondary-subtle text-secondary border">
+                        @totalArtigos artigos no menu
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Detalhes do Sistema e Ambiente -->
+<!-- Secção Central: Indicadores Operacionais e Acesso Rápido -->
 <div class="row g-3">
+    <!-- Tabela de Resumo Operacional -->
     <div class="col-12 col-lg-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Estado Operacional e Configurações Regionais</span>
-                <span class="badge badge-sucesso">Online (100% Local)</span>
+        <div class="card border shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                <span class="fw-bold"><i class="bi bi-info-circle me-1"></i>Resumo Operacional do Estabelecimento</span>
+                <span class="badge bg-success">Sistema Ativo (100% Local)</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <tbody>
                             <tr>
-                                <td class="fw-semibold text-muted" style="width: 250px;">Localização & Fuso Horário</td>
-                                <td>Moçambique &middot; <code>@ViewBag.FusoHorario</code> (Hora Oficial: <strong>@ViewBag.HoraLocal</strong>)</td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold text-muted">Moeda Oficial</td>
-                                <td><strong>@ViewBag.Moeda</strong> (Metical Moçambicano, 2 casas decimais)</td>
+                                <td class="fw-semibold text-muted" style="width: 240px;">Moeda e Localização</td>
+                                <td><strong>@ViewBag.Moeda</strong> &middot; Moçambique (Maputo)</td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold text-muted">Regime de IVA</td>
-                                <td>16,00% (Padrão Moçambique, isolamento fiscal ativo)</td>
+                                <td>16,00% (Aplicado conforme legislação vigente)</td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold text-muted">Funcionários Registados</td>
-                                <td>@ViewBag.TotalUtilizadores ativos em @ViewBag.TotalPerfis perfis de acesso</td>
+                                <td class="fw-semibold text-muted">Equipa Cadastrada</td>
+                                <td>@totalUtilizadores colaboradores ativos</td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold text-muted">Segurança & Auditoria</td>
-                                <td>PostgreSQL WORM triggers + SHA-256 tamper-evident chain</td>
+                                <td class="fw-semibold text-muted">Artigos no Cardápio</td>
+                                <td>@totalArtigos produtos ativos configurados para venda</td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold text-muted">Rede & Conectividade</td>
-                                <td>Operação 100% offline em rede local sem dependência de internet</td>
+                                <td class="fw-semibold text-muted">Sessões de Caixa</td>
+                                <td>@(sessoesCaixa > 0 ? $"{sessoesCaixa} terminal de caixa aberto" : "Nenhum caixa aberto neste momento")</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold text-muted">Rede e Conectividade</td>
+                                <td>Funcionamento contínuo em rede local com suporte a PWA em smartphones</td>
                             </tr>
                         </tbody>
                     </table>
@@ -132,20 +172,45 @@
         </div>
     </div>
 
+    <!-- Atalhos de Gestão do Restaurante -->
     <div class="col-12 col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                Atalhos Rápidos
+        <div class="card border shadow-sm h-100">
+            <div class="card-header bg-light fw-bold py-2">
+                <i class="bi bi-lightning-charge me-1"></i>Ações Frequentes
             </div>
             <div class="card-body d-flex flex-column gap-2">
-                <a href="/instalar-certificado" class="btn btn-outline-primary text-start">
-                    <i class="bi bi-shield-check me-2"></i>Instalar Certificado SSL Local
-                </a>
-                <a href="/auditoria" class="btn btn-outline-primary text-start">
-                    <i class="bi bi-journal-check me-2"></i>Verificar Integridade da Auditoria
-                </a>
-                <a href="/health/ready" target="_blank" class="btn btn-outline-primary text-start">
-                    <i class="bi bi-heart-pulse me-2"></i>Diagnóstico de Saúde (/health/ready)
+                @if (CurrentUser.TemPermissao(PermissoesCatalogo.ContasAbrir))
+                {
+                    <a href="/pedidos" class="btn btn-outline-dark text-start py-2">
+                        <i class="bi bi-receipt me-2 text-danger"></i>Gerir Comandas de Salão
+                    </a>
+                }
+                @if (CurrentUser.TemPermissao(PermissoesCatalogo.CaixaAbrir) || CurrentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar))
+                {
+                    <a href="/caixa" class="btn btn-outline-dark text-start py-2">
+                        <i class="bi bi-cash-coin me-2 text-success"></i>Abrir / Fechar Turno de Caixa
+                    </a>
+                }
+                @if (CurrentUser.TemPermissao(PermissoesCatalogo.MenuVer))
+                {
+                    <a href="/menu" class="btn btn-outline-dark text-start py-2">
+                        <i class="bi bi-book me-2 text-primary"></i>Consultar Menu e Artigos
+                    </a>
+                }
+                @if (CurrentUser.TemPermissao(PermissoesCatalogo.RelatoriosVer))
+                {
+                    <a href="/relatorios" class="btn btn-outline-dark text-start py-2">
+                        <i class="bi bi-bar-chart-line me-2 text-info"></i>Relatórios de Vendas
+                    </a>
+                }
+                @if (CurrentUser.TemPermissao(PermissoesCatalogo.UtilizadoresVer))
+                {
+                    <a href="/utilizadores" class="btn btn-outline-dark text-start py-2">
+                        <i class="bi bi-people me-2 text-secondary"></i>Gestão de Funcionários
+                    </a>
+                }
+                <a href="/app" class="btn btn-outline-dark text-start py-2">
+                    <i class="bi bi-phone me-2" style="color: #6E1A33;"></i>App de Garçom no Telemóvel
                 </a>
             </div>
         </div>

@@ -24,7 +24,7 @@ public class DateTimeService : IDateTimeService
             }
             catch
             {
-                _fusoHorario = TimeZoneInfo.CreateCustomTimeZone("Africa/Maputo", TimeSpan.FromHours(2), "Africa/Maputo", "CAT");
+                _fusoHorario = TimeZoneInfo.CreateCustomTimeZone("Africa/Maputo", TimeSpan.FromHours(2), "Africa/Maputo", "UTC+2");
             }
         }
 

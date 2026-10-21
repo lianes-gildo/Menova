@@ -193,6 +193,30 @@ public class PagamentoService : IPagamentoService
             .ToListAsync(ct);
     }
 
+    public async Task<PagamentoDto?> ObterPagamentoPorIdAsync(Guid pagamentoId, CancellationToken ct = default)
+    {
+        var p = await _context.Pagamentos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == pagamentoId, ct);
+
+        if (p == null) return null;
+
+        return new PagamentoDto(
+            p.Id,
+            p.ContaId,
+            p.SessaoCaixaId,
+            p.Metodo,
+            TraduzirMetodo(p.Metodo),
+            p.Valor,
+            p.ValorRecebido,
+            p.Troco,
+            p.Gorjeta,
+            p.Referencia,
+            p.CriadoEm,
+            p.CriadoPor
+        );
+    }
+
     private static string TraduzirMetodo(MetodoPagamento metodo) => metodo switch
     {
         MetodoPagamento.Numerario => "Numerário",
