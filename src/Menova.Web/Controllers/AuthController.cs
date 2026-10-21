@@ -230,8 +230,9 @@ public class AuthController : Controller
 
     [HttpPost("logout")]
     [HttpPost("/logout")]
+    [HttpGet("logout")]
     [HttpGet("/logout")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> Logout()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

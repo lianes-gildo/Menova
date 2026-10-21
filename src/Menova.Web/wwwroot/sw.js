@@ -60,6 +60,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Ignorar downloads binários (APK, MobileConfig, CRT) para o navegador transferir nativamente
+  if (url.pathname.includes('/download') || 
+      url.pathname.endsWith('.apk') || 
+      url.pathname.endsWith('.mobileconfig') || 
+      url.pathname.endsWith('.crt') ||
+      url.searchParams.has('download')) {
+    return;
+  }
+
   // 1. Pedidos de Navegação HTML (ex.: abrir /garcom) -> Rede primeiro, fallback para cache, fallback para offline.html
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith(

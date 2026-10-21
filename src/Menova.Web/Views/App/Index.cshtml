@@ -1,158 +1,326 @@
 @{
-    Layout = "_LayoutLogin";
-    ViewData["Title"] = "Instalar App Menova Garçom";
+    Layout = "_LayoutApp";
+    ViewData["Title"] = "Instalar Menova Garçom";
 }
 
-<div class="text-center mb-4">
-    <img src="~/icons/icon-192.png" alt="Menova Garçom" class="img-fluid rounded-4 shadow-sm mb-3" style="width: 80px; height: 80px; object-fit: cover;" />
-    <h4 class="fw-bold mb-1" style="color: var(--mv-vinho-900);">Menova Garçom</h4>
-    <p class="text-muted small mb-2">Aplicação móvel para garçons, tablets e telemóveis de salão.</p>
-    <div class="d-flex justify-content-center gap-2">
-        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+<!-- Cabeçalho / Hero -->
+<div class="card border-0 shadow-sm rounded-4 text-center p-3 p-sm-4 mb-3" style="background: linear-gradient(180deg, #ffffff 0%, #FAF7F2 100%);">
+    <div class="d-inline-flex justify-content-center mb-2">
+        <img src="~/icons/icon-192.png" alt="Menova Garçom" class="rounded-4 shadow-sm" style="width: 76px; height: 76px; object-fit: cover;" />
+    </div>
+    <h3 class="fw-bold mb-1" style="color: #6E1A33; letter-spacing: -0.5px;">Menova Garçom</h3>
+    <p class="text-muted small mb-2">Aplicação móvel de salão para smartphones e tablets.</p>
+    
+    <div class="d-flex flex-wrap justify-content-center gap-1">
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
             <i class="bi bi-wifi-off me-1"></i>Rede Local Offline
         </span>
-        <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">
-            v1.0.0 (Moçambique)
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 small">
+            <i class="bi bi-shield-check me-1"></i>100% Seguro
+        </span>
+        <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small">
+            v1.0.0
         </span>
     </div>
 </div>
 
-<!-- Secção QR Code para digitalização rápida -->
-<div class="card border-0 shadow-sm rounded-3 mb-4 text-center p-3" style="background: #fdfbf7;">
-    <h6 class="fw-bold mb-2 text-dark small"><i class="bi bi-qr-code-scan me-1"></i>Digitalizar com o Telemóvel</h6>
-    <p class="text-muted small mb-3">Aponte a câmara do telemóvel ou tablet à rede Wi-Fi do restaurante:</p>
-    <div class="d-flex justify-content-center my-2">
-        <div id="qrcode" class="p-2 bg-white rounded-3 shadow-sm border" style="min-height: 200px; min-width: 200px; display: flex; align-items: center; justify-content: center;">
-            <div class="spinner-border text-secondary spinner-border-sm" role="status"></div>
+<!-- Seletor de Plataforma em Abas -->
+<div class="card border-0 shadow-sm rounded-4 p-2 mb-3 bg-white">
+    <ul class="nav nav-pills nav-fill gap-1" id="pwaPlatformTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active py-2 px-2 fw-semibold small" id="tab-android-btn" data-bs-toggle="tab" data-bs-target="#tab-android" type="button" role="tab">
+                <i class="bi bi-android2 me-1 text-success"></i>Android
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link py-2 px-2 fw-semibold small" id="tab-ios-btn" data-bs-toggle="tab" data-bs-target="#tab-ios" type="button" role="tab">
+                <i class="bi bi-apple me-1 text-dark"></i>iPhone / iPad
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link py-2 px-2 fw-semibold small" id="tab-qr-btn" data-bs-toggle="tab" data-bs-target="#tab-qr" type="button" role="tab">
+                <i class="bi bi-qr-code me-1 text-danger"></i>Código QR
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link py-2 px-2 fw-semibold small" id="tab-cert-btn" data-bs-toggle="tab" data-bs-target="#tab-cert" type="button" role="tab">
+                <i class="bi bi-shield-lock me-1 text-primary"></i>SSL
+            </button>
+        </li>
+    </ul>
+</div>
+
+<!-- Conteúdo das Abas -->
+<div class="tab-content" id="pwaPlatformTabsContent">
+
+    <!-- ================= ABA ANDROID ================= -->
+    <div class="tab-pane fade show active" id="tab-android" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-sm-4 mb-3 bg-white">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-success-subtle text-success p-2 me-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-android2 fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">Instalação no Android</h5>
+                    <small class="text-muted">Chrome, Samsung Internet, Edge ou Opera</small>
+                </div>
+            </div>
+
+            <!-- Botão Principal PWA -->
+            <button type="button" class="btn text-white py-3 px-3 w-100 fw-bold mb-3 shadow-sm rounded-3 d-flex align-items-center justify-content-center" 
+                    id="btnInstallAndroidPwa" style="background-color: #6E1A33; min-height: 52px;">
+                <i class="bi bi-phone-fill fs-5 me-2"></i>
+                <span>Adicionar ao Ecrã Principal (Recomendado)</span>
+            </button>
+
+            <!-- Botão Download APK Nativo -->
+            <div class="mb-3">
+                <a href="/app/download/android" download="MenovaGarcom.apk" class="btn btn-outline-dark py-2 px-3 w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-between" style="min-height: 48px;">
+                    <div class="d-flex align-items-center text-truncate">
+                        <i class="bi bi-download text-success me-2 fs-5"></i>
+                        <span class="text-truncate">Descarregar Pacote Android (.apk)</span>
+                    </div>
+                    <span class="badge bg-light text-secondary border ms-2">~10 KB</span>
+                </a>
+                <small class="text-muted d-block mt-1 ps-1" style="font-size: 0.78rem;">
+                    <i class="bi bi-info-circle me-1"></i>O Android pode pedir para confirmar a transferência de origens seguras da rede local.
+                </small>
+            </div>
+
+            <!-- Instruções Rápidas Android -->
+            <div class="border rounded-3 p-3 bg-light">
+                <h6 class="fw-bold mb-2 small text-dark"><i class="bi bi-list-check me-1"></i>Passo a Passo Manual (se não instalar automaticamente):</h6>
+                <ol class="small text-muted ps-3 mb-0">
+                    <li class="mb-1">Abra o <strong>Google Chrome</strong> nesta página.</li>
+                    <li class="mb-1">Toque no menu de <strong>três pontos (&#8942;)</strong> no canto superior direito.</li>
+                    <li class="mb-1">Selecione <strong>"Adicionar ao ecrã inicial"</strong> ou <strong>"Instalar aplicação"</strong>.</li>
+                    <li>O ícone do <strong>Menova Garçom</strong> aparecerá no seu ecrã pronto a utilizar.</li>
+                </ol>
+            </div>
         </div>
     </div>
-    <div class="mt-2">
-        <small class="text-muted text-break" id="lblQrUrl">@ViewBag.AppUrl</small>
+
+    <!-- ================= ABA IPHONE / IPAD ================= -->
+    <div class="tab-pane fade" id="tab-ios" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-sm-4 mb-3 bg-white">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-dark-subtle text-dark p-2 me-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-apple fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">Instalação no iPhone e iPad</h5>
+                    <small class="text-muted">Compatível com Safari no iOS e iPadOS</small>
+                </div>
+            </div>
+
+            <!-- Opção 1: Atalho Safari PWA (Nativo Apple) -->
+            <div class="border rounded-3 p-3 mb-3" style="background-color: #FAF7F2; border-color: #E6DFD5 !important;">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge bg-danger px-2 py-1 me-2" style="background-color: #6E1A33 !important;">Método 1</span>
+                    <strong class="text-dark small">Adicionar Atalho Direto no Safari (Recomendado)</strong>
+                </div>
+                
+                <div class="d-flex flex-column gap-2 small text-muted my-2">
+                    <div class="d-flex align-items-center p-2 bg-white rounded-2 border">
+                        <span class="badge bg-secondary rounded-circle me-2 px-2 py-1">1</span>
+                        <span>Abra esta página no navegador <strong>Safari</strong> do iPhone.</span>
+                    </div>
+                    <div class="d-flex align-items-center p-2 bg-white rounded-2 border">
+                        <span class="badge bg-secondary rounded-circle me-2 px-2 py-1">2</span>
+                        <span>Toque no botão <strong>Partilhar</strong> <i class="bi bi-box-arrow-up text-primary mx-1 fs-6"></i> (quadrado com seta na barra inferior).</span>
+                    </div>
+                    <div class="d-flex align-items-center p-2 bg-white rounded-2 border">
+                        <span class="badge bg-secondary rounded-circle me-2 px-2 py-1">3</span>
+                        <span>Deslize a lista e toque em <strong>"Adicionar ao Ecrã Principal"</strong> <i class="bi bi-plus-square text-success mx-1 fs-6"></i>.</span>
+                    </div>
+                    <div class="d-flex align-items-center p-2 bg-white rounded-2 border">
+                        <span class="badge bg-secondary rounded-circle me-2 px-2 py-1">4</span>
+                        <span>Toque em <strong>"Adicionar"</strong> no canto superior direito para concluir.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Opção 2: Perfil WebClip .mobileconfig -->
+            <div class="border rounded-3 p-3 bg-light">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge bg-secondary px-2 py-1 me-2">Método 2</span>
+                    <strong class="text-dark small">Perfil de Configuração (.mobileconfig)</strong>
+                </div>
+                <p class="small text-muted mb-2">Instala o atalho através do sistema de perfis Apple WebClip:</p>
+                
+                <a href="/app/download/ios" download="MenovaGarcom.mobileconfig" target="_top" class="btn btn-outline-dark py-2 px-3 w-100 fw-semibold rounded-3 mb-2 d-flex align-items-center justify-content-between" style="min-height: 48px;">
+                    <div class="d-flex align-items-center text-truncate">
+                        <i class="bi bi-apple me-2 fs-5"></i>
+                        <span class="text-truncate">Descarregar Atalho iOS (.mobileconfig)</span>
+                    </div>
+                    <span class="badge bg-light text-secondary border ms-2">Perfil Apple</span>
+                </a>
+                
+                <ol class="small text-muted ps-3 mb-0">
+                    <li class="mb-1">Toque no botão acima e escolha <strong>"Permitir"</strong> quando o Safari solicitar.</li>
+                    <li class="mb-1">Abra a aplicação <strong>Definições</strong> do iPhone &gt; <strong>Perfil Descarregado</strong>.</li>
+                    <li>Toque em <strong>Instalar</strong> no canto superior direito e introduza o código do seu ecrã.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ABA CÓDIGO QR ================= -->
+    <div class="tab-pane fade" id="tab-qr" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-sm-4 mb-3 bg-white text-center">
+            <h5 class="fw-bold mb-1 text-dark"><i class="bi bi-qr-code-scan me-2 text-danger"></i>Digitalizar com o Telemóvel</h5>
+            <p class="text-muted small mb-3">Aponte a câmara do seu smartphone ou tablet ligado ao Wi-Fi do restaurante:</p>
+
+            <div class="d-flex justify-content-center my-2">
+                <div id="qrcodeBox" class="p-3 bg-white rounded-4 shadow-sm border d-flex align-items-center justify-content-center" style="max-width: 220px; width: 100%; min-height: 220px;">
+                    <div class="spinner-border text-danger spinner-border-sm" role="status"></div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <small class="text-muted d-block mb-1">Endereço da Aplicação no Servidor Local:</small>
+                <div class="input-group input-group-sm mx-auto" style="max-width: 380px;">
+                    <input type="text" id="txtAppOriginUrl" class="form-control text-center font-monospace" readonly value="@ViewBag.AppUrl" />
+                    <button class="btn btn-outline-secondary" type="button" id="btnCopiarUrl" onclick="copiarLigacaoApp()">
+                        <i class="bi bi-clipboard me-1"></i>Copiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ABA CERTIFICADO SSL ================= -->
+    <div class="tab-pane fade" id="tab-cert" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-sm-4 mb-3 bg-white">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-primary-subtle text-primary p-2 me-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-shield-check fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">Certificado de Segurança HTTPS</h5>
+                    <small class="text-muted">Garante ligação segura na rede Wi-Fi local sem internet</small>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <a href="/app/download/crt" download="menova-root.crt" class="btn btn-outline-primary py-2 px-3 w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-between" style="min-height: 48px;">
+                    <div class="d-flex align-items-center text-truncate">
+                        <i class="bi bi-shield-lock-fill text-primary me-2 fs-5"></i>
+                        <span class="text-truncate">Descarregar Certificado Raiz (.crt)</span>
+                    </div>
+                    <span class="badge bg-light text-primary border ms-2">X.509</span>
+                </a>
+            </div>
+
+            <div class="border rounded-3 p-3 bg-light">
+                <h6 class="fw-bold mb-2 small text-dark"><i class="bi bi-gear-fill me-1"></i>Como confiar no certificado local:</h6>
+                <div class="mb-2">
+                    <strong class="small text-dark d-block mb-1"><i class="bi bi-android2 text-success me-1"></i>No Android:</strong>
+                    <p class="small text-muted mb-0 ps-3">Transfira o ficheiro &gt; Aceda a <em>Definições &gt; Segurança &gt; Instalar certificado &gt; Certificado de CA</em> e selecione o ficheiro <code>menova-root.crt</code>.</p>
+                </div>
+                <div>
+                    <strong class="small text-dark d-block mb-1"><i class="bi bi-apple text-dark me-1"></i>No iPhone / iPad:</strong>
+                    <p class="small text-muted mb-0 ps-3">Transfira o certificado &gt; Instale o perfil em <em>Definições &gt; Perfil</em> &gt; Depois ative em <em>Definições &gt; Geral &gt; Informações &gt; Definições de Confiança nos Certificados</em>.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Botões de Ação Rápida -->
+<!-- Ações Rápidas de Acesso Imediato -->
 <div class="d-grid gap-2 mb-4">
-    <!-- Botão PWA (Android / Chrome / Desktop) -->
-    <button type="button" class="btn btn-primary py-2 fw-semibold" id="btnInstallPwa" style="display: none;">
-        <i class="bi bi-phone-fill me-1"></i> Instalar Aplicação no Ecrã Principal
-    </button>
-
-    <!-- Botão Abrir Imediatamente -->
-    <a href="/garcom" class="btn btn-outline-dark py-2 fw-semibold">
-        <i class="bi bi-box-arrow-up-right me-1"></i> Abrir Menova Garçom no Navegador
+    <a href="/garcom" class="btn text-white py-3 px-3 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center" style="background-color: #6E1A33; min-height: 50px;">
+        <i class="bi bi-box-arrow-up-right fs-5 me-2"></i>
+        <span>Abrir Menova Garçom no Navegador</span>
     </a>
 
-    <!-- Downloads Nativos -->
-    <div class="row g-2 pt-2">
+    <div class="row g-2">
         <div class="col-6">
-            <a href="/app/download/android" class="btn btn-light border w-100 py-2 small fw-semibold text-truncate">
-                <i class="bi bi-android2 text-success me-1"></i> Pacote Android (.apk)
+            <a href="/mesas" class="btn btn-outline-secondary py-2 w-100 small fw-semibold text-truncate">
+                <i class="bi bi-grid-3x3-gap me-1"></i>Salão &amp; Mesas
             </a>
         </div>
         <div class="col-6">
-            <a href="/app/download/ios" class="btn btn-light border w-100 py-2 small fw-semibold text-truncate">
-                <i class="bi bi-apple text-dark me-1"></i> Atalho iOS (.mobileconfig)
+            <a href="/pedidos" class="btn btn-outline-secondary py-2 w-100 small fw-semibold text-truncate">
+                <i class="bi bi-receipt me-1"></i>Comandas
             </a>
-        </div>
-    </div>
-
-    <div class="pt-1">
-        <a href="/app/download/crt" class="btn btn-sm btn-outline-secondary w-100 py-2 text-truncate">
-            <i class="bi bi-shield-lock-fill me-1"></i> Descarregar Certificado SSL Raiz (.crt)
-        </a>
-    </div>
-</div>
-
-<!-- Instruções Detalhadas por Plataforma -->
-<div class="accordion mb-4" id="accordionInstalacao">
-    <!-- Android -->
-    <div class="accordion-item">
-        <h2 class="accordion-header" id="headingAndroid">
-            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAndroid" aria-expanded="false" aria-controls="collapseAndroid">
-                <i class="bi bi-android2 text-success me-2 fs-5"></i> Instruções para Android
-            </button>
-        </h2>
-        <div id="collapseAndroid" class="accordion-collapse collapse show" aria-labelledby="headingAndroid" data-bs-parent="#accordionInstalacao">
-            <div class="accordion-body small text-muted">
-                <ol class="ps-3 mb-0">
-                    <li class="mb-1">Ligue o telemóvel à rede Wi-Fi do restaurante.</li>
-                    <li class="mb-1">Abra o <strong>Google Chrome</strong> ou <strong>Samsung Internet</strong>.</li>
-                    <li class="mb-1">Toque no botão <strong>"Instalar Aplicação"</strong> acima ou no menu do navegador (<strong>&vellip;</strong>) &gt; <strong>"Adicionar ao ecrã principal"</strong> ou <strong>"Instalar aplicação"</strong>.</li>
-                    <li>Em alternativa, utilize o botão <strong>"Pacote Android (.apk)"</strong> para descarregar o instalador.</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-
-    <!-- iOS / iPadOS -->
-    <div class="accordion-item">
-        <h2 class="accordion-header" id="headingIos">
-            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIos" aria-expanded="false" aria-controls="collapseIos">
-                <i class="bi bi-apple text-dark me-2 fs-5"></i> Instruções para iPhone e iPad (Safari)
-            </button>
-        </h2>
-        <div id="collapseIos" class="accordion-collapse collapse" aria-labelledby="headingIos" data-bs-parent="#accordionInstalacao">
-            <div class="accordion-body small text-muted">
-                <p class="mb-2 fw-semibold text-dark">Opção 1 &mdash; Atalho Nativo Safari (Recomendado):</p>
-                <ol class="ps-3 mb-3">
-                    <li class="mb-1">Abra esta página no <strong>Safari</strong>.</li>
-                    <li class="mb-1">Toque no botão de <strong>Partilha</strong> (ícone com quadrado e seta para cima).</li>
-                    <li>Deslize para baixo e selecione <strong>"Adicionar ao Ecrã Principal"</strong>.</li>
-                </ol>
-                <p class="mb-2 fw-semibold text-dark">Opção 2 &mdash; Perfil de Configuração (.mobileconfig):</p>
-                <ol class="ps-3 mb-0">
-                    <li class="mb-1">Toque no botão <strong>"Atalho iOS (.mobileconfig)"</strong> acima.</li>
-                    <li class="mb-1">Permita a transferência e aceda a <strong>Definições &gt; Perfil Descarregado</strong>.</li>
-                    <li>Toque em <strong>Instalar</strong> no canto superior direito e confirme o seu código.</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-
-    <!-- Certificado de Segurança -->
-    <div class="accordion-item">
-        <h2 class="accordion-header" id="headingCert">
-            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCert" aria-expanded="false" aria-controls="collapseCert">
-                <i class="bi bi-shield-check text-primary me-2 fs-5"></i> Certificado de Segurança HTTPS Local
-            </button>
-        </h2>
-        <div id="collapseCert" class="accordion-collapse collapse" aria-labelledby="headingCert" data-bs-parent="#accordionInstalacao">
-            <div class="accordion-body small text-muted">
-                <p class="mb-2">Para evitar alertas de ligação insegura na rede interna sem internet:</p>
-                <ol class="ps-3 mb-0">
-                    <li class="mb-1">Toque em <strong>"Descarregar Certificado SSL Raiz (.crt)"</strong>.</li>
-                    <li class="mb-1"><strong>No Android:</strong> Vá a <em>Definições &gt; Segurança &gt; Instalar certificado &gt; Certificado de CA</em> e selecione o ficheiro.</li>
-                    <li><strong>No iOS:</strong> Transfira o certificado, vá a <em>Definições &gt; Perfil &gt; Instalar</em>, depois em <em>Geral &gt; Informações &gt; Definições de Confiança nos Certificados</em> e ative a confiança total.</li>
-                </ol>
-            </div>
         </div>
     </div>
 </div>
 
-<div class="text-center">
-    <a asp-controller="Dashboard" asp-action="Index" class="text-muted small text-decoration-none">
-        <i class="bi bi-arrow-left me-1"></i> Voltar ao Painel Principal
-    </a>
+<!-- Modal com Ajuda Visual de Instalação no Android -->
+<div class="modal fade" id="modalAjudaAndroid" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0 rounded-4">
+            <div class="modal-header text-white rounded-top-4" style="background-color: #6E1A33;">
+                <h5 class="modal-title fw-bold"><i class="bi bi-android2 me-2"></i>Adicionar ao Ecrã no Chrome</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body p-3 p-sm-4">
+                <p class="text-muted small mb-3">Para instalar sem avisos e ter o ícone no seu ecrã:</p>
+                <div class="d-flex align-items-start mb-3 p-2 bg-light rounded-3 border">
+                    <span class="badge bg-secondary me-3 mt-1">1</span>
+                    <div>
+                        <strong class="d-block small text-dark">Toque no menu do Chrome</strong>
+                        <span class="text-muted small">Localizado no canto superior direito do navegador (ícone de 3 pontos verticais <strong>&#8942;</strong>).</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start mb-3 p-2 bg-light rounded-3 border">
+                    <span class="badge bg-secondary me-3 mt-1">2</span>
+                    <div>
+                        <strong class="d-block small text-dark">Selecione "Adicionar ao ecrã inicial"</strong>
+                        <span class="text-muted small">Em alguns dispositivos surge como <strong>"Instalar aplicação"</strong>.</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start p-2 bg-light rounded-3 border">
+                    <span class="badge bg-secondary me-3 mt-1">3</span>
+                    <div>
+                        <strong class="d-block small text-dark">Confirme tocando em "Instalar"</strong>
+                        <span class="text-muted small">A aplicação ficará disponível instantaneamente com modo de ecrã inteiro.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary w-100 py-2 fw-semibold" data-bs-dismiss="modal">Entendido</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <script src="~/lib/qrcode/qrcode.min.js"></script>
     <script>
+        let deferredPrompt = null;
+
         document.addEventListener('DOMContentLoaded', function () {
-            // Determinar o URL atual exato com origem do navegador
-            var appUrl = window.location.origin + '/app';
-            var lbl = document.getElementById('lblQrUrl');
-            if (lbl) {
-                lbl.textContent = appUrl;
+            const currentUrl = window.location.origin + '/garcom';
+            const txtUrl = document.getElementById('txtAppOriginUrl');
+            if (txtUrl) {
+                txtUrl.value = currentUrl;
             }
 
-            // Gerar QR Code localmente
-            var qrContainer = document.getElementById('qrcode');
-            if (qrContainer && typeof QRCode !== 'undefined') {
-                qrContainer.innerHTML = '';
-                new QRCode(qrContainer, {
-                    text: appUrl,
+            // Deteção inteligente de SO para abrir a aba correspondente
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isAndroid = /Android/i.test(navigator.userAgent);
+
+            if (isIOS) {
+                const iosTabBtn = document.getElementById('tab-ios-btn');
+                if (iosTabBtn && typeof bootstrap !== 'undefined') {
+                    new bootstrap.Tab(iosTabBtn).show();
+                }
+            } else if (isAndroid) {
+                const androidTabBtn = document.getElementById('tab-android-btn');
+                if (androidTabBtn && typeof bootstrap !== 'undefined') {
+                    new bootstrap.Tab(androidTabBtn).show();
+                }
+            }
+
+            // Gerar Código QR fluído
+            const qrBox = document.getElementById('qrcodeBox');
+            if (qrBox && typeof QRCode !== 'undefined') {
+                qrBox.innerHTML = '';
+                new QRCode(qrBox, {
+                    text: currentUrl,
                     width: 190,
                     height: 190,
                     colorDark: '#4A1122',
@@ -161,61 +329,53 @@
                 });
             }
 
-            // Lidar com o evento PWA beforeinstallprompt
-            var deferredPrompt = null;
-            var btnInstall = document.getElementById('btnInstallPwa');
-
+            // Capturar evento PWA beforeinstallprompt
             window.addEventListener('beforeinstallprompt', function (e) {
                 e.preventDefault();
                 deferredPrompt = e;
-                if (btnInstall) {
-                    btnInstall.style.display = 'block';
-                }
+                console.log('[PWA] Evento beforeinstallprompt capturado com sucesso.');
             });
 
+            // Tratador de clique no botão de instalação Android PWA
+            const btnInstall = document.getElementById('btnInstallAndroidPwa');
             if (btnInstall) {
                 btnInstall.addEventListener('click', async function () {
                     if (deferredPrompt) {
                         deferredPrompt.prompt();
-                        var choiceResult = await deferredPrompt.userChoice;
-                        if (choiceResult.outcome === 'accepted') {
-                            btnInstall.style.display = 'none';
+                        const result = await deferredPrompt.userChoice;
+                        if (result.outcome === 'accepted') {
+                            mostrarAvisoApp('Aplicação instalada com sucesso no ecrã!', 'sucesso');
                         }
                         deferredPrompt = null;
                     } else {
-                        // Navegadores sem suporte ao evento automático (ex: iOS ou já instalado)
-                        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                            var iosCollapse = document.getElementById('collapseIos');
-                            if (iosCollapse && typeof bootstrap !== 'undefined') {
-                                new bootstrap.Collapse(iosCollapse, { toggle: true });
-                            }
+                        // Se o evento nativo não estiver no contexto, abrir modal de passo a passo
+                        const modalEl = document.getElementById('modalAjudaAndroid');
+                        if (modalEl && typeof bootstrap !== 'undefined') {
+                            new bootstrap.Modal(modalEl).show();
                         } else {
-                            var toastEl = document.getElementById('appToast');
-                        if (toastEl && typeof bootstrap !== 'undefined') {
-                            var body = toastEl.querySelector('.toast-body');
-                            if (body) body.textContent = 'Abra o menu do navegador (três pontos) e toque em "Adicionar ao ecrã inicial" ou "Instalar aplicação".';
-                            var t = new bootstrap.Toast(toastEl);
-                            t.show();
-                        } else {
-                            var andCollapse = document.getElementById('collapseAndroid');
-                            if (andCollapse && typeof bootstrap !== 'undefined') {
-                                new bootstrap.Collapse(andCollapse, { toggle: true });
-                            }
-                        }
+                            mostrarAvisoApp('Toque no menu (⋮) do Chrome e selecione "Adicionar ao ecrã inicial".', 'aviso');
                         }
                     }
                 });
             }
-
-            // Se for Android ou ambiente desktop onde PWA pode ser exibido, garantir visibilidade
-            if (window.matchMedia('(display-mode: browser)').matches && !/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                // Dar um pequeno tempo para ver se beforeinstallprompt dispara; se não, exibe como fallback
-                setTimeout(function() {
-                    if (btnInstall && btnInstall.style.display === 'none') {
-                        btnInstall.style.display = 'block';
-                    }
-                }, 1200);
-            }
         });
+
+        // Função de copiar URL para a área de transferência
+        async function copiarLigacaoApp() {
+            const txt = document.getElementById('txtAppOriginUrl');
+            if (!txt) return;
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(txt.value);
+                } else {
+                    txt.select();
+                    document.execCommand('copy');
+                }
+                mostrarAvisoApp('Ligação copiada para a área de transferência!', 'sucesso');
+            } catch (err) {
+                mostrarAvisoApp('Não foi possível copiar automaticamente.', 'aviso');
+            }
+        }
     </script>
 }

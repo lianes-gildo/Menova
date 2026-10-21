@@ -51,7 +51,6 @@ public class AppController : Controller
 
         var bytes = System.IO.File.ReadAllBytes(apkPath);
         Response.Headers.ContentLength = bytes.Length;
-        Response.Headers["Content-Disposition"] = "attachment; filename=\"MenovaGarcom.apk\"";
 
         return File(bytes, "application/vnd.android.package-archive", "MenovaGarcom.apk", enableRangeProcessing: true);
     }
@@ -133,7 +132,6 @@ public class AppController : Controller
 
         var bytes = Encoding.UTF8.GetBytes(mobileConfigXml);
         Response.Headers.ContentLength = bytes.Length;
-        Response.Headers["Content-Disposition"] = "attachment; filename=\"MenovaGarcom.mobileconfig\"";
 
         return File(bytes, "application/x-apple-aspen-config", "MenovaGarcom.mobileconfig", enableRangeProcessing: true);
     }
@@ -148,7 +146,6 @@ public class AppController : Controller
     {
         var bytes = ObterOuGerarCertificadoRaiz();
         Response.Headers.ContentLength = bytes.Length;
-        Response.Headers["Content-Disposition"] = "attachment; filename=\"menova-root.crt\"";
 
         return File(bytes, "application/x-x509-ca-cert", "menova-root.crt", enableRangeProcessing: true);
     }

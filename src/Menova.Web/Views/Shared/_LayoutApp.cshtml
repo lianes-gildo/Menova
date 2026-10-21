@@ -1,0 +1,169 @@
+@inject ICurrentUserService CurrentUser
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    <title>@ViewData["Title"] - Menova Restaurante</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+
+    <!-- PWA & Mobile Web App Meta Tags (Android & iOS) -->
+    <link rel="manifest" href="~/manifest.json" />
+    <meta name="theme-color" content="#6E1A33" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Menova Garçom" />
+    <link rel="apple-touch-icon" href="~/icons/icon-180.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="~/icons/icon-192.png" />
+
+    <!-- Recursos 100% Locais (Sem Dependência de CDN) -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+
+    <style>
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sar: env(safe-area-inset-right, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+        }
+        body {
+            background-color: #f7f5f2;
+            color: #2b2b2b;
+            font-family: var(--mv-fonte, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overscroll-behavior-y: contain;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .app-navbar {
+            background-color: #6E1A33;
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            padding-top: calc(0.6rem + var(--sat));
+            padding-bottom: 0.6rem;
+            padding-left: calc(1rem + var(--sal));
+            padding-right: calc(1rem + var(--sar));
+        }
+        .app-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .app-brand img {
+            height: 32px;
+            width: 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        }
+        .app-page-container {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 1.25rem 1rem calc(2rem + var(--sab)) 1rem;
+            flex-grow: 1;
+        }
+        .toast-container-app {
+            position: fixed;
+            top: calc(70px + var(--sat));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1090;
+            width: 90%;
+            max-width: 380px;
+            pointer-events: none;
+        }
+        .toast-container-app .toast {
+            pointer-events: auto;
+        }
+        button, .btn, .nav-link {
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barra Superior -->
+    <header class="app-navbar d-flex justify-content-between align-items-center">
+        <a href="/garcom" class="app-brand">
+            <img src="~/icons/icon-180.png" alt="Menova Garçom" />
+            <span class="fs-5">Menova <span class="fw-normal opacity-75 fs-6">Garçom</span></span>
+        </a>
+
+        <div class="d-flex align-items-center gap-2">
+            <a href="/garcom" class="btn btn-sm btn-light fw-semibold px-3 py-1 shadow-sm">
+                <i class="bi bi-phone-fill me-1 text-danger"></i>Abrir App
+            </a>
+            @if (CurrentUser.EstaAutenticado)
+            {
+                <a href="/logout" class="btn btn-sm btn-outline-light py-1 px-2" title="Terminar Sessão">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            }
+            else
+            {
+                <a href="/auth/login" class="btn btn-sm btn-outline-light py-1 px-2" title="Iniciar Sessão">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                </a>
+            }
+        </div>
+    </header>
+
+    <!-- Notificações Toast Internas (Substitui alerts do navegador) -->
+    <div class="toast-container-app">
+        <div id="appGlobalToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fs-6" id="appGlobalToastMsg"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal Responsivo -->
+    <main class="app-page-container">
+        @RenderBody()
+    </main>
+
+    <!-- Scripts 100% Locais -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js"></script>
+
+    <script>
+        function mostrarAvisoApp(msg, tipo = 'info') {
+            const toastEl = document.getElementById('appGlobalToast');
+            const msgEl = document.getElementById('appGlobalToastMsg');
+            if (!toastEl || !msgEl) return;
+            msgEl.textContent = msg;
+
+            toastEl.className = 'toast align-items-center text-white border-0 shadow-lg';
+            if (tipo === 'sucesso') toastEl.classList.add('bg-success');
+            else if (tipo === 'erro') toastEl.classList.add('bg-danger');
+            else if (tipo === 'aviso') toastEl.classList.add('bg-warning', 'text-dark');
+            else toastEl.classList.add('bg-dark');
+
+            const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+            toast.show();
+        }
+
+        // Registo Service Worker para funcionamento offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[Menova App] SW Ativo:', reg.scope))
+                    .catch(err => console.warn('[Menova App] Falha no SW:', err));
+            });
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

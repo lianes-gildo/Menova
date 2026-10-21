@@ -1,15 +1,99 @@
 @using Menova.Application.DTOs
 @{
     Layout = "_LayoutGarcom";
-    ViewData["Title"] = "Menova Garçom (PWA)";
+    ViewData["Title"] = "Menova Garçom";
     var zonas = (List<ZonaDto>)ViewBag.Zonas;
     var menu = (MenuCompletoDto)ViewBag.Menu;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h4 class="fw-bold mb-0" style="color: #6E1A33;"><i class="bi bi-phone-fill me-2"></i>Menova Garçom</h4>
-        <span class="badge bg-success" id="badgeStatusOnline"><i class="bi bi-wifi me-1"></i>Rede Local OK</span>
+<style>
+    .btn-wine {
+        background-color: #6E1A33;
+        color: #ffffff;
+        border-color: #6E1A33;
+    }
+    .btn-wine:hover, .btn-wine:active, .btn-wine:focus {
+        background-color: #551427;
+        color: #ffffff;
+        border-color: #551427;
+    }
+    .card-artigo {
+        transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+        border: 1.5px solid #e9ecef;
+        background-color: #ffffff;
+        user-select: none;
+    }
+    .card-artigo.has-items {
+        border-color: #6E1A33;
+        box-shadow: 0 4px 12px rgba(110, 26, 51, 0.15);
+    }
+    .card-artigo:active {
+        transform: scale(0.98);
+    }
+    .stepper-btn {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-weight: 700;
+        touch-action: manipulation;
+    }
+    .pills-scroll {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+    }
+    .pills-scroll::-webkit-scrollbar {
+        display: none;
+    }
+    .table-chip {
+        min-width: 82px;
+        height: 48px;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        padding: 4px 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        touch-action: manipulation;
+        transition: all 0.15s ease;
+    }
+    .table-chip.active-table {
+        background-color: #6E1A33 !important;
+        color: #ffffff !important;
+        border-color: #6E1A33 !important;
+        box-shadow: 0 3px 8px rgba(110, 26, 51, 0.3);
+    }
+    .cart-bar-bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #e2ded8;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+        z-index: 1040;
+        padding-top: 8px;
+        padding-bottom: calc(10px + var(--sab));
+        padding-left: calc(12px + var(--sal));
+        padding-right: calc(12px + var(--sar));
+    }
+</style>
+
+<!-- Barra de Estado e Modos -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-success" id="badgeStatusOnline">
+            <i class="bi bi-wifi me-1"></i>Rede Local OK
+        </span>
     </div>
     <div class="btn-group" role="group">
         <button type="button" class="btn btn-sm btn-dark active" id="btnModoGarcom" onclick="alternarModo('garcom')">
@@ -23,22 +107,39 @@
 
 <!-- ================= MODO GARÇOM ================= -->
 <div id="painelModoGarcom">
-    <!-- Seletor Rápido de Mesas -->
-    <div class="card border shadow-sm mb-3">
-        <div class="card-body p-2">
+
+    <!-- Seletor Rápido de Mesas e Balcão -->
+    <div class="card border-0 shadow-sm rounded-3 mb-2 bg-white">
+        <div class="card-body p-2 p-sm-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="small fw-bold text-muted"><i class="bi bi-grid-3x3-gap-fill me-1"></i>Mesa Selecionada:</span>
-                <span class="badge bg-light text-dark border fs-6" id="labelMesaAtiva">Nenhuma selecionada</span>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-grid-3x3-gap-fill text-danger" style="color: #6E1A33 !important;"></i>
+                    <span class="small fw-bold text-dark">Destino do Pedido:</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6" id="labelMesaAtiva" style="color: #6E1A33 !important;">
+                        Balcão
+                    </span>
+                </div>
+                <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-muted small" onclick="abrirSeletorMesasModal()">
+                    <i class="bi bi-search me-1"></i>Ver todas
+                </button>
             </div>
-            <div class="d-flex overflow-auto gap-2 py-1" style="white-space: nowrap;">
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selecionarMesa(null, 'Balcão')">Balcão</button>
+
+            <!-- Chips de Rolagem Horizontal Rápida -->
+            <div class="pills-scroll py-1" id="mesaChipsContainer">
+                <button type="button" class="btn btn-outline-secondary table-chip active-table" id="chip-mesa-balcao" onclick="selecionarMesa(null, 'Balcão')">
+                    <span>Balcão</span>
+                    <small style="font-size: 0.68rem; font-weight: normal;">Direto</small>
+                </button>
                 @foreach (var z in zonas)
                 {
                     @foreach (var m in z.Mesas)
                     {
-                        var btnColor = m.Estado == Menova.Domain.Sala.EstadoMesa.Livre ? "btn-outline-success" : "btn-outline-danger";
-                        <button type="button" class="btn btn-sm @btnColor" onclick="selecionarMesa('@m.Id', 'Mesa @m.Numero')">
-                            Mesa @m.Numero
+                        var livre = m.Estado == Menova.Domain.Sala.EstadoMesa.Livre;
+                        var btnClass = livre ? "btn-outline-success" : "btn-outline-danger";
+                        var estadoTexto = livre ? "Livre" : "Ocupada";
+                        <button type="button" class="btn @btnClass table-chip" id="chip-mesa-@m.Id" onclick="selecionarMesa('@m.Id', 'Mesa @m.Numero (@z.Nome)')">
+                            <span>Mesa @m.Numero</span>
+                            <small style="font-size: 0.68rem; opacity: 0.85;">@estadoTexto</small>
                         </button>
                     }
                 }
@@ -46,51 +147,97 @@
         </div>
     </div>
 
-    <!-- Pesquisa e Artigos -->
-    <div class="input-group mb-2">
-        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-        <input type="text" id="pwaPesquisa" class="form-control" placeholder="Procurar artigo..." onkeyup="filtrarPwaArtigos()" />
+    <!-- Barra de Pesquisa Rápida -->
+    <div class="input-group input-group-lg shadow-sm rounded-3 mb-2">
+        <span class="input-group-text bg-white border-end-0 ps-3">
+            <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" id="pwaPesquisa" class="form-control border-start-0 ps-1" placeholder="Pesquisar artigo ou código..." onkeyup="filtrarPwaArtigos()" autocomplete="off" />
+        <button class="btn btn-white border-start-0 border text-muted" type="button" id="btnLimparPesquisa" onclick="limparPesquisaArtigos()" style="display: none;">
+            <i class="bi bi-x-circle-fill"></i>
+        </button>
     </div>
 
-    <div class="d-flex overflow-auto gap-1 mb-3 py-1" id="pwaCatPills">
-        <button type="button" class="btn btn-sm btn-dark active" onclick="filtrarPwaCat(null, this)">Todas</button>
+    <!-- Abas de Categorias de Artigos -->
+    <div class="pills-scroll mb-2 py-1" id="pwaCatPills">
+        <button type="button" class="btn btn-sm btn-dark active px-3 py-1 fw-semibold rounded-pill" onclick="filtrarPwaCat(null, this)">
+            Todas as Categorias
+        </button>
         @foreach (var cat in menu.Categorias)
         {
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filtrarPwaCat('@cat.Id', this)">@cat.Nome</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1 fw-semibold rounded-pill" onclick="filtrarPwaCat('@cat.Id', this)">
+                @cat.Nome
+            </button>
         }
     </div>
 
-    <!-- Lista de Artigos para o Garçom -->
-    <div class="row g-2 mb-5" id="pwaArtigosContainer" style="padding-bottom: 70px;">
+    <!-- Grelha de Artigos -->
+    <div class="row g-2 g-sm-3" id="pwaArtigosContainer">
         @foreach (var art in menu.Artigos)
         {
             var esgotado = art.EsgotadoManual || !art.Disponivel;
-            <div class="col-6 col-md-4 pwa-artigo-item" data-cat="@art.CategoriaId" data-nome="@art.Nome.ToLower()">
-                <div class="card h-100 border p-2 @(esgotado ? "opacity-50" : "")" 
-                     onclick="@(esgotado ? "" : $"adicionarItemPwa('{art.Id}', '{art.Nome.Replace("'", "\\'")}', {art.Preco.ToString(System.Globalization.CultureInfo.InvariantCulture)})")">
-                    <div class="d-flex justify-content-between">
-                        <span class="small font-monospace text-muted">@art.CodigoInterno</span>
+            <div class="col-6 col-sm-4 col-md-3 pwa-artigo-item" data-id="@art.Id" data-cat="@art.CategoriaId" data-nome="@art.Nome.ToLower() @art.CodigoInterno.ToLower()">
+                <div class="card card-artigo h-100 rounded-3 p-2 @(esgotado ? "opacity-50" : "")" id="card-art-@art.Id">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.72rem;">@art.CodigoInterno</span>
                         @if (esgotado)
                         {
-                            <span class="badge bg-danger" style="font-size: 0.65rem;">86</span>
+                            <span class="badge bg-danger" style="font-size: 0.65rem;">ESGOTADO</span>
                         }
                     </div>
-                    <div class="fw-bold my-1 text-truncate" title="@art.Nome">@art.Nome</div>
-                    <div class="mt-auto fw-bold text-success">@art.Preco.ToString("N2") MT</div>
+
+                    <div class="fw-bold text-dark my-1" style="font-size: 0.9rem; line-height: 1.25; min-height: 2.5em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="@art.Nome">
+                        @art.Nome
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-auto pt-1">
+                        <span class="fw-bold text-success" style="font-size: 0.95rem;">@art.Preco.ToString("N2") MT</span>
+                    </div>
+
+                    <!-- Controlo Stepper Integrado no Cartão -->
+                    <div class="mt-2 pt-2 border-top">
+                        @if (esgotado)
+                        {
+                            <button type="button" class="btn btn-sm btn-light text-muted w-100 py-1" disabled style="font-size: 0.8rem;">Indisponível</button>
+                        }
+                        else
+                        {
+                            <div class="stepper-artigo-zero" id="stepper-zero-@art.Id">
+                                <button type="button" class="btn btn-sm btn-outline-danger w-100 py-1 fw-semibold d-flex align-items-center justify-content-center" 
+                                        style="color: #6E1A33; border-color: #6E1A33; font-size: 0.82rem;"
+                                        onclick="adicionarItemPwa('@art.Id', '@art.Nome.Replace("'", "\\'")', @art.Preco.ToString(System.Globalization.CultureInfo.InvariantCulture), 1)">
+                                    <i class="bi bi-plus-lg me-1"></i>Adicionar
+                                </button>
+                            </div>
+                            <div class="stepper-artigo-ativo d-flex align-items-center justify-content-between" id="stepper-ativo-@art.Id" style="display: none !important;">
+                                <button type="button" class="btn btn-sm btn-danger stepper-btn" style="background-color: #6E1A33; border-color: #6E1A33;"
+                                        onclick="adicionarItemPwa('@art.Id', '@art.Nome.Replace("'", "\\'")', @art.Preco.ToString(System.Globalization.CultureInfo.InvariantCulture), -1)">
+                                    <i class="bi bi-dash-lg"></i>
+                                </button>
+                                <span class="fw-bold fs-6 text-dark px-2" id="qtd-art-@art.Id">0</span>
+                                <button type="button" class="btn btn-sm btn-danger stepper-btn" style="background-color: #6E1A33; border-color: #6E1A33;"
+                                        onclick="adicionarItemPwa('@art.Id', '@art.Nome.Replace("'", "\\'")', @art.Preco.ToString(System.Globalization.CultureInfo.InvariantCulture), 1)">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         }
     </div>
 
-    <!-- Barra Inferior Fixa do Carrinho / Comanda -->
-    <div class="fixed-bottom bg-white border-top shadow-lg p-2" style="z-index: 1040;">
-        <div class="container d-flex justify-content-between align-items-center">
+    <!-- Barra Inferior Fixa da Comanda -->
+    <div class="cart-bar-bottom">
+        <div class="container-fluid d-flex justify-content-between align-items-center p-0">
             <div>
-                <span class="small text-muted d-block" id="pwaCarrinhoResumo">0 artigos selecionados</span>
+                <span class="small text-muted d-block" id="pwaCarrinhoResumo">0 artigo(s) • Balcão</span>
                 <span class="fw-bold fs-5 text-success" id="pwaCarrinhoTotal">0,00 MT</span>
             </div>
-            <button type="button" class="btn text-white px-4 py-2 fw-bold" style="background-color: #6E1A33;" onclick="abrirModalComandaPwa()">
-                <i class="bi bi-receipt me-1"></i>Ver Comanda
+            <button type="button" class="btn btn-wine px-3 py-2 fw-bold rounded-3 shadow d-flex align-items-center gap-2" onclick="abrirModalComandaPwa()">
+                <i class="bi bi-receipt fs-5"></i>
+                <span>Ver Comanda</span>
+                <span class="badge bg-white text-danger rounded-pill px-2" id="badgeCarrinhoQtd" style="color: #6E1A33 !important; display: none;">0</span>
             </button>
         </div>
     </div>
@@ -98,28 +245,35 @@
 
 <!-- ================= MODO APRESENTAÇÃO AO CLIENTE ================= -->
 <div id="painelModoCliente" style="display: none;">
-    <div class="alert alert-info py-2 px-3 small d-flex justify-content-between align-items-center mb-3">
-        <span><i class="bi bi-info-circle-fill me-1"></i>Modo de Apresentação ao Cliente: fotografias, ingredientes e alérgenos.</span>
-        <button type="button" class="btn btn-sm btn-dark" onclick="alternarModo('garcom')">Sair do Modo Cliente</button>
+    <div class="card border-0 shadow-sm rounded-3 p-3 mb-3 bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-book-half me-2 text-danger" style="color: #6E1A33 !important;"></i>Menu do Restaurante</h5>
+                <small class="text-muted">Modo de demonstração de pratos para o cliente</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-dark" onclick="alternarModo('garcom')">
+                <i class="bi bi-x-lg me-1"></i>Sair
+            </button>
+        </div>
     </div>
 
     <div class="row g-3">
         @foreach (var art in menu.Artigos.Where(a => !a.EsgotadoManual && a.Disponivel))
         {
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 border shadow-sm">
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden bg-white">
                     <img src="@art.ImagemPrincipal" class="card-img-top" alt="@art.Nome" style="height: 180px; object-fit: cover;" onerror="this.src='/menova_logo_0f.png';" />
                     <div class="card-body p-3">
                         <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h5 class="fw-bold mb-0">@art.Nome</h5>
-                            <span class="fs-5 fw-bold text-success">@art.Preco.ToString("N2") MT</span>
+                            <h5 class="fw-bold mb-0 text-dark">@art.Nome</h5>
+                            <span class="fs-5 fw-bold text-success text-nowrap ms-2">@art.Preco.ToString("N2") MT</span>
                         </div>
-                        <div class="small text-muted mb-2">@art.DescricaoCurta</div>
+                        <p class="small text-muted mb-2">@art.DescricaoCurta</p>
 
                         @if (art.Alergenios != null && art.Alergenios.Any())
                         {
                             <div class="mt-2">
-                                <span class="badge bg-warning text-dark me-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Contém: @string.Join(", ", art.Alergenios)</span>
+                                <span class="badge bg-warning text-dark me-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Alérgenos: @string.Join(", ", art.Alergenios)</span>
                             </div>
                         }
 
@@ -139,30 +293,82 @@
     </div>
 </div>
 
-<!-- Modal da Comanda Garçom -->
+<!-- ================= MODAL DETALHE DA COMANDA ================= -->
 <div class="modal fade" id="modalComandaPwa" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header text-white" style="background-color: #6E1A33;">
-                <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>Comanda <span id="pwaModalMesaNome"></span></h5>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow border-0 rounded-4">
+            <div class="modal-header text-white rounded-top-4" style="background-color: #6E1A33;">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-receipt fs-4 me-2"></i>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">Comanda <span id="pwaModalMesaNome"></span></h5>
+                        <small class="opacity-75">Envio direto para a Cozinha e Bar</small>
+                    </div>
+                </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-3">
                 <div id="pwaModalItens" class="list-group list-group-flush mb-3"></div>
+
                 <div class="mb-3">
-                    <label class="form-label small fw-bold">Observações:</label>
-                    <input type="text" id="pwaModalObs" class="form-control form-control-sm" placeholder="Ex: Pouco sal, carne ao ponto..." />
+                    <label class="form-label small fw-bold text-dark">Observações Gerais da Comanda:</label>
+                    <input type="text" id="pwaModalObs" class="form-control rounded-3" placeholder="Ex: Pouco sal, trazer entradas primeiro..." />
                 </div>
-                <div class="d-flex justify-content-between align-items-center fw-bold fs-5">
-                    <span>Total a Pagar:</span>
-                    <span class="text-success" id="pwaModalTotal">0,00 MT</span>
+
+                <div class="card bg-light border-0 rounded-3 p-3 mb-2">
+                    <div class="d-flex justify-content-between align-items-center fw-bold fs-5">
+                        <span class="text-dark">Total da Comanda:</span>
+                        <span class="text-success" id="pwaModalTotal">0,00 MT</span>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
-                <button type="button" class="btn text-white" style="background-color: #6E1A33;" onclick="enviarComandaPwa()">
-                    <i class="bi bi-send-fill me-1"></i>Enviar Comanda
+            <div class="modal-footer border-0 pt-0 d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="confirmarLimpezaComanda()">
+                    <i class="bi bi-trash me-1"></i>Limpar
                 </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Adicionar Mais</button>
+                    <button type="button" class="btn btn-wine fw-bold px-3" id="btnEnviarComanda" onclick="enviarComandaPwa()">
+                        <i class="bi bi-send-fill me-1"></i>Enviar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL SELETOR DE MESAS COMPLETO ================= -->
+<div class="modal fade" id="modalSeletorMesas" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow border-0 rounded-4">
+            <div class="modal-header text-white rounded-top-4" style="background-color: #6E1A33;">
+                <h5 class="modal-title fw-bold"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Selecionar Mesa ou Balcão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="d-grid gap-2 mb-3">
+                    <button type="button" class="btn btn-outline-secondary py-2 fw-bold text-start" onclick="selecionarMesaModal(null, 'Balcão')">
+                        <i class="bi bi-cup-hot-fill me-2"></i>Balcão (Atendimento Direto)
+                    </button>
+                </div>
+
+                @foreach (var z in zonas)
+                {
+                    <h6 class="fw-bold text-dark border-bottom pb-1 mb-2 mt-3">@z.Nome</h6>
+                    <div class="row g-2 mb-3">
+                        @foreach (var m in z.Mesas)
+                        {
+                            var livre = m.Estado == Menova.Domain.Sala.EstadoMesa.Livre;
+                            var btnClass = livre ? "btn-outline-success" : "btn-outline-danger";
+                            <div class="col-4 col-sm-3">
+                                <button type="button" class="btn @btnClass w-100 py-2 table-chip" onclick="selecionarMesaModal('@m.Id', 'Mesa @m.Numero (@z.Nome)')">
+                                    <span>Mesa @m.Numero</span>
+                                    <small style="font-size: 0.65rem;">@(livre ? "Livre" : "Ocupada")</small>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -176,6 +382,21 @@
     let mesaNomeSelecionada = "Balcão";
     let itensPwa = [];
     let catPwaAtual = null;
+
+    // Atualização de estado online / offline
+    function atualizarEstadoConexao() {
+        const badge = document.getElementById('badgeStatusOnline');
+        if (!badge) return;
+        if (navigator.onLine) {
+            badge.className = 'badge bg-success';
+            badge.innerHTML = '<i class="bi bi-wifi me-1"></i>Rede Local OK';
+        } else {
+            badge.className = 'badge bg-warning text-dark';
+            badge.innerHTML = '<i class="bi bi-wifi-off me-1"></i>Sem Conexão';
+        }
+    }
+    window.addEventListener('online', atualizarEstadoConexao);
+    window.addEventListener('offline', atualizarEstadoConexao);
 
     function alternarModo(modo) {
         if (modo === 'cliente') {
@@ -191,10 +412,36 @@
         }
     }
 
+    function abrirSeletorMesasModal() {
+        new bootstrap.Modal(document.getElementById('modalSeletorMesas')).show();
+    }
+
+    function selecionarMesaModal(id, nome) {
+        bootstrap.Modal.getInstance(document.getElementById('modalSeletorMesas'))?.hide();
+        selecionarMesa(id, nome);
+    }
+
     function selecionarMesa(id, nome) {
         mesaSelecionada = id;
         mesaNomeSelecionada = nome;
-        document.getElementById('labelMesaAtiva').textContent = nome;
+
+        // Feedback háptico
+        if (navigator.vibrate) navigator.vibrate(25);
+
+        // Atualizar etiquetas
+        const label = document.getElementById('labelMesaAtiva');
+        if (label) label.textContent = nome;
+
+        // Atualizar destaque visual dos chips
+        document.querySelectorAll('.table-chip').forEach(c => c.classList.remove('active-table'));
+        const chipId = id ? 'chip-mesa-' + id : 'chip-mesa-balcao';
+        const activeChip = document.getElementById(chipId);
+        if (activeChip) {
+            activeChip.classList.add('active-table');
+            activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+
+        atualizarBarraPwa();
     }
 
     function filtrarPwaCat(catId, btn) {
@@ -209,7 +456,11 @@
     }
 
     function filtrarPwaArtigos() {
-        const termo = document.getElementById('pwaPesquisa').value.toLowerCase().trim();
+        const input = document.getElementById('pwaPesquisa');
+        const termo = (input ? input.value : '').toLowerCase().trim();
+        const btnClear = document.getElementById('btnLimparPesquisa');
+        if (btnClear) btnClear.style.display = termo ? 'block' : 'none';
+
         document.querySelectorAll('.pwa-artigo-item').forEach(card => {
             const cat = card.getAttribute('data-cat');
             const nome = card.getAttribute('data-nome');
@@ -219,57 +470,192 @@
         });
     }
 
-    function adicionarItemPwa(id, nome, preco) {
-        const existente = itensPwa.find(i => i.id === id);
-        if (existente) existente.quantidade++;
-        else itensPwa.push({ id: id, nome: nome, preco: preco, quantidade: 1, notas: '' });
+    function limparPesquisaArtigos() {
+        const input = document.getElementById('pwaPesquisa');
+        if (input) input.value = '';
+        filtrarPwaArtigos();
+    }
+
+    function adicionarItemPwa(id, nome, preco, delta) {
+        let existente = itensPwa.find(i => i.id === id);
+
+        if (delta > 0) {
+            if (existente) {
+                existente.quantidade += delta;
+            } else {
+                itensPwa.push({ id: id, nome: nome, preco: preco, quantidade: delta, notas: '' });
+            }
+        } else if (delta < 0 && existente) {
+            existente.quantidade += delta;
+            if (existente.quantidade <= 0) {
+                itensPwa = itensPwa.filter(i => i.id !== id);
+            }
+        }
+
+        // Haptic feedback
+        if (navigator.vibrate) navigator.vibrate(20);
+
+        atualizarCardArtigo(id);
         atualizarBarraPwa();
+    }
+
+    function atualizarCardArtigo(id) {
+        const item = itensPwa.find(i => i.id === id);
+        const qtd = item ? item.quantidade : 0;
+
+        const card = document.getElementById('card-art-' + id);
+        const zeroBox = document.getElementById('stepper-zero-' + id);
+        const ativoBox = document.getElementById('stepper-ativo-' + id);
+        const qtdLabel = document.getElementById('qtd-art-' + id);
+
+        if (!card || !zeroBox || !ativoBox || !qtdLabel) return;
+
+        if (qtd > 0) {
+            card.classList.add('has-items');
+            zeroBox.style.setProperty('display', 'none', 'important');
+            ativoBox.style.setProperty('display', 'flex', 'important');
+            qtdLabel.textContent = qtd;
+        } else {
+            card.classList.remove('has-items');
+            zeroBox.style.setProperty('display', 'block', 'important');
+            ativoBox.style.setProperty('display', 'none', 'important');
+            qtdLabel.textContent = 0;
+        }
     }
 
     function atualizarBarraPwa() {
         const totalQtd = itensPwa.reduce((acc, i) => acc + i.quantidade, 0);
         const totalVal = itensPwa.reduce((acc, i) => acc + (i.preco * i.quantidade), 0);
-        document.getElementById('pwaCarrinhoResumo').textContent = totalQtd + ' artigo(s) para ' + mesaNomeSelecionada;
-        document.getElementById('pwaCarrinhoTotal').textContent = totalVal.toFixed(2) + ' MT';
+
+        const resumo = document.getElementById('pwaCarrinhoResumo');
+        if (resumo) resumo.textContent = `${totalQtd} artigo(s) • ${mesaNomeSelecionada}`;
+
+        const total = document.getElementById('pwaCarrinhoTotal');
+        if (total) total.textContent = totalVal.toFixed(2).replace('.', ',') + ' MT';
+
+        const badge = document.getElementById('badgeCarrinhoQtd');
+        if (badge) {
+            badge.textContent = totalQtd;
+            badge.style.display = totalQtd > 0 ? 'inline-block' : 'none';
+        }
     }
 
     function abrirModalComandaPwa() {
         if (itensPwa.length === 0) {
-            mostrarAviso('A comanda está vazia. Selecione artigos antes de continuar.', 'aviso');
+            mostrarAviso('A comanda está vazia. Adicione artigos antes de continuar.', 'aviso');
             return;
         }
 
-        document.getElementById('pwaModalMesaNome').textContent = `(${mesaNomeSelecionada})`;
+        const lblMesa = document.getElementById('pwaModalMesaNome');
+        if (lblMesa) lblMesa.textContent = `(${mesaNomeSelecionada})`;
+
+        renderizarItensModal();
+        new bootstrap.Modal(document.getElementById('modalComandaPwa')).show();
+    }
+
+    function renderizarItensModal() {
         const container = document.getElementById('pwaModalItens');
+        if (!container) return;
+
         let html = '';
         let total = 0;
 
-        itensPwa.forEach(item => {
+        itensPwa.forEach((item, index) => {
             const sub = item.preco * item.quantidade;
             total += sub;
             html += `
-                <div class="list-group-item px-0 py-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">${item.quantidade}x ${item.nome}</span>
-                        <span>${sub.toFixed(2)} MT</span>
+                <div class="list-group-item px-0 py-2 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div>
+                            <strong class="text-dark">${item.nome}</strong>
+                            <small class="text-muted d-block">${item.preco.toFixed(2)} MT cada</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold text-success">${sub.toFixed(2).replace('.', ',')} MT</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger p-1" title="Remover" onclick="removerItemModal('${item.id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center gap-2 mt-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-dark stepper-btn" onclick="adicionarItemPwa('${item.id}', '', 0, -1); renderizarItensModal();">
+                                <i class="bi bi-dash-lg"></i>
+                            </button>
+                            <span class="fw-bold px-1">${item.quantidade}</span>
+                            <button type="button" class="btn btn-sm btn-outline-dark stepper-btn" onclick="adicionarItemPwa('${item.id}', '', 0, 1); renderizarItensModal();">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                        <div class="flex-grow-1 ms-2">
+                            <input type="text" class="form-control form-control-sm" placeholder="Instrução (ex: pouco sal)" value="${item.notas || ''}" onchange="atualizarNotasItem('${item.id}', this.value)" />
+                        </div>
                     </div>
                 </div>`;
         });
 
         container.innerHTML = html;
-        document.getElementById('pwaModalTotal').textContent = total.toFixed(2) + ' MT';
-        new bootstrap.Modal(document.getElementById('modalComandaPwa')).show();
+        const totalEl = document.getElementById('pwaModalTotal');
+        if (totalEl) totalEl.textContent = total.toFixed(2).replace('.', ',') + ' MT';
+    }
+
+    function atualizarNotasItem(id, notas) {
+        const item = itensPwa.find(i => i.id === id);
+        if (item) item.notas = notas;
+    }
+
+    function removerItemModal(id) {
+        itensPwa = itensPwa.filter(i => i.id !== id);
+        atualizarCardArtigo(id);
+        atualizarBarraPwa();
+        if (itensPwa.length === 0) {
+            bootstrap.Modal.getInstance(document.getElementById('modalComandaPwa'))?.hide();
+        } else {
+            renderizarItensModal();
+        }
+    }
+
+    function confirmarLimpezaComanda() {
+        confirmarAcaoModal('Limpar Comanda', 'Tem a certeza de que deseja esvaziar todos os artigos da comanda?', function () {
+            itensPwa.forEach(i => {
+                const zeroBox = document.getElementById('stepper-zero-' + i.id);
+                const ativoBox = document.getElementById('stepper-ativo-' + i.id);
+                const card = document.getElementById('card-art-' + i.id);
+                if (card) card.classList.remove('has-items');
+                if (zeroBox) zeroBox.style.setProperty('display', 'block', 'important');
+                if (ativoBox) ativoBox.style.setProperty('display', 'none', 'important');
+            });
+            itensPwa = [];
+            atualizarBarraPwa();
+            bootstrap.Modal.getInstance(document.getElementById('modalComandaPwa'))?.hide();
+            mostrarAviso('Comanda esvaziada.', 'info');
+        });
     }
 
     async function enviarComandaPwa() {
+        if (itensPwa.length === 0) {
+            mostrarAviso('A comanda está vazia.', 'aviso');
+            return;
+        }
+
+        const btn = document.getElementById('btnEnviarComanda');
         const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-        const obs = document.getElementById('pwaModalObs').value;
-        const idempotencyKey = 'menova-pwa-' + Date.now();
+        const obs = document.getElementById('pwaModalObs')?.value || '';
+        const idempotencyKey = 'menova-garcom-' + Date.now();
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>A enviar...';
+        }
 
         const payload = {
             MesaId: mesaSelecionada,
             Observacoes: obs,
-            Itens: itensPwa.map(i => ({ ArtigoId: i.id, Quantidade: i.quantidade, Notas: i.notas }))
+            Itens: itensPwa.map(i => ({
+                ArtigoId: i.id,
+                Quantidade: i.quantidade,
+                Notas: i.notas
+            }))
         };
 
         try {
@@ -285,26 +671,39 @@
 
             const data = await resp.json();
             if (data.sucesso) {
+                // Fechar modal
                 bootstrap.Modal.getInstance(document.getElementById('modalComandaPwa'))?.hide();
+
+                // Limpar seleções
+                itensPwa.forEach(i => {
+                    const zeroBox = document.getElementById('stepper-zero-' + i.id);
+                    const ativoBox = document.getElementById('stepper-ativo-' + i.id);
+                    const card = document.getElementById('card-art-' + i.id);
+                    if (card) card.classList.remove('has-items');
+                    if (zeroBox) zeroBox.style.setProperty('display', 'block', 'important');
+                    if (ativoBox) ativoBox.style.setProperty('display', 'none', 'important');
+                });
                 itensPwa = [];
+                const obsEl = document.getElementById('pwaModalObs');
+                if (obsEl) obsEl.value = '';
                 atualizarBarraPwa();
-                mostrarAviso('Comanda enviada com sucesso para a cozinha!', 'sucesso');
+
+                // Haptic de sucesso
+                if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+
+                mostrarAviso(`Comanda de ${mesaNomeSelecionada} enviada com sucesso para a Cozinha!`, 'sucesso');
             } else {
-                mostrarAviso(data.mensagem || 'Erro ao enviar comanda.', 'erro');
+                mostrarAviso(data.mensagem || 'Erro ao enviar a comanda.', 'erro');
             }
         } catch (e) {
             console.error(e);
-            mostrarAviso('Erro de comunicação com o servidor.', 'erro');
+            mostrarAviso('Falha de comunicação com o servidor local.', 'erro');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send-fill me-1"></i>Enviar Pedido';
+            }
         }
-    }
-
-    // Registar Service Worker PWA
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('Service Worker Menova registado:', reg.scope))
-                .catch(err => console.log('Falha ao registar Service Worker:', err));
-        });
     }
 </script>
 }
