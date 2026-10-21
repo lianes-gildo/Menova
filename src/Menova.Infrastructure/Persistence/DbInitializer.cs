@@ -88,7 +88,7 @@ public static class DbInitializer
                 .Select(p => p.Codigo);
             await SincronizarPermissoesAsync(context, gerentePerfil.Id, permissoesGerente);
 
-            // Operador de Caixa: exclusivo operações de caixa, cobrança, emissão Z e consulta de menu/mesas
+            // Operador de Caixa: exclusivo operações de caixa, cobrança, emissão Z e consulta de mesas/pedidos
             var permissoesCaixa = new[]
             {
                 PermissoesCatalogo.CaixaAbrir,
@@ -102,22 +102,18 @@ public static class DbInitializer
                 PermissoesCatalogo.ContasAbrir,
                 PermissoesCatalogo.ContasVerTodas,
                 PermissoesCatalogo.ItensAdicionar,
-                PermissoesCatalogo.ItensEnviar,
-                PermissoesCatalogo.MenuVer
+                PermissoesCatalogo.ItensEnviar
             };
             await SincronizarPermissoesAsync(context, caixaPerfil.Id, permissoesCaixa);
 
-            // Garçom: exclusivo salão, mesas, envio de pedidos e consulta de artigos/esgotados
+            // Garçom: exclusivo salão, mesas e abertura/envio de pedidos (NÃO gere menu, NÃO anula itens, NÃO esgota produtos)
             var permissoesGarcom = new[]
             {
                 PermissoesCatalogo.MesasVer,
                 PermissoesCatalogo.ContasAbrir,
                 PermissoesCatalogo.ContasVerTodas,
                 PermissoesCatalogo.ItensAdicionar,
-                PermissoesCatalogo.ItensEnviar,
-                PermissoesCatalogo.ItensAnular,
-                PermissoesCatalogo.MenuVer,
-                PermissoesCatalogo.ArtigosEsgotar
+                PermissoesCatalogo.ItensEnviar
             };
             await SincronizarPermissoesAsync(context, garcomPerfil.Id, permissoesGarcom);
 
@@ -126,8 +122,7 @@ public static class DbInitializer
             {
                 PermissoesCatalogo.CozinhaVer,
                 PermissoesCatalogo.CozinhaOperar,
-                PermissoesCatalogo.ArtigosEsgotar,
-                PermissoesCatalogo.MenuVer
+                PermissoesCatalogo.ArtigosEsgotar
             };
             await SincronizarPermissoesAsync(context, cozinhaPerfil.Id, permissoesCozinha);
 

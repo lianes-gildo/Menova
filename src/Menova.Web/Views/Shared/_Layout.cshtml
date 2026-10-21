@@ -97,171 +97,173 @@
             <!-- Sidebar Esquerda (Recolhe SOMENTE o menu vinho, nunca a logo) -->
             <aside class="app-sidebar" id="appSidebar">
                 <ul class="sidebar-menu">
+                    <!-- 1. Categoria: Operação -->
                     <li class="sidebar-section-title">Operação</li>
 
-                @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
-                {
-                    <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
-                        <a asp-controller="Dashboard" asp-action="Index">
-                            <i class="bi bi-grid-1x2-fill sidebar-icon"></i>
-                            <span class="sidebar-text">Painel</span>
-                        </a>
-                    </li>
-                }
+                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
+                    {
+                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                            <a asp-controller="Dashboard" asp-action="Index" title="Painel Principal">
+                                <i class="bi bi-grid-1x2-fill sidebar-icon"></i>
+                                <span class="sidebar-text">Painel</span>
+                            </a>
+                        </li>
+                    }
 
-                @if (CurrentUser.TemPermissao(PermissoesCatalogo.MesasVer))
-                {
-                    <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Mesas" ? "active" : "")">
-                        <a href="/mesas">
-                            <i class="bi bi-layout-wtf sidebar-icon"></i>
-                            <span class="sidebar-text">Salão e Mesas</span>
-                        </a>
-                    </li>
-                }
+                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.MesasVer))
+                    {
+                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Mesas" ? "active" : "")">
+                            <a href="/mesas" title="Salão e Mesas">
+                                <i class="bi bi-layout-wtf sidebar-icon"></i>
+                                <span class="sidebar-text">Salão &amp; Mesas</span>
+                            </a>
+                        </li>
+                    }
 
-                @if (CurrentUser.TemPermissao(PermissoesCatalogo.ContasAbrir))
-                {
-                    <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Pedidos" ? "active" : "")">
-                        <a href="/pedidos">
-                            <i class="bi bi-receipt-cutoff sidebar-icon"></i>
-                            <span class="sidebar-text">Pedidos</span>
-                        </a>
-                    </li>
-                }
+                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.ContasAbrir))
+                    {
+                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Pedidos" ? "active" : "")">
+                            <a href="/pedidos" title="Pedidos e Comandas">
+                                <i class="bi bi-receipt-cutoff sidebar-icon"></i>
+                                <span class="sidebar-text">Pedidos</span>
+                            </a>
+                        </li>
+                    }
 
-                @if (CurrentUser.TemPermissao(PermissoesCatalogo.CozinhaVer))
-                {
-                    <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Kds" ? "active" : "")">
-                        <a href="/kds">
-                            <i class="bi bi-fire sidebar-icon"></i>
-                            <span class="sidebar-text">Cozinha / Bar</span>
-                        </a>
-                    </li>
-                }
-
-                @if (CurrentUser.TemPermissao(PermissoesCatalogo.ContasAbrir))
-                {
-                    <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Garcom" ? "active" : "")">
-                        <a href="/garcom">
-                            <i class="bi bi-phone-fill sidebar-icon"></i>
-                            <span class="sidebar-text">App Garçom</span>
-                        </a>
-                    </li>
-                }
-
-                <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "App" ? "active" : "")">
-                    <a href="/app">
-                        <i class="bi bi-qr-code-scan sidebar-icon"></i>
-                        <span class="sidebar-text">Instalar no Móvel</span>
-                    </a>
-                </li>
-
-                @if (CurrentUser.TemPermissao(PermissoesCatalogo.CaixaAbrir) || CurrentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar) || CurrentUser.TemPermissao(PermissoesCatalogo.MenuVer))
-                {
-                    <li class="sidebar-section-title">Caixa & Menu</li>
+                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.CozinhaVer))
+                    {
+                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Kds" ? "active" : "")">
+                            <a href="/kds" title="Cozinha e Bar (KDS)">
+                                <i class="bi bi-fire sidebar-icon"></i>
+                                <span class="sidebar-text">Cozinha &amp; Bar</span>
+                            </a>
+                        </li>
+                    }
 
                     @if (CurrentUser.TemPermissao(PermissoesCatalogo.CaixaAbrir) || CurrentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar))
                     {
                         <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Caixa" ? "active" : "")">
-                            <a href="/caixa">
+                            <a href="/caixa" title="Caixa e Sessões">
                                 <i class="bi bi-cash-stack sidebar-icon"></i>
-                                <span class="sidebar-text">Caixa & Sessões</span>
+                                <span class="sidebar-text">Caixa</span>
                             </a>
                         </li>
                     }
 
-                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.MenuVer))
+                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.ContasAbrir))
                     {
-                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Menu" ? "active" : "")">
-                            <a href="/menu">
-                                <i class="bi bi-journal-bookmark sidebar-icon"></i>
-                                <span class="sidebar-text">Menu & Artigos</span>
-                            </a>
-                        </li>
-                    }
-                }
-
-                @if (CurrentUser.TemPermissao(PermissoesCatalogo.RelatoriosVer) ||
-                     CurrentUser.TemPermissao(PermissoesCatalogo.UtilizadoresVer) ||
-                     CurrentUser.TemPermissao(PermissoesCatalogo.DispositivosGerir) ||
-                     CurrentUser.TemPermissao(PermissoesCatalogo.ImpressorasGerir) ||
-                     CurrentUser.TemPermissao(PermissoesCatalogo.AuditoriaVer) ||
-                     CurrentUser.TemPermissao(PermissoesCatalogo.BackupsVer) ||
-                     CurrentUser.TemPermissao(PermissoesCatalogo.DefinicoesGerir))
-                {
-                    <li class="sidebar-section-title">Administração</li>
-
-                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.RelatoriosVer))
-                    {
-                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Relatorios" ? "active" : "")">
-                            <a href="/relatorios">
-                                <i class="bi bi-bar-chart-fill sidebar-icon"></i>
-                                <span class="sidebar-text">Relatórios</span>
-                            </a>
-                        </li>
-                    }
-
-                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.UtilizadoresVer))
-                    {
-                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Utilizadores" ? "active" : "")">
-                            <a href="/utilizadores">
-                                <i class="bi bi-people-fill sidebar-icon"></i>
-                                <span class="sidebar-text">Funcionários</span>
-                            </a>
-                        </li>
-                    }
-
-                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.DispositivosGerir))
-                    {
-                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dispositivos" ? "active" : "")">
-                            <a href="/dispositivos">
+                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Garcom" ? "active" : "")">
+                            <a href="/garcom" title="Terminal Garçom">
                                 <i class="bi bi-phone-fill sidebar-icon"></i>
-                                <span class="sidebar-text">Dispositivos</span>
+                                <span class="sidebar-text">Terminal Garçom</span>
                             </a>
                         </li>
                     }
 
-                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.ImpressorasGerir))
+                    <!-- 2. Categoria: Gestão -->
+                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.MenuVer) || CurrentUser.TemPermissao(PermissoesCatalogo.RelatoriosVer))
                     {
-                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Impressoras" ? "active" : "")">
-                            <a href="/impressoras">
-                                <i class="bi bi-printer-fill sidebar-icon"></i>
-                                <span class="sidebar-text">Impressoras</span>
-                            </a>
-                        </li>
+                        <li class="sidebar-section-title">Gestão</li>
+
+                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.MenuVer))
+                        {
+                            <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Menu" ? "active" : "")">
+                                <a href="/menu" title="Menu e Artigos">
+                                    <i class="bi bi-journal-bookmark-fill sidebar-icon"></i>
+                                    <span class="sidebar-text">Menu &amp; Artigos</span>
+                                </a>
+                            </li>
+                        }
+
+                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.RelatoriosVer))
+                        {
+                            <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Relatorios" ? "active" : "")">
+                                <a href="/relatorios" title="Relatórios e Vendas">
+                                    <i class="bi bi-bar-chart-fill sidebar-icon"></i>
+                                    <span class="sidebar-text">Relatórios</span>
+                                </a>
+                            </li>
+                        }
                     }
 
-                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.AuditoriaVer))
+                    <!-- 3. Categoria: Administração & Sistema -->
+                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.UtilizadoresVer) ||
+                         CurrentUser.TemPermissao(PermissoesCatalogo.DefinicoesGerir) ||
+                         CurrentUser.TemPermissao(PermissoesCatalogo.ImpressorasGerir) ||
+                         CurrentUser.TemPermissao(PermissoesCatalogo.DispositivosGerir) ||
+                         CurrentUser.TemPermissao(PermissoesCatalogo.AuditoriaVer) ||
+                         CurrentUser.TemPermissao(PermissoesCatalogo.BackupsVer))
                     {
-                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Auditoria" ? "active" : "")">
-                            <a href="/auditoria">
-                                <i class="bi bi-shield-check sidebar-icon"></i>
-                                <span class="sidebar-text">Auditoria</span>
-                            </a>
-                        </li>
-                    }
+                        <li class="sidebar-section-title">Administração</li>
 
-                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.BackupsVer))
-                    {
-                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Backups" ? "active" : "")">
-                            <a href="/backups">
-                                <i class="bi bi-database-check sidebar-icon"></i>
-                                <span class="sidebar-text">Backups</span>
-                            </a>
-                        </li>
-                    }
+                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.UtilizadoresVer))
+                        {
+                            <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Utilizadores" ? "active" : "")">
+                                <a href="/utilizadores" title="Gestão de Funcionários">
+                                    <i class="bi bi-people-fill sidebar-icon"></i>
+                                    <span class="sidebar-text">Funcionários</span>
+                                </a>
+                            </li>
+                        }
 
-                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.DefinicoesGerir))
-                    {
-                        <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Definicoes" ? "active" : "")">
-                            <a href="/definicoes">
-                                <i class="bi bi-sliders sidebar-icon"></i>
-                                <span class="sidebar-text">Definições</span>
-                            </a>
-                        </li>
+                        var ctrlAtual = ViewContext.RouteData.Values["Controller"]?.ToString();
+                        var ehPaginaSistema = ctrlAtual == "Definicoes" || ctrlAtual == "Impressoras" || ctrlAtual == "Dispositivos" || ctrlAtual == "Auditoria" || ctrlAtual == "Backups" || ctrlAtual == "App";
+
+                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.DefinicoesGerir) ||
+                             CurrentUser.TemPermissao(PermissoesCatalogo.ImpressorasGerir) ||
+                             CurrentUser.TemPermissao(PermissoesCatalogo.DispositivosGerir) ||
+                             CurrentUser.TemPermissao(PermissoesCatalogo.AuditoriaVer) ||
+                             CurrentUser.TemPermissao(PermissoesCatalogo.BackupsVer))
+                        {
+                            <li class="sidebar-item sidebar-item-dropdown @(ehPaginaSistema ? "active open" : "")">
+                                <a href="#submenuSistema" data-bs-toggle="collapse" role="button" aria-expanded="@(ehPaginaSistema ? "true" : "false")" class="d-flex justify-content-between align-items-center" title="Sistema e Configurações">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-gear-fill sidebar-icon"></i>
+                                        <span class="sidebar-text">Sistema</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down sidebar-chevron @(ehPaginaSistema ? "rotate" : "")"></i>
+                                </a>
+                                <div class="collapse @(ehPaginaSistema ? "show" : "")" id="submenuSistema">
+                                    <ul class="sidebar-submenu">
+                                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.DefinicoesGerir))
+                                        {
+                                            <li class="sidebar-subitem @(ctrlAtual == "Definicoes" ? "active" : "")">
+                                                <a href="/definicoes"><i class="bi bi-sliders me-2"></i>Definições</a>
+                                            </li>
+                                        }
+                                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.ImpressorasGerir))
+                                        {
+                                            <li class="sidebar-subitem @(ctrlAtual == "Impressoras" ? "active" : "")">
+                                                <a href="/impressoras"><i class="bi bi-printer-fill me-2"></i>Impressoras</a>
+                                            </li>
+                                        }
+                                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.DispositivosGerir))
+                                        {
+                                            <li class="sidebar-subitem @(ctrlAtual == "Dispositivos" ? "active" : "")">
+                                                <a href="/dispositivos"><i class="bi bi-phone-fill me-2"></i>Dispositivos</a>
+                                            </li>
+                                        }
+                                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.BackupsVer))
+                                        {
+                                            <li class="sidebar-subitem @(ctrlAtual == "Backups" ? "active" : "")">
+                                                <a href="/backups"><i class="bi bi-database-check me-2"></i>Backups</a>
+                                            </li>
+                                        }
+                                        @if (CurrentUser.TemPermissao(PermissoesCatalogo.AuditoriaVer))
+                                        {
+                                            <li class="sidebar-subitem @(ctrlAtual == "Auditoria" ? "active" : "")">
+                                                <a href="/auditoria"><i class="bi bi-shield-check me-2"></i>Auditoria</a>
+                                            </li>
+                                        }
+                                        <li class="sidebar-subitem @(ctrlAtual == "App" ? "active" : "")">
+                                            <a href="/app"><i class="bi bi-qr-code-scan me-2"></i>Instalar Móvel</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+                        }
                     }
-                }
-            </ul>
+                </ul>
         </aside>
 
         <!-- Backdrop Móvel para fechar menu ao tocar fora -->

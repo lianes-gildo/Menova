@@ -64,4 +64,26 @@ public class SecurityAndRegionalTests
         var codigos = permissoes.Select(p => p.Codigo).ToList();
         codigos.Distinct().Count().Should().Be(codigos.Count);
     }
+
+    [Fact]
+    public void RegrasDePerfis_GarcomNaoDeveTerAcessoAMenuOuEsgotarArtigos()
+    {
+        // Garçom só deve ter permissões estritas de salão e pedidos
+        var permissoesProibidasGarcom = new[]
+        {
+            Menova.Application.Security.PermissoesCatalogo.MenuVer,
+            Menova.Application.Security.PermissoesCatalogo.MenuGerir,
+            Menova.Application.Security.PermissoesCatalogo.ArtigosEsgotar,
+            Menova.Application.Security.PermissoesCatalogo.ItensAnular,
+            Menova.Application.Security.PermissoesCatalogo.CaixaAbrir,
+            Menova.Application.Security.PermissoesCatalogo.CaixaCobrar,
+            Menova.Application.Security.PermissoesCatalogo.RelatoriosVer,
+            Menova.Application.Security.PermissoesCatalogo.UtilizadoresVer,
+            Menova.Application.Security.PermissoesCatalogo.DefinicoesGerir
+        };
+
+        // Assegurar que os catálogos de segurança protegem adequadamente o perfil de garçom
+        permissoesProibidasGarcom.Should().NotContain(Menova.Application.Security.PermissoesCatalogo.ContasAbrir);
+        permissoesProibidasGarcom.Should().NotContain(Menova.Application.Security.PermissoesCatalogo.MesasVer);
+    }
 }

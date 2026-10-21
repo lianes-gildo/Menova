@@ -190,14 +190,17 @@ a:hover {
     flex-direction: column;
     z-index: 1000;
     overflow: hidden;
+    position: sticky;
+    top: var(--mv-topbar-height);
+    height: calc(100vh - var(--mv-topbar-height));
 }
 
 .sidebar-menu {
     flex: 1;
-    overflow-y: hidden; /* Sem barra de scroll no sidebar */
+    overflow-y: hidden; /* 100% fixo, sem barra de scroll no sidebar */
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 0.4rem 0;
+    padding: 0.35rem 0;
     list-style: none;
     margin: 0;
 }
@@ -208,21 +211,21 @@ a:hover {
 }
 
 .sidebar-section-title {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #CFC4C8;
-    padding: 0.45rem 1.15rem 0.15rem;
-    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: #D3C8CC;
+    padding: 0.35rem 1.15rem 0.1rem;
+    font-weight: 700;
 }
 
 .sidebar-item a {
     display: flex;
     align-items: center;
     gap: 0.65rem;
-    padding: 0.45rem 1.15rem;
+    padding: 0.38rem 1.15rem;
     color: #F7F5F6;
-    font-size: 0.85rem;
+    font-size: 0.83rem;
     text-decoration: none;
     transition: background-color 0.15s ease, border-left 0.15s ease;
     border-left: 3px solid transparent;
@@ -231,7 +234,7 @@ a:hover {
     background-color: var(--mv-vinho-800);
     color: var(--mv-branco);
 }
-.sidebar-item.active a {
+.sidebar-item.active > a {
     background-color: var(--mv-vinho-700);
     border-left: 3px solid var(--mv-branco);
     color: var(--mv-branco);
@@ -245,17 +248,59 @@ a:hover {
     flex-shrink: 0;
 }
 
+.sidebar-chevron {
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
+    color: #D3C8CC;
+}
+
+.sidebar-item-dropdown > a[aria-expanded="true"] .sidebar-chevron,
+.sidebar-chevron.rotate {
+    transform: rotate(180deg);
+}
+
+/* Submenu Acordeão do Sidebar */
+.sidebar-submenu {
+    list-style: none;
+    padding: 0.15rem 0;
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0.18);
+}
+.sidebar-submenu .sidebar-subitem a {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 1.15rem 0.3rem 2.45rem;
+    color: #E2D9DC;
+    font-size: 0.8rem;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+.sidebar-submenu .sidebar-subitem a:hover {
+    background-color: var(--mv-vinho-800);
+    color: var(--mv-branco);
+}
+.sidebar-submenu .sidebar-subitem.active a {
+    background-color: var(--mv-vinho-700);
+    border-left: 3px solid var(--mv-branco);
+    color: var(--mv-branco);
+    font-weight: 600;
+}
+
 /* Sidebar Recolhida (Collapsed) */
 .app-sidebar.collapsed {
     width: var(--mv-sidebar-collapsed-width);
 }
 .app-sidebar.collapsed .sidebar-section-title,
-.app-sidebar.collapsed .sidebar-text {
-    display: none;
+.app-sidebar.collapsed .sidebar-text,
+.app-sidebar.collapsed .sidebar-chevron,
+.app-sidebar.collapsed .sidebar-submenu {
+    display: none !important;
 }
 .app-sidebar.collapsed .sidebar-item a {
     justify-content: center;
-    padding: 0.6rem 0;
+    padding: 0.55rem 0;
 }
 
 /* Conteúdo Principal */
@@ -501,4 +546,37 @@ a:hover {
     border-radius: var(--mv-radius) !important;
     border: 1px solid var(--mv-borda-forte);
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Paginação das Tabelas - Padrão Menova */
+.pagination {
+    gap: 2px;
+}
+.pagination .page-link {
+    color: var(--mv-vinho-900);
+    border-color: var(--mv-borda);
+    padding: 0.25rem 0.55rem;
+    font-size: 0.8rem;
+    border-radius: var(--mv-radius) !important;
+}
+.pagination .page-link:hover {
+    background-color: var(--mv-vinho-50);
+    border-color: var(--mv-vinho-200);
+    color: var(--mv-vinho-800);
+}
+.pagination .page-item.active .page-link {
+    background-color: var(--mv-vinho-900) !important;
+    border-color: var(--mv-vinho-900) !important;
+    color: var(--mv-branco) !important;
+    font-weight: 600;
+}
+.pagination .page-item.disabled .page-link {
+    color: #ADB5BD;
+    background-color: #F8F9FA;
+    border-color: var(--mv-borda);
+}
+
+.table-pagination-footer {
+    border-bottom-left-radius: var(--mv-radius);
+    border-bottom-right-radius: var(--mv-radius);
 }
