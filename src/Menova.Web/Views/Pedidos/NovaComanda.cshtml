@@ -300,13 +300,13 @@
             if (data.sucesso) {
                 window.location.href = '/pedidos/detalhes/' + data.contaId;
             } else {
-                alert(data.mensagem || 'Erro ao enviar comanda.');
+                mostrarToast(data.mensagem || 'Erro ao enviar comanda.', 'erro');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Enviar para a Cozinha / Bar';
             }
         } catch (e) {
             console.error(e);
-            alert('Falha na ligação com o servidor.');
+            mostrarToast('Falha na ligação com o servidor.', 'erro');
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Enviar para a Cozinha / Bar';
         }

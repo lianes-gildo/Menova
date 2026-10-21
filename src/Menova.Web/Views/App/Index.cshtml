@@ -1,0 +1,221 @@
+@{
+    Layout = "_LayoutLogin";
+    ViewData["Title"] = "Instalar App Menova Garçom";
+}
+
+<div class="text-center mb-4">
+    <img src="~/icons/icon-192.png" alt="Menova Garçom" class="img-fluid rounded-4 shadow-sm mb-3" style="width: 80px; height: 80px; object-fit: cover;" />
+    <h4 class="fw-bold mb-1" style="color: var(--mv-vinho-900);">Menova Garçom</h4>
+    <p class="text-muted small mb-2">Aplicação móvel para garçons, tablets e telemóveis de salão.</p>
+    <div class="d-flex justify-content-center gap-2">
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+            <i class="bi bi-wifi-off me-1"></i>Rede Local Offline
+        </span>
+        <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">
+            v1.0.0 (Moçambique)
+        </span>
+    </div>
+</div>
+
+<!-- Secção QR Code para digitalização rápida -->
+<div class="card border-0 shadow-sm rounded-3 mb-4 text-center p-3" style="background: #fdfbf7;">
+    <h6 class="fw-bold mb-2 text-dark small"><i class="bi bi-qr-code-scan me-1"></i>Digitalizar com o Telemóvel</h6>
+    <p class="text-muted small mb-3">Aponte a câmara do telemóvel ou tablet à rede Wi-Fi do restaurante:</p>
+    <div class="d-flex justify-content-center my-2">
+        <div id="qrcode" class="p-2 bg-white rounded-3 shadow-sm border" style="min-height: 200px; min-width: 200px; display: flex; align-items: center; justify-content: center;">
+            <div class="spinner-border text-secondary spinner-border-sm" role="status"></div>
+        </div>
+    </div>
+    <div class="mt-2">
+        <small class="text-muted text-break" id="lblQrUrl">@ViewBag.AppUrl</small>
+    </div>
+</div>
+
+<!-- Botões de Ação Rápida -->
+<div class="d-grid gap-2 mb-4">
+    <!-- Botão PWA (Android / Chrome / Desktop) -->
+    <button type="button" class="btn btn-primary py-2 fw-semibold" id="btnInstallPwa" style="display: none;">
+        <i class="bi bi-phone-fill me-1"></i> Instalar Aplicação no Ecrã Principal
+    </button>
+
+    <!-- Botão Abrir Imediatamente -->
+    <a href="/garcom" class="btn btn-outline-dark py-2 fw-semibold">
+        <i class="bi bi-box-arrow-up-right me-1"></i> Abrir Menova Garçom no Navegador
+    </a>
+
+    <!-- Downloads Nativos -->
+    <div class="row g-2 pt-2">
+        <div class="col-6">
+            <a href="/app/download/android" class="btn btn-light border w-100 py-2 small fw-semibold text-truncate">
+                <i class="bi bi-android2 text-success me-1"></i> Pacote Android (.apk)
+            </a>
+        </div>
+        <div class="col-6">
+            <a href="/app/download/ios" class="btn btn-light border w-100 py-2 small fw-semibold text-truncate">
+                <i class="bi bi-apple text-dark me-1"></i> Atalho iOS (.mobileconfig)
+            </a>
+        </div>
+    </div>
+
+    <div class="pt-1">
+        <a href="/app/download/crt" class="btn btn-sm btn-outline-secondary w-100 py-2 text-truncate">
+            <i class="bi bi-shield-lock-fill me-1"></i> Descarregar Certificado SSL Raiz (.crt)
+        </a>
+    </div>
+</div>
+
+<!-- Instruções Detalhadas por Plataforma -->
+<div class="accordion mb-4" id="accordionInstalacao">
+    <!-- Android -->
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingAndroid">
+            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAndroid" aria-expanded="false" aria-controls="collapseAndroid">
+                <i class="bi bi-android2 text-success me-2 fs-5"></i> Instruções para Android
+            </button>
+        </h2>
+        <div id="collapseAndroid" class="accordion-collapse collapse show" aria-labelledby="headingAndroid" data-bs-parent="#accordionInstalacao">
+            <div class="accordion-body small text-muted">
+                <ol class="ps-3 mb-0">
+                    <li class="mb-1">Ligue o telemóvel à rede Wi-Fi do restaurante.</li>
+                    <li class="mb-1">Abra o <strong>Google Chrome</strong> ou <strong>Samsung Internet</strong>.</li>
+                    <li class="mb-1">Toque no botão <strong>"Instalar Aplicação"</strong> acima ou no menu do navegador (<strong>&vellip;</strong>) &gt; <strong>"Adicionar ao ecrã principal"</strong> ou <strong>"Instalar aplicação"</strong>.</li>
+                    <li>Em alternativa, utilize o botão <strong>"Pacote Android (.apk)"</strong> para descarregar o instalador.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS / iPadOS -->
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingIos">
+            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIos" aria-expanded="false" aria-controls="collapseIos">
+                <i class="bi bi-apple text-dark me-2 fs-5"></i> Instruções para iPhone e iPad (Safari)
+            </button>
+        </h2>
+        <div id="collapseIos" class="accordion-collapse collapse" aria-labelledby="headingIos" data-bs-parent="#accordionInstalacao">
+            <div class="accordion-body small text-muted">
+                <p class="mb-2 fw-semibold text-dark">Opção 1 &mdash; Atalho Nativo Safari (Recomendado):</p>
+                <ol class="ps-3 mb-3">
+                    <li class="mb-1">Abra esta página no <strong>Safari</strong>.</li>
+                    <li class="mb-1">Toque no botão de <strong>Partilha</strong> (ícone com quadrado e seta para cima).</li>
+                    <li>Deslize para baixo e selecione <strong>"Adicionar ao Ecrã Principal"</strong>.</li>
+                </ol>
+                <p class="mb-2 fw-semibold text-dark">Opção 2 &mdash; Perfil de Configuração (.mobileconfig):</p>
+                <ol class="ps-3 mb-0">
+                    <li class="mb-1">Toque no botão <strong>"Atalho iOS (.mobileconfig)"</strong> acima.</li>
+                    <li class="mb-1">Permita a transferência e aceda a <strong>Definições &gt; Perfil Descarregado</strong>.</li>
+                    <li>Toque em <strong>Instalar</strong> no canto superior direito e confirme o seu código.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificado de Segurança -->
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingCert">
+            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCert" aria-expanded="false" aria-controls="collapseCert">
+                <i class="bi bi-shield-check text-primary me-2 fs-5"></i> Certificado de Segurança HTTPS Local
+            </button>
+        </h2>
+        <div id="collapseCert" class="accordion-collapse collapse" aria-labelledby="headingCert" data-bs-parent="#accordionInstalacao">
+            <div class="accordion-body small text-muted">
+                <p class="mb-2">Para evitar alertas de ligação insegura na rede interna sem internet:</p>
+                <ol class="ps-3 mb-0">
+                    <li class="mb-1">Toque em <strong>"Descarregar Certificado SSL Raiz (.crt)"</strong>.</li>
+                    <li class="mb-1"><strong>No Android:</strong> Vá a <em>Definições &gt; Segurança &gt; Instalar certificado &gt; Certificado de CA</em> e selecione o ficheiro.</li>
+                    <li><strong>No iOS:</strong> Transfira o certificado, vá a <em>Definições &gt; Perfil &gt; Instalar</em>, depois em <em>Geral &gt; Informações &gt; Definições de Confiança nos Certificados</em> e ative a confiança total.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center">
+    <a asp-controller="Dashboard" asp-action="Index" class="text-muted small text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i> Voltar ao Painel Principal
+    </a>
+</div>
+
+@section Scripts {
+    <script src="~/lib/qrcode/qrcode.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Determinar o URL atual exato com origem do navegador
+            var appUrl = window.location.origin + '/app';
+            var lbl = document.getElementById('lblQrUrl');
+            if (lbl) {
+                lbl.textContent = appUrl;
+            }
+
+            // Gerar QR Code localmente
+            var qrContainer = document.getElementById('qrcode');
+            if (qrContainer && typeof QRCode !== 'undefined') {
+                qrContainer.innerHTML = '';
+                new QRCode(qrContainer, {
+                    text: appUrl,
+                    width: 190,
+                    height: 190,
+                    colorDark: '#4A1122',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            }
+
+            // Lidar com o evento PWA beforeinstallprompt
+            var deferredPrompt = null;
+            var btnInstall = document.getElementById('btnInstallPwa');
+
+            window.addEventListener('beforeinstallprompt', function (e) {
+                e.preventDefault();
+                deferredPrompt = e;
+                if (btnInstall) {
+                    btnInstall.style.display = 'block';
+                }
+            });
+
+            if (btnInstall) {
+                btnInstall.addEventListener('click', async function () {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        var choiceResult = await deferredPrompt.userChoice;
+                        if (choiceResult.outcome === 'accepted') {
+                            btnInstall.style.display = 'none';
+                        }
+                        deferredPrompt = null;
+                    } else {
+                        // Navegadores sem suporte ao evento automático (ex: iOS ou já instalado)
+                        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                            var iosCollapse = document.getElementById('collapseIos');
+                            if (iosCollapse && typeof bootstrap !== 'undefined') {
+                                new bootstrap.Collapse(iosCollapse, { toggle: true });
+                            }
+                        } else {
+                            var toastEl = document.getElementById('appToast');
+                        if (toastEl && typeof bootstrap !== 'undefined') {
+                            var body = toastEl.querySelector('.toast-body');
+                            if (body) body.textContent = 'Abra o menu do navegador (três pontos) e toque em "Adicionar ao ecrã inicial" ou "Instalar aplicação".';
+                            var t = new bootstrap.Toast(toastEl);
+                            t.show();
+                        } else {
+                            var andCollapse = document.getElementById('collapseAndroid');
+                            if (andCollapse && typeof bootstrap !== 'undefined') {
+                                new bootstrap.Collapse(andCollapse, { toggle: true });
+                            }
+                        }
+                        }
+                    }
+                });
+            }
+
+            // Se for Android ou ambiente desktop onde PWA pode ser exibido, garantir visibilidade
+            if (window.matchMedia('(display-mode: browser)').matches && !/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                // Dar um pequeno tempo para ver se beforeinstallprompt dispara; se não, exibe como fallback
+                setTimeout(function() {
+                    if (btnInstall && btnInstall.style.display === 'none') {
+                        btnInstall.style.display = 'block';
+                    }
+                }, 1200);
+            }
+        });
+    </script>
+}

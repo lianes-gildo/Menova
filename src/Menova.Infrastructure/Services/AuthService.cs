@@ -11,17 +11,20 @@ public class AuthService : IAuthService
     private readonly IAppDbContext _context;
     private readonly IAuditoriaService _auditoriaService;
     private readonly IPasswordHasher<Utilizador> _passwordHasher;
+    private readonly IPinService _pinService;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         IAppDbContext context,
         IAuditoriaService auditoriaService,
         IPasswordHasher<Utilizador> passwordHasher,
+        IPinService pinService,
         ILogger<AuthService> logger)
     {
         _context = context;
         _auditoriaService = auditoriaService;
         _passwordHasher = passwordHasher;
+        _pinService = pinService;
         _logger = logger;
     }
 
@@ -116,10 +119,107 @@ public class AuthService : IAuthService
             PerfilCodigo: perfilPrincipal);
     }
 
-    public Task<ResultadoLogin> AutenticarPinAsync(string pin, string tokenDispositivo, string ip, string? userAgent, CancellationToken cancellationToken = default)
+    public async Task<ResultadoLogin> AutenticarPinAsync(
+        string pin,
+        string tokenDispositivo,
+        string ip,
+        string? userAgent,
+        CancellationToken cancellationToken = default)
     {
-        // Implementado detalhadamente na fase do Garçom/PWA com o dispositivo
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(pin) || pin.Length < 4)
+        {
+            RegistarTentativa(null, "PIN_INVALIDO", ip, null, false, "PIN fornecido com formato inválido");
+            await _context.SaveChangesAsync(cancellationToken);
+            return new ResultadoLogin(false, "O PIN deve conter pelo menos 4 dígitos.");
+        }
+
+        Guid? dispositivoId = null;
+        if (!string.IsNullOrWhiteSpace(tokenDispositivo))
+        {
+            var dispositivo = await _context.Dispositivos
+                .FirstOrDefaultAsync(d => d.TokenHash == tokenDispositivo && d.EliminadoEm == null, cancellationToken);
+
+            if (dispositivo != null)
+            {
+                if (dispositivo.Estado == EstadoDispositivo.Revogado)
+                {
+                    RegistarTentativa(null, "DISPOSITIVO_REVOGADO", ip, dispositivo.Id, false, "Dispositivo revogado");
+                    await _context.SaveChangesAsync(cancellationToken);
+                    return new ResultadoLogin(false, "Este dispositivo móvel foi revogado pelo administrador.");
+                }
+
+                dispositivoId = dispositivo.Id;
+                dispositivo.UltimoAcessoEm = DateTime.UtcNow;
+                dispositivo.UltimoIp = ip;
+            }
+        }
+
+        // Localizar utilizador ativo cujo HashPin coincide
+        var utilizadoresComPin = await _context.Utilizadores
+            .Include(u => u.UtilizadoresPerfis).ThenInclude(up => up.Perfil)
+            .Where(u => u.Ativo && u.HashPin != null)
+            .ToListAsync(cancellationToken);
+
+        Utilizador? utilizador = null;
+        foreach (var u in utilizadoresComPin)
+        {
+            var partes = u.HashPin!.Split(':');
+            if (partes.Length == 2 && _pinService.VerificarPin(pin, partes[0], u.HashPin))
+            {
+                utilizador = u;
+                break;
+            }
+        }
+
+        if (utilizador == null)
+        {
+            RegistarTentativa(null, "PIN_DESCONHECIDO", ip, dispositivoId, false, "PIN incorreto");
+            await _context.SaveChangesAsync(cancellationToken);
+            return new ResultadoLogin(false, "PIN incorreto ou colaborador não encontrado.");
+        }
+
+        if (utilizador.EstaBloqueado())
+        {
+            var minutosRestantes = (int)Math.Ceiling((utilizador.BloqueadoAte!.Value - DateTime.UtcNow).TotalMinutes);
+            RegistarTentativa(utilizador.Id, utilizador.NomeUtilizador, ip, dispositivoId, false, "Conta bloqueada");
+            await _context.SaveChangesAsync(cancellationToken);
+            return new ResultadoLogin(false, $"Conta temporariamente bloqueada. Tente dentro de {minutosRestantes} minuto(s).", Bloqueado: true, BloqueadoAte: utilizador.BloqueadoAte);
+        }
+
+        // Sucesso na autenticação por PIN
+        utilizador.RegistarSucessoLogin();
+
+        var sessao = new SessaoUtilizador
+        {
+            UtilizadorId = utilizador.Id,
+            DispositivoId = dispositivoId,
+            Inicio = DateTime.UtcNow,
+            UltimoAcesso = DateTime.UtcNow,
+            Ip = ip,
+            UserAgent = userAgent,
+            Revogada = false
+        };
+        _context.SessoesUtilizador.Add(sessao);
+
+        RegistarTentativa(utilizador.Id, utilizador.NomeUtilizador, ip, dispositivoId, true, "Autenticação por PIN bem-sucedida");
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var perfilPrincipal = utilizador.UtilizadoresPerfis.FirstOrDefault()?.Perfil.Codigo;
+
+        await _auditoriaService.RegistarAsync(
+            "login.pin.sucesso",
+            "utilizadores",
+            utilizador.Id.ToString(),
+            valoresDepois: new { utilizador.NomeUtilizador, ip, dispositivoId },
+            cancellationToken: cancellationToken);
+
+        return new ResultadoLogin(
+            Sucesso: true,
+            DeveAlterarPalavraPasse: false,
+            UtilizadorId: utilizador.Id,
+            NomeCompleto: utilizador.NomeCompleto,
+            NomeUtilizador: utilizador.NomeUtilizador,
+            PerfilCodigo: perfilPrincipal);
     }
 
     public async Task<(bool Sucesso, string? MensagemErro)> AlterarPalavraPasseAsync(

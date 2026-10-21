@@ -1,5 +1,6 @@
 @using Menova.Application.DTOs
 @{
+    Layout = "_LayoutGarcom";
     ViewData["Title"] = "Menova Garçom (PWA)";
     var zonas = (List<ZonaDto>)ViewBag.Zonas;
     var menu = (MenuCompletoDto)ViewBag.Menu;
@@ -234,7 +235,7 @@
 
     function abrirModalComandaPwa() {
         if (itensPwa.length === 0) {
-            alert('A comanda está vazia.');
+            mostrarAviso('A comanda está vazia. Selecione artigos antes de continuar.', 'aviso');
             return;
         }
 
@@ -261,7 +262,7 @@
     }
 
     async function enviarComandaPwa() {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
         const obs = document.getElementById('pwaModalObs').value;
         const idempotencyKey = 'menova-pwa-' + Date.now();
 
@@ -284,16 +285,16 @@
 
             const data = await resp.json();
             if (data.sucesso) {
-                bootstrap.Modal.getInstance(document.getElementById('modalComandaPwa')).hide();
+                bootstrap.Modal.getInstance(document.getElementById('modalComandaPwa'))?.hide();
                 itensPwa = [];
                 atualizarBarraPwa();
-                alert('Comanda enviada com sucesso para a cozinha!');
+                mostrarAviso('Comanda enviada com sucesso para a cozinha!', 'sucesso');
             } else {
-                alert(data.mensagem || 'Erro ao enviar comanda.');
+                mostrarAviso(data.mensagem || 'Erro ao enviar comanda.', 'erro');
             }
         } catch (e) {
             console.error(e);
-            alert('Erro de comunicação.');
+            mostrarAviso('Erro de comunicação com o servidor.', 'erro');
         }
     }
 

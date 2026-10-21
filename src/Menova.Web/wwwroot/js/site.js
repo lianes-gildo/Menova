@@ -92,3 +92,37 @@ function initConfirmModals() {
         });
     });
 }
+
+// 5. Função Global de Toast para Notificações do Sistema (Substitui alert nativo)
+window.mostrarToast = function (mensagem, tipo = 'info') {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        container.style.zIndex = '1090';
+        document.body.appendChild(container);
+    }
+
+    const toastEl = document.createElement('div');
+    const bgClass = tipo === 'sucesso' ? 'bg-success text-white' : (tipo === 'erro' ? 'bg-danger text-white' : (tipo === 'aviso' ? 'bg-warning text-dark' : 'bg-dark text-white'));
+    const iconClass = tipo === 'sucesso' ? 'bi-check-circle-fill' : (tipo === 'erro' ? 'bi-x-circle-fill' : (tipo === 'aviso' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'));
+
+    toastEl.className = `toast align-items-center ${bgClass} border-0 shadow mb-2`;
+    toastEl.setAttribute('role', 'alert');
+    toastEl.setAttribute('aria-live', 'assertive');
+    toastEl.setAttribute('aria-atomic', 'true');
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center">
+                <i class="bi ${iconClass} me-2 fs-6"></i>
+                <div>${mensagem}</div>
+            </div>
+            <button type="button" class="btn-close ${tipo === 'aviso' ? '' : 'btn-close-white'} me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+        </div>
+    `;
+
+    container.appendChild(toastEl);
+    const bsToast = new bootstrap.Toast(toastEl, { delay: 4500 });
+    bsToast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+};

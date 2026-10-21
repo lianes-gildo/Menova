@@ -1,0 +1,167 @@
+@inject ICurrentUserService CurrentUser
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>@ViewData["Title"] - Menova Garçom</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    
+    <!-- PWA & Mobile Web App Meta Tags (Android & iOS) -->
+    <link rel="manifest" href="~/manifest.json" />
+    <meta name="theme-color" content="#6E1A33" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Menova Garçom" />
+    <link rel="apple-touch-icon" href="~/icons/icon-180.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="~/icons/icon-192.png" />
+
+    <!-- Recursos 100% Locais (Sem CDN) -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    
+    <style>
+        body {
+            background-color: #f8f6f3;
+            color: #2b2b2b;
+            overscroll-behavior-y: contain;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .garcom-navbar {
+            background-color: #6E1A33;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+        .garcom-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .garcom-brand img {
+            height: 28px;
+            width: 28px;
+            border-radius: 6px;
+        }
+        .toast-container-mobile {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1060;
+            width: 90%;
+            max-width: 360px;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Barra Superior Móvel -->
+    <header class="garcom-navbar py-2 px-3 d-flex justify-content-between align-items-center">
+        <a href="/garcom" class="garcom-brand">
+            <img src="~/icons/icon-180.png" alt="Menova" />
+            <span class="fs-5">Menova</span>
+        </a>
+        
+        <div class="d-flex align-items-center gap-2">
+            <a href="/app" class="btn btn-sm btn-outline-light py-1 px-2" title="Instalar App">
+                <i class="bi bi-download"></i>
+            </a>
+            
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-light dropdown-toggle py-1 px-2" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-1"></i>@(CurrentUser.NomeCompleto?.Split(' ')[0] ?? CurrentUser.NomeUtilizador)
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><h6 class="dropdown-header">Garçom: @CurrentUser.NomeUtilizador</h6></li>
+                    <li><a class="dropdown-item" href="/dashboard"><i class="bi bi-grid-1x2 me-2"></i>Painel Principal</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i>Terminar sessão
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contentor de Toasts de Notificação (Substitui alerts do navegador) -->
+    <div class="toast-container-mobile" id="mobileToastContainer">
+        <div id="appToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fs-6" id="appToastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Global de Confirmação Interno (Regra 5: Zero alert/confirm nativo) -->
+    <div class="modal fade" id="globalConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="globalConfirmModalTitle">Confirmação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body py-3" id="globalConfirmModalBody">
+                    Tem a certeza de que deseja executar esta ação?
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="globalConfirmModalSubmit">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main class="container-fluid px-2 py-3 flex-grow-1">
+        @RenderBody()
+    </main>
+
+    <!-- Scripts 100% Locais -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script src="~/js/site.js"></script>
+    
+    <script>
+        // Função Global de Toast para substituir alert()
+        function mostrarAviso(msg, tipo = 'info') {
+            const toastEl = document.getElementById('appToast');
+            const msgEl = document.getElementById('appToastMessage');
+            msgEl.textContent = msg;
+            
+            toastEl.className = 'toast align-items-center text-white border-0 shadow-lg';
+            if (tipo === 'sucesso') toastEl.classList.add('bg-success');
+            else if (tipo === 'erro') toastEl.classList.add('bg-danger');
+            else if (tipo === 'aviso') toastEl.classList.add('bg-warning', 'text-dark');
+            else toastEl.classList.add('bg-dark');
+
+            const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+            toast.show();
+        }
+
+        // Registo do Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[PWA] SW registado:', reg.scope))
+                    .catch(err => console.warn('[PWA] Falha no registo do SW:', err));
+            });
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

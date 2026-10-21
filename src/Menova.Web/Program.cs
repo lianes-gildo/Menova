@@ -38,6 +38,12 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
 });
 
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "RequestVerificationToken";
+    options.FormFieldName = "__RequestVerificationToken";
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 

@@ -64,6 +64,23 @@
                     </li>
                 }
 
+                @if (CurrentUser.TemPermissao(PermissoesCatalogo.ContasAbrir))
+                {
+                    <li class="sidebar-item">
+                        <a href="/garcom" target="_blank">
+                            <i class="bi bi-phone-fill sidebar-icon"></i>
+                            <span class="sidebar-text">App Garçom</span>
+                        </a>
+                    </li>
+                }
+
+                <li class="sidebar-item">
+                    <a href="/app">
+                        <i class="bi bi-qr-code-scan sidebar-icon"></i>
+                        <span class="sidebar-text">Instalar no Móvel</span>
+                    </a>
+                </li>
+
                 @if (CurrentUser.TemPermissao(PermissoesCatalogo.CaixaAbrir) || CurrentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar))
                 {
                     <li class="sidebar-section-title">Caixa & Menu</li>

@@ -83,9 +83,15 @@ public class MustChangePasswordMiddleware
                                 path.StartsWith("/css", StringComparison.OrdinalIgnoreCase) ||
                                 path.StartsWith("/js", StringComparison.OrdinalIgnoreCase) ||
                                 path.StartsWith("/lib", StringComparison.OrdinalIgnoreCase) ||
+                                path.StartsWith("/icons", StringComparison.OrdinalIgnoreCase) ||
                                 path.StartsWith("/menova_logo", StringComparison.OrdinalIgnoreCase) ||
                                 path.StartsWith("/default.jpg", StringComparison.OrdinalIgnoreCase) ||
-                                path.StartsWith("/favicon.ico", StringComparison.OrdinalIgnoreCase);
+                                path.StartsWith("/favicon.ico", StringComparison.OrdinalIgnoreCase) ||
+                                path.StartsWith("/manifest.json", StringComparison.OrdinalIgnoreCase) ||
+                                path.StartsWith("/sw.js", StringComparison.OrdinalIgnoreCase) ||
+                                path.StartsWith("/offline.html", StringComparison.OrdinalIgnoreCase) ||
+                                path.StartsWith("/app", StringComparison.OrdinalIgnoreCase) ||
+                                path.StartsWith("/instalar-certificado", StringComparison.OrdinalIgnoreCase);
 
                 if (!isAllowed)
                 {

@@ -1,22 +1,36 @@
-const CACHE_NAME = 'menova-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/garcom',
+const CACHE_NAME = 'menova-pwa-v2';
+const STATIC_ASSETS = [
+  '/offline.html',
+  '/manifest.json',
   '/css/site.css',
   '/js/site.js',
+  '/icons/icon-180.png',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/icon-maskable-512.png',
+  '/menova_logo_0f.png',
+  '/default.jpg',
   '/lib/bootstrap/dist/css/bootstrap.min.css',
   '/lib/bootstrap/dist/js/bootstrap.bundle.min.js',
   '/lib/bootstrap-icons/font/bootstrap-icons.min.css',
-  '/lib/signalr/signalr.min.js',
-  '/menova_logo_0f.png',
-  '/default.jpg',
-  '/manifest.json'
+  '/lib/signalr/signalr.min.js'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      // Usar Promise.allSettled ou tratar individualmente para nunca abortar a instalação
+      return Promise.all(
+        STATIC_ASSETS.map((url) => {
+          return fetch(url).then((response) => {
+            if (response.ok) {
+              return cache.put(url, response);
+            }
+          }).catch((err) => {
+            console.warn('[SW] Aviso ao pré-carregar recurso:', url, err);
+          });
+        })
+      );
     })
   );
   self.skipWaiting();
@@ -34,28 +48,51 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Apenas intercepta pedidos GET locais
-  if (event.request.method !== 'GET') return;
+  const req = event.request;
 
+  // Ignorar pedidos que não sejam GET
+  if (req.method !== 'GET') return;
+
+  const url = new URL(req.url);
+
+  // Ignorar WebSockets e SignalR (/hub/)
+  if (url.pathname.startsWith('/hub/') || url.pathname.startsWith('/ws')) {
+    return;
+  }
+
+  // 1. Pedidos de Navegação HTML (ex.: abrir /garcom) -> Rede primeiro, fallback para cache, fallback para offline.html
+  if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(req)
+        .then((networkResponse) => {
+          if (networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          const cached = await caches.match(req);
+          if (cached) return cached;
+          const offlinePage = await caches.match('/offline.html');
+          return offlinePage || new Response('Sem ligação à rede local.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+        })
+    );
+    return;
+  }
+
+  // 2. Ficheiros estáticos e assets locais -> Cache primeiro, depois rede
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    caches.match(req).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(event.request).then((response) => {
-        // Guarda cópia de assets estáticos na cache
-        if (response.status === 200 && event.request.url.includes('/lib/')) {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+      return fetch(req).then((networkResponse) => {
+        if (networkResponse.status === 200 && (url.pathname.startsWith('/css/') || url.pathname.startsWith('/js/') || url.pathname.startsWith('/lib/') || url.pathname.startsWith('/icons/'))) {
+          const copy = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
         }
-        return response;
-      }).catch(() => {
-        // Fallback offline caso perca a rede
-        if (event.request.headers.get('accept').includes('text/html')) {
-          return caches.match('/garcom');
-        }
+        return networkResponse;
       });
     })
   );

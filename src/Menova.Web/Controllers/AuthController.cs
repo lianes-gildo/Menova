@@ -110,6 +110,65 @@ public class AuthController : Controller
         return RedirectToAction("Index", "Dashboard");
     }
 
+    [HttpPost("login-pin")]
+    [HttpPost("/login-pin")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> LoginPin(string pin, string? returnUrl = null, string? tokenDispositivo = null)
+    {
+        ViewData["ReturnUrl"] = returnUrl;
+
+        if (string.IsNullOrWhiteSpace(pin) || pin.Length < 4)
+        {
+            TempData["ErroPin"] = "O PIN deve conter pelo menos 4 dígitos numéricos.";
+            return RedirectToAction(nameof(Login), new { returnUrl, modo = "pin" });
+        }
+
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        var userAgent = HttpContext.Request.Headers.UserAgent.ToString();
+
+        var resultado = await _authService.AutenticarPinAsync(pin.Trim(), tokenDispositivo ?? string.Empty, ip, userAgent);
+        if (!resultado.Sucesso)
+        {
+            TempData["ErroPin"] = resultado.MensagemErro ?? "PIN incorreto.";
+            return RedirectToAction(nameof(Login), new { returnUrl, modo = "pin" });
+        }
+
+        // Criar claims e autenticar com Cookie
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, resultado.UtilizadorId!.Value.ToString()),
+            new(ClaimTypes.Name, resultado.NomeUtilizador!),
+            new("nome_completo", resultado.NomeCompleto ?? resultado.NomeUtilizador!),
+            new(ClaimTypes.Role, resultado.PerfilCodigo ?? "GARCOM"),
+            new("deve_alterar_palavra_passe", "false")
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(12)
+        };
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity),
+            authProperties);
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        if (string.Equals(resultado.PerfilCodigo, "GARCOM", StringComparison.OrdinalIgnoreCase))
+        {
+            return RedirectToAction("Index", "Garcom");
+        }
+
+        return RedirectToAction("Index", "Dashboard");
+    }
+
     [HttpGet("alterar-palavra-passe")]
     [Authorize]
     public IActionResult AlterarPalavraPasse()

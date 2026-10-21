@@ -2,54 +2,161 @@
 @{
     Layout = "_LayoutLogin";
     ViewData["Title"] = "Iniciar Sessão";
+    var modo = Context.Request.Query["modo"].ToString();
+    var erroPin = TempData["ErroPin"]?.ToString();
+    var isPinAtivo = modo == "pin" || !string.IsNullOrEmpty(erroPin);
 }
 
-<h4 class="text-center mb-3 fw-bold" style="color: var(--mv-vinho-900);">Acesso ao Sistema</h4>
-<p class="text-center text-muted small mb-4">Introduza as suas credenciais para aceder ao painel.</p>
+<h4 class="text-center mb-1 fw-bold" style="color: var(--mv-vinho-900);">Acesso ao Sistema</h4>
+<p class="text-center text-muted small mb-3">Selecione o método de autenticação:</p>
 
-<form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
-    @Html.AntiForgeryToken()
+<!-- Abas de Seleção: Credenciais vs PIN -->
+<ul class="nav nav-pills nav-fill mb-3 p-1 rounded-3 bg-light border" id="loginTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link py-1 small fw-semibold @(!isPinAtivo ? "active" : "")" id="tab-credenciais-btn" data-bs-toggle="pill" data-bs-target="#tab-credenciais" type="button" role="tab" aria-selected="@(!isPinAtivo ? "true" : "false")">
+            <i class="bi bi-person-lock me-1"></i> Palavra-passe
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link py-1 small fw-semibold @(isPinAtivo ? "active" : "")" id="tab-pin-btn" data-bs-toggle="pill" data-bs-target="#tab-pin" type="button" role="tab" aria-selected="@(isPinAtivo ? "true" : "false")">
+            <i class="bi bi-grid-3x3-gap-fill me-1"></i> PIN Rápido
+        </button>
+    </li>
+</ul>
 
-    @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
-    {
-        <div class="alert alert-danger py-2 px-3 small mb-3">
-            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-            @ViewData.ModelState[string.Empty]?.Errors[0].ErrorMessage
-        </div>
-    }
+<div class="tab-content" id="loginTabsContent">
+    <!-- ABA 1: Utilizador e Palavra-passe -->
+    <div class="tab-pane fade @(!isPinAtivo ? "show active" : "")" id="tab-credenciais" role="tabpanel">
+        <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+            @Html.AntiForgeryToken()
 
-    <div class="mb-3">
-        <label asp-for="NomeUtilizador" class="form-label fw-semibold text-dark small">Nome de utilizador</label>
-        <div class="input-group">
-            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-person"></i></span>
-            <input asp-for="NomeUtilizador" class="form-control border-start-0" placeholder="Ex.: admin" autocomplete="username" autofocus />
-        </div>
-        <span asp-validation-for="NomeUtilizador" class="text-danger small"></span>
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+            {
+                <div class="alert alert-danger py-2 px-3 small mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    @ViewData.ModelState[string.Empty]?.Errors[0].ErrorMessage
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="NomeUtilizador" class="form-label fw-semibold text-dark small">Nome de utilizador</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-person"></i></span>
+                    <input asp-for="NomeUtilizador" class="form-control border-start-0" placeholder="Ex.: admin" autocomplete="username" autofocus />
+                </div>
+                <span asp-validation-for="NomeUtilizador" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PalavraPasse" class="form-label fw-semibold text-dark small">Palavra-passe</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+                    <input asp-for="PalavraPasse" type="password" class="form-control border-start-0" placeholder="••••••••" autocomplete="current-password" />
+                </div>
+                <span asp-validation-for="PalavraPasse" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                    <input asp-for="LembrarMe" class="form-check-input" type="checkbox" id="lembrarMeCheck">
+                    <label class="form-check-label small text-muted" for="lembrarMeCheck">
+                        Lembrar sessão
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sessão
+            </button>
+        </form>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="PalavraPasse" class="form-label fw-semibold text-dark small">Palavra-passe</label>
-        <div class="input-group">
-            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-lock"></i></span>
-            <input asp-for="PalavraPasse" type="password" class="form-control border-start-0" placeholder="••••••••" autocomplete="current-password" />
-        </div>
-        <span asp-validation-for="PalavraPasse" class="text-danger small"></span>
+    <!-- ABA 2: PIN Numérico (Garçom / Caixa / Operador) -->
+    <div class="tab-pane fade @(isPinAtivo ? "show active" : "")" id="tab-pin" role="tabpanel">
+        <form asp-controller="Auth" asp-action="LoginPin" method="post" id="formPin">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+            <input type="hidden" name="tokenDispositivo" id="inputTokenDispositivo" value="" />
+
+            @if (!string.IsNullOrEmpty(erroPin))
+            {
+                <div class="alert alert-danger py-2 px-3 small mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    @erroPin
+                </div>
+            }
+
+            <div class="text-center mb-3">
+                <label for="inputPin" class="form-label fw-semibold text-dark small">Introduza o seu PIN pessoal (4 dígitos)</label>
+                <input type="password" name="pin" id="inputPin" class="form-control form-control-lg text-center fw-bold fs-3 letter-spacing-lg mx-auto" 
+                       style="max-width: 200px; letter-spacing: 0.5rem;" maxlength="8" inputmode="numeric" pattern="[0-9]*" placeholder="••••" required autocomplete="off" />
+            </div>
+
+            <!-- Teclado Numérico Tátil -->
+            <div class="keypad-container mx-auto mb-3" style="max-width: 240px;">
+                <div class="row g-2 mb-2">
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('1')">1</button></div>
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('2')">2</button></div>
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('3')">3</button></div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('4')">4</button></div>
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('5')">5</button></div>
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('6')">6</button></div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('7')">7</button></div>
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('8')">8</button></div>
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('9')">9</button></div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-4"><button type="button" class="btn btn-outline-danger w-100 py-2 fw-semibold" onclick="limparPin()" title="Limpar"><i class="bi bi-backspace"></i></button></div>
+                    <div class="col-4"><button type="button" class="btn btn-light border w-100 py-2 fs-5 fw-bold" onclick="adicionarDigito('0')">0</button></div>
+                    <div class="col-4"><button type="submit" class="btn btn-success w-100 py-2 fw-semibold" title="Entrar"><i class="bi bi-check-lg"></i></button></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Validar PIN
+            </button>
+        </form>
     </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="form-check">
-            <input asp-for="LembrarMe" class="form-check-input" type="checkbox" id="lembrarMeCheck">
-            <label class="form-check-label small text-muted" for="lembrarMeCheck">
-                Lembrar sessão
-            </label>
-        </div>
-    </div>
-
-    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
-        <i class="bi bi-box-arrow-in-right me-1"></i> Entrar
-    </button>
-</form>
-
-<div class="mt-4 pt-3 border-top text-center text-muted" style="font-size: 0.75rem;">
-    Menova &middot; Moçambique (CAT) &middot; Ambiente Seguro
 </div>
+
+<div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center text-muted" style="font-size: 0.75rem;">
+    <span><i class="bi bi-shield-check me-1"></i>Moçambique (CAT)</span>
+    <a href="/app" class="text-decoration-none text-muted fw-semibold">
+        <i class="bi bi-phone me-1"></i>Instalar App Garçom
+    </a>
+</div>
+
+@section Scripts {
+    <script>
+        function adicionarDigito(d) {
+            var input = document.getElementById('inputPin');
+            if (input && input.value.length < 8) {
+                input.value += d;
+                if (input.value.length === 4) {
+                    // Opcional: auto-submeter ao atingir 4 dígitos
+                }
+            }
+        }
+
+        function limparPin() {
+            var input = document.getElementById('inputPin');
+            if (input) {
+                input.value = input.value.slice(0, -1);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                var token = localStorage.getItem('menova_device_token');
+                if (token) {
+                    var inputToken = document.getElementById('inputTokenDispositivo');
+                    if (inputToken) inputToken.value = token;
+                }
+            } catch (e) {}
+        });
+    </script>
+}

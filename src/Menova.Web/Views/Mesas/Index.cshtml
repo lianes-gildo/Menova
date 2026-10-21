@@ -152,7 +152,7 @@
         const mesaId = document.getElementById('modalMesaId').value;
         const novoEstado = parseInt(document.getElementById('selectEstadoMesa').value);
         const motivo = document.getElementById('inputMotivoEstado').value;
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
 
         try {
             const resp = await fetch('/mesas/alterar-estado', {
@@ -166,13 +166,14 @@
 
             const data = await resp.json();
             if (data.sucesso) {
-                bootstrap.Modal.getInstance(document.getElementById('modalMesa')).hide();
+                bootstrap.Modal.getInstance(document.getElementById('modalMesa'))?.hide();
                 window.location.reload();
             } else {
-                alert(data.mensagem || 'Erro ao alterar estado.');
+                mostrarToast(data.mensagem || 'Erro ao alterar estado da mesa.', 'erro');
             }
         } catch (e) {
             console.error(e);
+            mostrarToast('Falha na comunicação com o servidor.', 'erro');
         }
     }
 
