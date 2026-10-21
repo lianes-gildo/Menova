@@ -254,13 +254,13 @@
     </div>
 
     <!-- Barra Inferior Fixa da Comanda -->
-    <div class="cart-bar-bottom">
-        <div class="container-fluid d-flex justify-content-between align-items-center p-0">
-            <div>
-                <span class="small text-muted d-block" id="pwaCarrinhoResumo">0 artigo(s) • Balcão</span>
+    <div class="cart-bar-bottom" style="max-width: 100vw; overflow-x: hidden;">
+        <div class="container-fluid d-flex justify-content-between align-items-center p-0 gap-2">
+            <div class="flex-grow-1 overflow-hidden" style="min-width: 0;">
+                <span class="small text-muted d-block text-truncate" id="pwaCarrinhoResumo">0 artigo(s) • Balcão</span>
                 <span class="fw-bold fs-5 text-success" id="pwaCarrinhoTotal">0,00 MT</span>
             </div>
-            <button type="button" class="btn btn-wine px-3 py-2 fw-bold rounded-3 shadow d-flex align-items-center gap-2" onclick="abrirModalComandaPwa()">
+            <button type="button" class="btn btn-wine px-3 py-2 fw-bold rounded-3 shadow d-flex align-items-center gap-2 flex-shrink-0 text-nowrap" onclick="abrirModalComandaPwa()">
                 <i class="bi bi-receipt fs-5"></i>
                 <span>Ver Comanda</span>
                 <span class="badge bg-white text-danger rounded-pill px-2" id="badgeCarrinhoQtd" style="color: #6E1A33 !important; display: none;">0</span>

@@ -152,18 +152,6 @@
 
 @Html.AntiForgeryToken()
 
-<!-- Toast de Notificação Rápida -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
-    <div id="toast86" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body" id="toast86Message">
-                Disponibilidade alterada.
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
 <script>
     async function alternar86(artigoId, nomeArtigo) {
@@ -193,23 +181,16 @@
                     btn.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i><span id="label-86-${artigoId}">Disponível</span>`;
                 }
 
-                mostrarToast(data.mensagem);
+                mostrarToast(data.mensagem || 'Disponibilidade atualizada com sucesso.', 'sucesso');
             } else {
-                mostrarToast(data.mensagem || 'Erro ao processar.');
+                mostrarToast(data.mensagem || 'Erro ao processar alteração.', 'erro');
             }
         } catch (e) {
             console.error(e);
-            mostrarToast('Erro de comunicação com o servidor.');
+            mostrarToast('Erro de comunicação com o servidor local.', 'erro');
         } finally {
             btn.disabled = false;
         }
-    }
-
-    function mostrarToast(mensagem) {
-        const toastEl = document.getElementById('toast86');
-        document.getElementById('toast86Message').textContent = mensagem;
-        const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
-        toast.show();
     }
 
     function confirmarEliminarArtigo(artigoId, nome) {

@@ -136,12 +136,26 @@ function initClock() {
     setInterval(update, 1000);
 }
 
-// 3. Inicialização de Toasts
+// 3. Inicialização de Toasts do Servidor (TempData) com Auto-Dismiss e Remoção de Órfãos
 function initToasts() {
-    const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    toastElList.map(function (toastEl) {
-        const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
-        toast.show();
+    document.querySelectorAll('.toast').forEach(function (toastEl) {
+        const body = toastEl.querySelector('.toast-body');
+        const text = body ? body.textContent.trim() : '';
+        
+        // Se for um elemento de modelo vazio ou sem conteúdo, remover do DOM imediatamente
+        if (!text) {
+            toastEl.remove();
+            return;
+        }
+
+        // Inicializar apenas se tiver texto válido e classe show do servidor
+        if (toastEl.classList.contains('show')) {
+            const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 4500 });
+            toast.show();
+            toastEl.addEventListener('hidden.bs.toast', function () {
+                toastEl.remove();
+            });
+        }
     });
 }
 
@@ -179,39 +193,63 @@ function initConfirmModals() {
     });
 }
 
-// 5. Função Global de Toast para Notificações do Sistema (Substitui alert nativo)
-window.mostrarToast = function (mensagem, tipo = 'info') {
-    let container = document.querySelector('.toast-container');
+// 5. Motor Centralizado de Notificações Toast (Inteligente, Responsivo e com Auto-Dismiss)
+window.mostrarToast = function (mensagem, tipo = 'info', duracaoMs = 4000) {
+    if (!mensagem || typeof mensagem !== 'string' || !mensagem.trim()) {
+        return; // Nunca exibir popups vazios ou sem texto
+    }
+
+    let container = document.getElementById('menovaToastContainer');
     if (!container) {
         container = document.createElement('div');
-        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        container.style.zIndex = '1090';
+        container.id = 'menovaToastContainer';
+        container.className = 'menova-toast-container';
         document.body.appendChild(container);
     }
 
-    const toastEl = document.createElement('div');
-    const bgClass = tipo === 'sucesso' ? 'bg-success text-white' : (tipo === 'erro' ? 'bg-danger text-white' : (tipo === 'aviso' ? 'bg-warning text-dark' : 'bg-dark text-white'));
-    const iconClass = tipo === 'sucesso' ? 'bi-check-circle-fill' : (tipo === 'erro' ? 'bi-x-circle-fill' : (tipo === 'aviso' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'));
+    const tipoNormalizado = (tipo || 'info').toLowerCase();
+    let bgClass = 'bg-dark text-white';
+    let iconClass = 'bi-info-circle-fill';
+    let closeBtnClass = 'btn-close-white';
 
-    toastEl.className = `toast align-items-center ${bgClass} border-0 shadow mb-2`;
+    if (tipoNormalizado === 'sucesso' || tipoNormalizado === 'success') {
+        bgClass = 'bg-success text-white';
+        iconClass = 'bi-check-circle-fill';
+    } else if (tipoNormalizado === 'erro' || tipoNormalizado === 'danger' || tipoNormalizado === 'error') {
+        bgClass = 'bg-danger text-white';
+        iconClass = 'bi-x-circle-fill';
+    } else if (tipoNormalizado === 'aviso' || tipoNormalizado === 'warning' || tipoNormalizado === 'warn') {
+        bgClass = 'bg-warning text-dark';
+        iconClass = 'bi-exclamation-triangle-fill';
+        closeBtnClass = '';
+    }
+
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center ${bgClass} border-0 shadow-lg mb-2`;
     toastEl.setAttribute('role', 'alert');
     toastEl.setAttribute('aria-live', 'assertive');
     toastEl.setAttribute('aria-atomic', 'true');
     toastEl.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body d-flex align-items-center">
-                <i class="bi ${iconClass} me-2 fs-6"></i>
-                <div>${mensagem}</div>
+        <div class="d-flex align-items-center">
+            <div class="toast-body d-flex align-items-center py-2 px-3">
+                <i class="bi ${iconClass} me-2 fs-5 flex-shrink-0"></i>
+                <span class="text-break">${mensagem.trim()}</span>
             </div>
-            <button type="button" class="btn-close ${tipo === 'aviso' ? '' : 'btn-close-white'} me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+            <button type="button" class="btn-close ${closeBtnClass} me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
         </div>
     `;
 
     container.appendChild(toastEl);
-    const bsToast = new bootstrap.Toast(toastEl, { delay: 4500 });
+    const bsToast = new bootstrap.Toast(toastEl, { autohide: true, delay: duracaoMs });
     bsToast.show();
-    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+    toastEl.addEventListener('hidden.bs.toast', function () {
+        toastEl.remove();
+    });
 };
+
+// Aliases globais para compatibilidade total entre páginas
+window.mostrarAviso = window.mostrarToast;
+window.mostrarAvisoApp = window.mostrarToast;
 
 // =========================================================================
 // 6. Paginação Universal e Reativa de Tabelas (Menova Senior Architecture)

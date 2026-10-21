@@ -12,12 +12,12 @@
 
 <div class="row mb-3 align-items-center">
     <div class="col-md-6">
-        <div class="d-flex align-items-center">
-            <a href="/pedidos" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Voltar</a>
+        <div class="d-flex align-items-center flex-wrap gap-2">
+            <a href="/pedidos" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i> Voltar</a>
             <div>
-                <h3 class="mb-0 fw-bold" style="color: #6E1A33;">
-                    Conta @Model.Numero 
-                    <span class="badge @(Model.Estado == Menova.Domain.Pedidos.EstadoConta.Aberta ? "bg-success" : "bg-secondary") fs-6 ms-2">
+                <h3 class="mb-0 fw-bold d-flex flex-wrap align-items-center gap-2" style="color: #6E1A33;">
+                    <span>Conta @Model.Numero</span>
+                    <span class="badge @(Model.Estado == Menova.Domain.Pedidos.EstadoConta.Aberta ? "bg-success" : "bg-secondary") fs-6">
                         @Model.EstadoDescricao
                     </span>
                 </h3>
@@ -27,18 +27,18 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+    <div class="col-md-6 text-md-end mt-2 mt-md-0 d-flex flex-wrap gap-2 align-items-center justify-content-start justify-content-md-end">
         @if (Model.Estado == Menova.Domain.Pedidos.EstadoConta.Aberta)
         {
             @if (Model.MesaId.HasValue)
             {
-                <a href="/pedidos/nova-comanda?mesaId=@Model.MesaId" class="btn btn-outline-secondary me-2">
+                <a href="/pedidos/nova-comanda?mesaId=@Model.MesaId" class="btn btn-outline-secondary text-nowrap">
                     <i class="bi bi-plus-lg me-1"></i>Adicionar Artigos
                 </a>
             }
             @if (CurrentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar))
             {
-                <a href="/caixa?contaId=@Model.Id" class="btn text-white py-2 px-3" style="background-color: #6E1A33;">
+                <a href="/caixa?contaId=@Model.Id" class="btn text-white py-2 px-3 text-nowrap" style="background-color: #6E1A33;">
                     <i class="bi bi-cash-stack me-1"></i>Cobrar Conta
                 </a>
             }

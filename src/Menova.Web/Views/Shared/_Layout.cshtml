@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
+<body style="max-width: 100vw; overflow-x: hidden;">
     <div class="app-layout">
         <!-- Barra Superior Conectada no Topo (Logótipo Estável + Menu Dropdown + Horário) -->
         <header class="app-topbar" id="appTopbar">
@@ -282,8 +282,8 @@
     </div>
 </div>
 
-    <!-- Container de Notificações Toast -->
-    <div class="toast-container">
+    <!-- Container de Notificações Toast Global -->
+    <div id="menovaToastContainer" class="menova-toast-container">
         @if (TempData["Sucesso"] != null)
         {
             <div class="toast align-items-center text-white bg-success border-0 show" role="alert" aria-live="assertive" aria-atomic="true">

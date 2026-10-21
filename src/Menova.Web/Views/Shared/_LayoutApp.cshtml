@@ -72,26 +72,14 @@
             margin: 0 auto;
             padding: 1.25rem 1rem calc(2rem + var(--sab)) 1rem;
             flex-grow: 1;
-        }
-        .toast-container-app {
-            position: fixed;
-            top: calc(70px + var(--sat));
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1090;
-            width: 90%;
-            max-width: 380px;
-            pointer-events: none;
-        }
-        .toast-container-app .toast {
-            pointer-events: auto;
+            overflow-x: hidden;
         }
         button, .btn, .nav-link {
             touch-action: manipulation;
         }
     </style>
 </head>
-<body>
+<body style="max-width: 100vw; overflow-x: hidden;">
     <!-- Barra Superior -->
     <header class="app-navbar d-flex justify-content-between align-items-center">
         <div class="app-brand user-select-none" style="cursor: default;">
@@ -118,42 +106,19 @@
         </div>
     </header>
 
-    <!-- Notificações Toast Internas (Substitui alerts do navegador) -->
-    <div class="toast-container-app">
-        <div id="appGlobalToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body fs-6" id="appGlobalToastMsg"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
-            </div>
-        </div>
-    </div>
-
     <!-- Conteúdo Principal Responsivo -->
     <main class="app-page-container">
         @RenderBody()
     </main>
+
+    <!-- Container Global de Notificações Toast -->
+    <div id="menovaToastContainer" class="menova-toast-container"></div>
 
     <!-- Scripts 100% Locais -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js"></script>
 
     <script>
-        function mostrarAvisoApp(msg, tipo = 'info') {
-            const toastEl = document.getElementById('appGlobalToast');
-            const msgEl = document.getElementById('appGlobalToastMsg');
-            if (!toastEl || !msgEl) return;
-            msgEl.textContent = msg;
-
-            toastEl.className = 'toast align-items-center text-white border-0 shadow-lg';
-            if (tipo === 'sucesso') toastEl.classList.add('bg-success');
-            else if (tipo === 'erro') toastEl.classList.add('bg-danger');
-            else if (tipo === 'aviso') toastEl.classList.add('bg-warning', 'text-dark');
-            else toastEl.classList.add('bg-dark');
-
-            const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
-            toast.show();
-        }
-
         // Registo Service Worker para funcionamento offline
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
