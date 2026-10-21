@@ -16,11 +16,32 @@
     </div>
 
     <div class="d-flex gap-2">
-        <a href="javascript:history.back()" class="btn btn-secondary flex-fill">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary flex-fill">
             <i class="bi bi-arrow-left me-1"></i> Voltar
         </a>
-        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary flex-fill">
-            <i class="bi bi-house me-1"></i> Painel Inicial
-        </a>
+        @if (string.Equals((string?)ViewBag.Perfil, "GARCOM", StringComparison.OrdinalIgnoreCase))
+        {
+            <a href="/garcom" class="btn btn-primary flex-fill">
+                <i class="bi bi-phone-fill me-1"></i> Ir para o App Garçom
+            </a>
+        }
+        else if (string.Equals((string?)ViewBag.Perfil, "COZINHA", StringComparison.OrdinalIgnoreCase))
+        {
+            <a href="/kds" class="btn btn-primary flex-fill">
+                <i class="bi bi-fire me-1"></i> Ir para Cozinha / KDS
+            </a>
+        }
+        else if (string.Equals((string?)ViewBag.Perfil, "CAIXA", StringComparison.OrdinalIgnoreCase))
+        {
+            <a href="/caixa" class="btn btn-primary flex-fill">
+                <i class="bi bi-cash-stack me-1"></i> Ir para o Caixa
+            </a>
+        }
+        else
+        {
+            <a href="/dashboard" class="btn btn-primary flex-fill">
+                <i class="bi bi-house me-1"></i> Painel Inicial
+            </a>
+        }
     </div>
 </div>

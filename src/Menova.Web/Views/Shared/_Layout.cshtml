@@ -27,12 +27,15 @@
             <ul class="sidebar-menu">
                 <li class="sidebar-section-title">Operação</li>
 
-                <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
-                    <a asp-controller="Dashboard" asp-action="Index">
-                        <i class="bi bi-grid-1x2-fill sidebar-icon"></i>
-                        <span class="sidebar-text">Painel</span>
-                    </a>
-                </li>
+                @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
+                {
+                    <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                        <a asp-controller="Dashboard" asp-action="Index">
+                            <i class="bi bi-grid-1x2-fill sidebar-icon"></i>
+                            <span class="sidebar-text">Painel</span>
+                        </a>
+                    </li>
+                }
 
                 @if (CurrentUser.TemPermissao(PermissoesCatalogo.MesasVer))
                 {

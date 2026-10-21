@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Menova.Application.DTOs;
 using Menova.Application.Interfaces;
+using Menova.Application.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -102,12 +103,7 @@ public class AuthController : Controller
             return RedirectToAction(nameof(AlterarPalavraPasse));
         }
 
-        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
-        {
-            return Redirect(returnUrl);
-        }
-
-        return RedirectToAction("Index", "Dashboard");
+        return RedirecionarPorPerfil(resultado.PerfilCodigo, returnUrl);
     }
 
     [HttpPost("login-pin")]
@@ -156,14 +152,29 @@ public class AuthController : Controller
             new ClaimsPrincipal(claimsIdentity),
             authProperties);
 
-        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        return RedirecionarPorPerfil(resultado.PerfilCodigo, returnUrl);
+    }
+
+    private IActionResult RedirecionarPorPerfil(string? perfilCodigo, string? returnUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl) && returnUrl != "/" && returnUrl != "/dashboard")
         {
             return Redirect(returnUrl);
         }
 
-        if (string.Equals(resultado.PerfilCodigo, "GARCOM", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(perfilCodigo, PerfisSistema.Garcom, StringComparison.OrdinalIgnoreCase))
         {
             return RedirectToAction("Index", "Garcom");
+        }
+
+        if (string.Equals(perfilCodigo, PerfisSistema.CozinhaBar, StringComparison.OrdinalIgnoreCase))
+        {
+            return RedirectToAction("Index", "Kds");
+        }
+
+        if (string.Equals(perfilCodigo, PerfisSistema.Caixa, StringComparison.OrdinalIgnoreCase))
+        {
+            return RedirectToAction("Index", "Caixa");
         }
 
         return RedirectToAction("Index", "Dashboard");

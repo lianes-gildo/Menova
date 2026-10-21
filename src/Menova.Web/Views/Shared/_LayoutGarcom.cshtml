@@ -81,7 +81,14 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow">
                     <li><h6 class="dropdown-header">Garçom: @CurrentUser.NomeUtilizador</h6></li>
-                    <li><a class="dropdown-item" href="/dashboard"><i class="bi bi-grid-1x2 me-2"></i>Painel Principal</a></li>
+                    <li><a class="dropdown-item" href="/garcom"><i class="bi bi-phone me-2"></i>App Garçom</a></li>
+                    <li><a class="dropdown-item" href="/mesas"><i class="bi bi-layout-wtf me-2"></i>Salão e Mesas</a></li>
+                    <li><a class="dropdown-item" href="/pedidos"><i class="bi bi-receipt me-2"></i>Pedidos e Comandas</a></li>
+                    <li><a class="dropdown-item" href="/app"><i class="bi bi-download me-2"></i>Instalar Aplicação</a></li>
+                    @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
+                    {
+                        <li><a class="dropdown-item" href="/dashboard"><i class="bi bi-grid-1x2 me-2"></i>Painel Principal</a></li>
+                    }
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">

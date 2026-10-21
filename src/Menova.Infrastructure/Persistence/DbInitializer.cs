@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Menova.Application.Security;
 using Menova.Domain.Caixa;
 using Menova.Domain.Configuracao;
@@ -94,9 +96,14 @@ public static class DbInitializer
                 PermissoesCatalogo.CaixaCobrar,
                 PermissoesCatalogo.CaixaFechar,
                 PermissoesCatalogo.CaixaMovimentos,
+                PermissoesCatalogo.CaixaVerTodas,
                 PermissoesCatalogo.CaixaReimprimir,
                 PermissoesCatalogo.ZVer,
                 PermissoesCatalogo.MesasVer,
+                PermissoesCatalogo.ContasAbrir,
+                PermissoesCatalogo.ContasVerTodas,
+                PermissoesCatalogo.ItensAdicionar,
+                PermissoesCatalogo.ItensEnviar,
                 PermissoesCatalogo.MenuVer
             };
             await AtribuirPermissoesAsync(context, caixaPerfil.Id, permissoesCaixa);
@@ -104,20 +111,26 @@ public static class DbInitializer
             // Garçom
             var permissoesGarcom = new[]
             {
+                PermissoesCatalogo.PainelVer,
                 PermissoesCatalogo.MesasVer,
                 PermissoesCatalogo.ContasAbrir,
+                PermissoesCatalogo.ContasVerTodas,
                 PermissoesCatalogo.ItensAdicionar,
                 PermissoesCatalogo.ItensEnviar,
-                PermissoesCatalogo.MenuVer
+                PermissoesCatalogo.ItensAnular,
+                PermissoesCatalogo.MenuVer,
+                PermissoesCatalogo.ArtigosEsgotar
             };
             await AtribuirPermissoesAsync(context, garcomPerfil.Id, permissoesGarcom);
 
             // Cozinha
             var permissoesCozinha = new[]
             {
+                PermissoesCatalogo.PainelVer,
                 PermissoesCatalogo.CozinhaVer,
                 PermissoesCatalogo.CozinhaOperar,
-                PermissoesCatalogo.ArtigosEsgotar
+                PermissoesCatalogo.ArtigosEsgotar,
+                PermissoesCatalogo.MenuVer
             };
             await AtribuirPermissoesAsync(context, cozinhaPerfil.Id, permissoesCozinha);
 
@@ -173,6 +186,123 @@ public static class DbInitializer
                 await context.SaveChangesAsync();
 
                 logger.LogInformation("Utilizador administrador inicial criado com sucesso (Utilizador: admin, Palavra-passe temporária: MenovaAdmin@2026).");
+            }
+
+            if (adminUser != null && adminUser.HashPin == null)
+            {
+                adminUser.HashPin = GerarHashPin("9999");
+                await context.SaveChangesAsync();
+            }
+
+            // 6.1 Semear Utilizador Garçom Inicial
+            var garcomUser = await context.Utilizadores
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.NomeUtilizador.ToLower() == "garcom1");
+
+            if (garcomUser == null)
+            {
+                garcomUser = new Utilizador
+                {
+                    NomeUtilizador = "garcom1",
+                    NomeCompleto = "Garçom Principal 01",
+                    Email = "garcom1@menova.mz",
+                    Telefone = "+258 84 222 3333",
+                    Foto = "default.jpg",
+                    Ativo = true,
+                    DeveAlterarPalavraPasse = false,
+                    SeloSeguranca = Guid.NewGuid().ToString("N"),
+                    HashPin = GerarHashPin("1111")
+                };
+                garcomUser.HashPalavraPasse = passwordHasher.HashPassword(garcomUser, "Garcom@2026");
+                context.Utilizadores.Add(garcomUser);
+                await context.SaveChangesAsync();
+
+                context.UtilizadoresPerfis.Add(new UtilizadorPerfil
+                {
+                    UtilizadorId = garcomUser.Id,
+                    PerfilId = garcomPerfil.Id
+                });
+                await context.SaveChangesAsync();
+                logger.LogInformation("Utilizador garcom1 inicial criado com sucesso (PIN: 1111, Palavra-passe: Garcom@2026).");
+            }
+            else
+            {
+                garcomUser.HashPin = GerarHashPin("1111");
+                await context.SaveChangesAsync();
+            }
+
+            // 6.2 Semear Utilizador Caixa Inicial
+            var caixaUser = await context.Utilizadores
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.NomeUtilizador.ToLower() == "caixa1");
+
+            if (caixaUser == null)
+            {
+                caixaUser = new Utilizador
+                {
+                    NomeUtilizador = "caixa1",
+                    NomeCompleto = "Operador de Caixa 01",
+                    Email = "caixa1@menova.mz",
+                    Telefone = "+258 84 333 4444",
+                    Foto = "default.jpg",
+                    Ativo = true,
+                    DeveAlterarPalavraPasse = false,
+                    SeloSeguranca = Guid.NewGuid().ToString("N"),
+                    HashPin = GerarHashPin("2222")
+                };
+                caixaUser.HashPalavraPasse = passwordHasher.HashPassword(caixaUser, "Caixa@2026");
+                context.Utilizadores.Add(caixaUser);
+                await context.SaveChangesAsync();
+
+                context.UtilizadoresPerfis.Add(new UtilizadorPerfil
+                {
+                    UtilizadorId = caixaUser.Id,
+                    PerfilId = caixaPerfil.Id
+                });
+                await context.SaveChangesAsync();
+                logger.LogInformation("Utilizador caixa1 inicial criado com sucesso (PIN: 2222, Palavra-passe: Caixa@2026).");
+            }
+            else
+            {
+                caixaUser.HashPin = GerarHashPin("2222");
+                await context.SaveChangesAsync();
+            }
+
+            // 6.3 Semear Utilizador Cozinha Inicial
+            var cozinhaUser = await context.Utilizadores
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.NomeUtilizador.ToLower() == "cozinha1");
+
+            if (cozinhaUser == null)
+            {
+                cozinhaUser = new Utilizador
+                {
+                    NomeUtilizador = "cozinha1",
+                    NomeCompleto = "Chefe de Cozinha",
+                    Email = "cozinha1@menova.mz",
+                    Telefone = "+258 84 444 5555",
+                    Foto = "default.jpg",
+                    Ativo = true,
+                    DeveAlterarPalavraPasse = false,
+                    SeloSeguranca = Guid.NewGuid().ToString("N"),
+                    HashPin = GerarHashPin("3333")
+                };
+                cozinhaUser.HashPalavraPasse = passwordHasher.HashPassword(cozinhaUser, "Cozinha@2026");
+                context.Utilizadores.Add(cozinhaUser);
+                await context.SaveChangesAsync();
+
+                context.UtilizadoresPerfis.Add(new UtilizadorPerfil
+                {
+                    UtilizadorId = cozinhaUser.Id,
+                    PerfilId = cozinhaPerfil.Id
+                });
+                await context.SaveChangesAsync();
+                logger.LogInformation("Utilizador cozinha1 inicial criado com sucesso (PIN: 3333, Palavra-passe: Cozinha@2026).");
+            }
+            else
+            {
+                cozinhaUser.HashPin = GerarHashPin("3333");
+                await context.SaveChangesAsync();
             }
 
             // 7. Semear Menu, Sala, Estações e Artigos Padrão
@@ -599,5 +729,19 @@ public static class DbInitializer
         }
 
         logger.LogInformation("Caixa padrão e Impressora padrão semeados com sucesso.");
+    }
+
+    private static string GerarHashPin(string pin, string pepper = "Menova_Dev_Pin_Pepper_2026_Africa_Maputo")
+    {
+        var bytes = RandomNumberGenerator.GetBytes(16);
+        var salt = Convert.ToHexString(bytes).ToLowerInvariant();
+        var input = $"{pin}:{salt}:{pepper}";
+        var hashBytes = Rfc2898DeriveBytes.Pbkdf2(
+            Encoding.UTF8.GetBytes(input),
+            Encoding.UTF8.GetBytes(salt),
+            iterations: 100_000,
+            hashAlgorithm: HashAlgorithmName.SHA256,
+            outputLength: 32);
+        return $"{salt}:{Convert.ToHexString(hashBytes).ToLowerInvariant()}";
     }
 }
