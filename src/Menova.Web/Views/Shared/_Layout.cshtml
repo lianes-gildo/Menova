@@ -1,6 +1,6 @@
 @inject ICurrentUserService CurrentUser
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-PT" class="app-fixed-shell">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body style="max-width: 100vw; overflow-x: hidden;">
+<body class="app-fixed-shell">
     <div class="app-layout">
         <!-- Barra Superior Conectada no Topo (Logótipo Estável + Menu Dropdown + Horário) -->
         <header class="app-topbar" id="appTopbar">
@@ -123,9 +123,10 @@
                     @if (CurrentUser.TemPermissao(PermissoesCatalogo.ContasAbrir))
                     {
                         <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Pedidos" ? "active" : "")">
-                            <a href="/pedidos" title="Pedidos e Comandas">
+                            <a href="/pedidos" title="Pedidos e Comandas" class="d-flex align-items-center">
                                 <i class="bi bi-receipt-cutoff sidebar-icon"></i>
-                                <span class="sidebar-text">Pedidos</span>
+                                <span class="sidebar-text flex-grow-1">Pedidos</span>
+                                <span class="badge bg-danger rounded-pill sidebar-live-badge" id="badgeLivePedidos" style="display:none; font-size: 0.65rem;">0</span>
                             </a>
                         </li>
                     }
@@ -133,9 +134,10 @@
                     @if (CurrentUser.TemPermissao(PermissoesCatalogo.CozinhaVer))
                     {
                         <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Kds" ? "active" : "")">
-                            <a href="/kds" title="Cozinha e Bar (KDS)">
+                            <a href="/kds" title="Cozinha e Bar (KDS)" class="d-flex align-items-center">
                                 <i class="bi bi-fire sidebar-icon"></i>
-                                <span class="sidebar-text">Cozinha &amp; Bar</span>
+                                <span class="sidebar-text flex-grow-1">Cozinha &amp; Bar</span>
+                                <span class="badge bg-warning text-dark rounded-pill sidebar-live-badge" id="badgeLiveKds" style="display:none; font-size: 0.65rem;">0</span>
                             </a>
                         </li>
                     }
@@ -177,12 +179,23 @@
 
                         @if (CurrentUser.TemPermissao(PermissoesCatalogo.RelatoriosVer))
                         {
-                            <li class="sidebar-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Relatorios" ? "active" : "")">
+                            var ctrlRel = ViewContext.RouteData.Values["Controller"]?.ToString();
+                            var actRel = ViewContext.RouteData.Values["Action"]?.ToString();
+                            <li class="sidebar-item @(ctrlRel == "Relatorios" && actRel != "Exportacao" ? "active" : "")">
                                 <a href="/relatorios" title="Relatórios e Vendas">
                                     <i class="bi bi-bar-chart-fill sidebar-icon"></i>
                                     <span class="sidebar-text">Relatórios</span>
                                 </a>
                             </li>
+                            @if (CurrentUser.TemPermissao(PermissoesCatalogo.RelatoriosExportar))
+                            {
+                                <li class="sidebar-item @(ctrlRel == "Relatorios" && actRel == "Exportacao" ? "active" : "")">
+                                    <a href="/relatorios/exportacao" title="Centro de Exportação de Dados">
+                                        <i class="bi bi-file-earmark-arrow-down-fill sidebar-icon"></i>
+                                        <span class="sidebar-text">Exportação</span>
+                                    </a>
+                                </li>
+                            }
                         }
                     }
 
@@ -275,7 +288,7 @@
                 @RenderBody()
             </main>
 
-            <footer class="py-2 px-4 bg-white border-top text-end" style="font-size: 0.75rem; color: var(--mv-texto-suave);">
+            <footer class="app-footer text-end">
                 &copy; @DateTime.UtcNow.Year Menova Restaurante &bull; Sistema Integrado de Gestão
             </footer>
         </div>

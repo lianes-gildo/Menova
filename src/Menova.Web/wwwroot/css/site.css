@@ -81,31 +81,55 @@ a:hover {
 /* Botões do Design System */
 .btn {
     border-radius: var(--mv-radius) !important;
-    font-weight: 500;
+    font-weight: 600;
     padding: 0.45rem 0.9rem;
     font-size: 0.875rem;
     border: 1px solid transparent;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
-    box-shadow: none !important;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    cursor: pointer;
+    user-select: none;
+}
+.btn:hover {
+    text-decoration: none !important;
 }
 
 .btn-primary {
     background-color: var(--mv-vinho-700) !important;
     border-color: var(--mv-vinho-700) !important;
     color: var(--mv-branco) !important;
+    box-shadow: 0 1px 3px rgba(110, 26, 51, 0.2) !important;
 }
 .btn-primary:hover, .btn-primary:focus {
     background-color: var(--mv-vinho-800) !important;
     border-color: var(--mv-vinho-800) !important;
+    color: #ffffff !important;
 }
 
 .btn-outline-primary {
     background-color: var(--mv-branco) !important;
-    border-color: var(--mv-vinho-700) !important;
+    border: 1.5px solid var(--mv-vinho-700) !important;
     color: var(--mv-vinho-700) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 .btn-outline-primary:hover {
+    background-color: var(--mv-vinho-700) !important;
+    border-color: var(--mv-vinho-700) !important;
+    color: var(--mv-branco) !important;
+}
+
+.btn-outline-secondary {
+    background-color: var(--mv-branco) !important;
+    border: 1.5px solid var(--mv-borda-forte) !important;
+    color: var(--mv-texto) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+.btn-outline-secondary:hover {
     background-color: var(--mv-vinho-50) !important;
+    border-color: var(--mv-vinho-700) !important;
     color: var(--mv-vinho-900) !important;
 }
 
@@ -117,8 +141,21 @@ a:hover {
 
 .btn-secondary {
     background-color: #ECE8E9 !important;
-    border-color: var(--mv-borda-forte) !important;
+    border: 1px solid var(--mv-borda-forte) !important;
     color: var(--mv-texto) !important;
+}
+
+.btn-action {
+    border: 1.5px solid var(--mv-vinho-700) !important;
+    background-color: #ffffff !important;
+    color: var(--mv-vinho-700) !important;
+    padding: 0.25rem 0.65rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+}
+.btn-action:hover {
+    background-color: var(--mv-vinho-700) !important;
+    color: #ffffff !important;
 }
 
 /* Campos de Formulário */
@@ -179,11 +216,21 @@ a:hover {
     background-color: var(--mv-vinho-50);
 }
 
-/* Estrutura Principal: Layout com Sidebar e Topbar */
+/* Estrutura Principal: Layout com Sidebar e Topbar (100% Fixed Shell Senior Architecture) */
+html.app-fixed-shell, 
+body.app-fixed-shell {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
 .app-layout, .app-wrapper, .app-main, .app-content, main {
     max-width: 100%;
     width: 100%;
-    overflow-x: clip;
 }
 
 .container, .container-fluid {
@@ -193,13 +240,21 @@ a:hover {
 .app-layout {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
+    width: 100vw;
+    max-width: 100vw;
+    overflow: hidden;
 }
 
 .app-wrapper {
     display: flex;
     flex: 1;
-    min-height: calc(100vh - var(--mv-topbar-height));
+    height: calc(100vh - var(--mv-topbar-height));
+    max-height: calc(100vh - var(--mv-topbar-height));
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
     position: relative;
 }
 
@@ -213,25 +268,29 @@ a:hover {
     display: flex;
     flex-direction: column;
     z-index: 1000;
+    height: 100%;
+    max-height: 100%;
     overflow: hidden;
-    position: sticky;
-    top: var(--mv-topbar-height);
-    height: calc(100vh - var(--mv-topbar-height));
+    position: relative;
+    top: 0;
 }
 
 .sidebar-menu {
     flex: 1;
-    overflow-y: hidden; /* 100% fixo, sem barra de scroll no sidebar */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    height: 100%;
+    overflow-y: auto; /* Permite scroll vertical interno seguro quando a resolução for curta */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
     padding: 0.35rem 0;
     list-style: none;
     margin: 0;
 }
 .sidebar-menu::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
+    width: 4px;
+}
+.sidebar-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 2px;
 }
 
 .sidebar-section-title {
@@ -332,7 +391,11 @@ a:hover {
     flex: 1;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    max-height: 100%;
     min-width: 0;
+    min-height: 0;
+    overflow: hidden;
     background-color: var(--mv-fundo);
 }
 
@@ -345,8 +408,8 @@ a:hover {
     align-items: center;
     justify-content: space-between;
     padding: 0 1.25rem;
-    position: sticky;
-    top: 0;
+    flex-shrink: 0;
+    position: relative;
     z-index: 1020;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
@@ -427,10 +490,12 @@ a:hover {
         top: var(--mv-topbar-height);
         left: 0;
         bottom: 0;
-        width: 250px;
+        height: calc(100vh - var(--mv-topbar-height));
+        width: 260px;
         transform: translateX(-100%);
         transition: transform 0.25s ease;
         box-shadow: 2px 0 12px rgba(0,0,0,0.25);
+        z-index: 1050;
     }
     .app-sidebar.mobile-open {
         transform: translateX(0);
@@ -486,10 +551,26 @@ a:hover {
     border: 1px solid var(--mv-borda-forte);
 }
 
-/* Conteúdo da Página */
+/* Conteúdo da Página - ÚNICA ÁREA DE SCROLL DO SISTEMA */
 .app-content {
-    padding: 1.5rem;
     flex: 1;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Footer Fixo do Sistema */
+.app-footer {
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border-top: 1px solid var(--mv-borda);
+    padding: 0.5rem 1.5rem;
+    font-size: 0.75rem;
+    color: var(--mv-texto-suave);
+    z-index: 10;
 }
 
 .page-header {

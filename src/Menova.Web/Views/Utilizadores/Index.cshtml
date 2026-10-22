@@ -3,15 +3,25 @@
     ViewData["Title"] = "Gestão de Funcionários";
     var perfis = (List<Menova.Domain.Identity.Perfil>)ViewBag.Perfis;
     var utilizadorAtual = User.Identity?.Name ?? "";
+    var totalAtivos = Model.Count(u => u.Ativo);
+    var totalComPin = Model.Count(u => !string.IsNullOrEmpty(u.HashPin));
 }
 
+<!-- Cabeçalho Principal -->
 <div class="row mb-3 align-items-center">
-    <div class="col-md-6">
-        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-people-fill me-2"></i>Gestão de Funcionários e Acessos</h3>
-        <p class="text-muted small mb-0">Controlo de colaboradores do restaurante, funções de salão/caixa e PINs de acesso rápido.</p>
+    <div class="col-md-7">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;">
+            <i class="bi bi-people-fill me-2"></i>Gestão de Funcionários e Acessos
+        </h3>
+        <p class="text-muted small mb-0">
+            Controlo operacional de colaboradores do restaurante, funções de salão, caixas e códigos PIN de acesso rápido.
+        </p>
     </div>
-    <div class="col-md-6 text-md-end mt-2 mt-md-0">
-        <button type="button" class="btn text-white py-2 px-3 shadow-sm" style="background-color: #6E1A33;" data-bs-toggle="modal" data-bs-target="#modalCriarUtilizador">
+    <div class="col-md-5 text-md-end mt-2 mt-md-0 d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+        <span class="badge bg-white text-dark border px-3 py-2 shadow-sm">
+            Total: <strong>@Model.Count</strong> &bull; Ativos: <strong class="text-success">@totalAtivos</strong> &bull; Com PIN: <strong class="text-primary">@totalComPin</strong>
+        </span>
+        <button type="button" class="btn text-white px-3 py-2 shadow-sm fw-semibold" style="background-color: #6E1A33;" onclick="resetarFormularioNovo()">
             <i class="bi bi-person-plus-fill me-1"></i>Novo Funcionário
         </button>
     </div>
@@ -33,201 +43,186 @@
     </div>
 }
 
-<div class="card border shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="tabelaUtilizadores" data-paginate="10">
-            <thead class="table-light">
-                <tr>
-                    <th>Nome Completo</th>
-                    <th>Utilizador</th>
-                    <th>Função / Perfil</th>
-                    <th>Contacto</th>
-                    <th class="text-center">PIN Salão</th>
-                    <th class="text-center">Estado</th>
-                    <th class="text-end" style="width: 160px;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var u in Model)
-                {
-                    var perfilAtual = u.UtilizadoresPerfis.FirstOrDefault()?.Perfil;
-                    var perfilNome = perfilAtual?.Nome ?? "Sem Perfil";
-                    var ehProprioUtilizador = string.Equals(u.NomeUtilizador, utilizadorAtual, StringComparison.OrdinalIgnoreCase);
-
-                    <tr>
-                        <td class="fw-bold">
-                            <i class="bi bi-person-circle text-muted me-2"></i>@u.NomeCompleto
-                            @if (u.EhRootAdmin)
-                            {
-                                <span class="badge bg-danger ms-1" title="Administrador Principal do Sistema. Protegido permanentemente contra desativação e edições externas.">
-                                    <i class="bi bi-shield-fill-check me-1"></i>Raiz
-                                </span>
-                            }
-                        </td>
-                        <td class="font-monospace text-muted">@u.NomeUtilizador</td>
-                        <td>
-                            <span class="badge bg-secondary">@perfilNome</span>
-                        </td>
-                        <td class="small text-muted">@(string.IsNullOrEmpty(u.Telefone) ? (u.Email ?? "-") : u.Telefone)</td>
-                        <td class="text-center">
-                            @if (!string.IsNullOrEmpty(u.HashPin))
-                            {
-                                <span class="badge bg-success" title="PIN individual de 4 dígitos configurado"><i class="bi bi-key-fill me-1"></i>Ativo</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-light text-muted border">Não Definido</span>
-                            }
-                        </td>
-                        <td class="text-center">
-                            @if (u.Ativo)
-                            {
-                                <span class="badge bg-success">Ativo</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger">Inativo</span>
-                            }
-                        </td>
-                        <td class="text-end">
-                            @if (u.EhRootAdmin)
-                            {
-                                <button type="button" class="btn btn-sm btn-outline-secondary disabled" title="O administrador raiz está permanentemente protegido" disabled>
-                                    <i class="bi bi-lock-fill"></i> Protegido
-                                </button>
-                            }
-                            else
-                            {
-                                <div class="btn-group btn-group-sm">
-                                    <!-- Botão Editar -->
-                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarUtilizador-@u.Id" title="Editar dados e acessos">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </button>
-
-                                    <!-- Botão Ativar/Desativar com Confirmação do Sistema -->
-                                    @if (!ehProprioUtilizador)
-                                    {
-                                        <form action="/utilizadores/toggle-ativo/@u.Id" method="post" id="formToggle-@u.Id" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <button type="button" class="btn @(u.Ativo ? "btn-outline-danger" : "btn-outline-success")"
-                                                    data-confirm-modal
-                                                    data-confirm-title="@(u.Ativo ? "Desativar Colaborador" : "Reativar Colaborador")"
-                                                    data-confirm-message="Tem a certeza de que pretende @(u.Ativo ? "desativar" : "reativar") o colaborador '@u.NomeCompleto' (@u.NomeUtilizador)?@(u.Ativo ? " O utilizador deixará de conseguir iniciar sessão imediatamente." : "")"
-                                                    data-confirm-action="@(u.Ativo ? "Sim, Desativar" : "Sim, Reativar")"
-                                                    data-confirm-form="formToggle-@u.Id"
-                                                    title="@(u.Ativo ? "Desativar utilizador" : "Reativar utilizador")">
-                                                <i class="bi @(u.Ativo ? "bi-person-dash" : "bi-person-check")"></i>
-                                            </button>
-                                        </form>
-                                    }
-                                </div>
-                            }
-                        </td>
-                    </tr>
-
-                    @if (!u.EhRootAdmin)
-                    {
-                        <!-- Modal: Editar Utilizador -->
-                        <div class="modal fade" id="modalEditarUtilizador-@u.Id" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <form action="/utilizadores/editar/@u.Id" method="post" class="modal-content">
-                                    @Html.AntiForgeryToken()
-                                    <div class="modal-header text-white" style="background-color: #6E1A33;">
-                                        <h5 class="modal-title"><i class="bi bi-person-gear me-2"></i>Editar: @u.NomeCompleto</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold">Nome Completo:</label>
-                                            <input type="text" name="nomeCompleto" class="form-control" value="@u.NomeCompleto" required />
-                                        </div>
-                                        <div class="row g-2 mb-3">
-                                            <div class="col-6">
-                                                <label class="form-label fw-bold">Nome de Utilizador:</label>
-                                                <input type="text" class="form-control font-monospace bg-light" value="@u.NomeUtilizador" disabled readonly />
-                                                <div class="form-text">Identificador exclusivo de login.</div>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label fw-bold">Função / Perfil:</label>
-                                                <select name="perfilId" class="form-select" required>
-                                                    @foreach (var p in perfis)
-                                                    {
-                                                        <option value="@p.Id" selected="@(perfilAtual?.Id == p.Id)">@p.Nome</option>
-                                                    }
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="row g-2 mb-3">
-                                            <div class="col-6">
-                                                <label class="form-label">Telefone:</label>
-                                                <input type="text" name="telefone" class="form-control" value="@u.Telefone" placeholder="+258 84 123 4567" />
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Email:</label>
-                                                <input type="email" name="email" class="form-control" value="@u.Email" placeholder="utilizador@menova.mz" />
-                                            </div>
-                                        </div>
-                                        <div class="row g-2 mb-3">
-                                            <div class="col-6">
-                                                <label class="form-label">Nova Palavra-passe:</label>
-                                                <input type="password" name="novaPalavraPasse" class="form-control" placeholder="Deixar em branco se inalterada" />
-                                                <div class="form-text">Mínimo de 6 caracteres.</div>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">PIN Rápido (4 dígitos):</label>
-                                                <input type="password" name="pin" maxlength="4" class="form-control text-center font-monospace" placeholder="@(!string.IsNullOrEmpty(u.HashPin) ? "••••" : "Sem PIN")" />
-                                                <div class="form-text">Uso exclusivo em salão/garçom.</div>
-                                            </div>
-                                        </div>
-                                        @if (!string.IsNullOrEmpty(u.HashPin))
-                                        {
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="removerPin" value="true" id="chkRemoverPin-@u.Id">
-                                                <label class="form-check-label text-danger small" for="chkRemoverPin-@u.Id">
-                                                    Remover PIN de acesso rápido deste colaborador
-                                                </label>
-                                            </div>
-                                        }
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn text-white fw-bold" style="background-color: #6E1A33;">
-                                            <i class="bi bi-save me-1"></i>Guardar Alterações
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
+<!-- Estrutura Master-Detail: Tabela de Funcionários (Esquerda) + Card Visível de Edição/Registo (Direita) -->
+<div class="row g-3">
+    <!-- Coluna 1: Tabela de Funcionários -->
+    <div class="col-lg-7 col-xl-8">
+        <div class="card border shadow-sm">
+            <div class="card-header bg-white py-2 border-bottom">
+                <div class="row g-2 align-items-center">
+                    <div class="col-sm-7">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" id="filtroColaboradores" class="form-control border-start-0" placeholder="Pesquisar por nome, utilizador ou função..." autocomplete="off">
                         </div>
-                    }
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Modal: Criar Utilizador -->
-<div class="modal fade" id="modalCriarUtilizador" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form action="/utilizadores/criar" method="post" class="modal-content">
-            @Html.AntiForgeryToken()
-            <div class="modal-header text-white" style="background-color: #6E1A33;">
-                <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Registar Novo Funcionário</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Nome Completo:</label>
-                    <input type="text" name="nomeCompleto" class="form-control" placeholder="Ex: Lucas Machava" required />
+                    </div>
+                    <div class="col-sm-5 text-sm-end text-muted small">
+                        Clique em <strong class="text-primary">Editar</strong> para carregar a ficha ao lado.
+                    </div>
                 </div>
-                <div class="row g-2 mb-3">
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tabelaUtilizadores" data-paginate="8" data-filter-input="#filtroColaboradores">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Colaborador</th>
+                            <th>Função</th>
+                            <th>Contacto</th>
+                            <th class="text-center">PIN</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end" style="width: 140px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model)
+                        {
+                            var perfilAtual = u.UtilizadoresPerfis.FirstOrDefault()?.Perfil;
+                            var perfilNome = perfilAtual?.Nome ?? "Sem Perfil";
+                            var perfilId = perfilAtual?.Id.ToString() ?? "";
+                            var ehProprioUtilizador = string.Equals(u.NomeUtilizador, utilizadorAtual, StringComparison.OrdinalIgnoreCase);
+                            var hasPin = !string.IsNullOrEmpty(u.HashPin);
+
+                            <tr id="row-user-@u.Id" 
+                                data-id="@u.Id"
+                                data-nome="@u.NomeCompleto"
+                                data-username="@u.NomeUtilizador"
+                                data-email="@(u.Email ?? "")"
+                                data-telefone="@(u.Telefone ?? "")"
+                                data-perfil-id="@perfilId"
+                                data-has-pin="@(hasPin ? "true" : "false")"
+                                data-ativo="@(u.Ativo ? "true" : "false")"
+                                data-root="@(u.EhRootAdmin ? "true" : "false")">
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0" 
+                                             style="width: 32px; height: 32px; background-color: @(u.EhRootAdmin ? "#3F0F1F" : "#6E1A33"); font-size: 0.8rem;">
+                                            @(u.NomeCompleto.Length > 0 ? u.NomeCompleto[0].ToString().ToUpper() : "U")
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark mb-0 text-truncate" style="max-width: 170px;">
+                                                @u.NomeCompleto
+                                                @if (u.EhRootAdmin)
+                                                {
+                                                    <span class="badge bg-danger ms-1" style="font-size: 0.65rem;" title="Administrador Principal Permanente">
+                                                        Raiz
+                                                    </span>
+                                                }
+                                            </div>
+                                            <div class="small font-monospace text-muted">@@@u.NomeUtilizador</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">@perfilNome</span>
+                                </td>
+                                <td class="small text-muted">
+                                    @(string.IsNullOrEmpty(u.Telefone) ? (u.Email ?? "-") : u.Telefone)
+                                </td>
+                                <td class="text-center">
+                                    @if (hasPin)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold" title="PIN de 4 dígitos ativo">
+                                            <i class="bi bi-key-fill me-1"></i>Ativo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-muted border">Não Definido</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (u.Ativo)
+                                    {
+                                        <span class="badge bg-success">Ativo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Inativo</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @if (u.EhRootAdmin)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-light border text-muted disabled" title="Conta de administrador raiz protegida">
+                                            <i class="bi bi-shield-lock-fill"></i> Protegido
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <div class="btn-group btn-group-sm">
+                                            <!-- Botão Carregar no Card de Edição -->
+                                            <button type="button" class="btn btn-outline-primary btn-action-edit fw-semibold" 
+                                                    onclick="carregarColaboradorPeloId('@u.Id')" 
+                                                    title="Editar este colaborador no painel ao lado">
+                                                <i class="bi bi-pencil-square me-1"></i>Editar
+                                            </button>
+
+                                            <!-- Botão Ativar/Desativar -->
+                                            @if (!ehProprioUtilizador)
+                                            {
+                                                <form action="/utilizadores/toggle-ativo/@u.Id" method="post" id="formToggle-@u.Id" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="button" class="btn @(u.Ativo ? "btn-outline-danger" : "btn-outline-success")"
+                                                            data-confirm-modal
+                                                            data-confirm-title="@(u.Ativo ? "Desativar Colaborador" : "Reativar Colaborador")"
+                                                            data-confirm-message="Tem a certeza de que pretende @(u.Ativo ? "desativar" : "reativar") o colaborador '@u.NomeCompleto' (@u.NomeUtilizador)?@(u.Ativo ? " O utilizador deixará de conseguir iniciar sessão imediatamente." : "")"
+                                                            data-confirm-action="@(u.Ativo ? "Sim, Desativar" : "Sim, Reativar")"
+                                                            data-confirm-form="formToggle-@u.Id"
+                                                            title="@(u.Ativo ? "Desativar colaborador" : "Reativar colaborador")">
+                                                        <i class="bi @(u.Ativo ? "bi-person-dash" : "bi-person-check")"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coluna 2: Card de Ficha do Colaborador (100% Visível - Edição & Registo) -->
+    <div class="col-lg-5 col-xl-4">
+        <div class="card border shadow-sm sticky-top" style="top: 1rem; z-index: 10;" id="cardFichaColaborador">
+            <div class="card-header text-white py-2 d-flex justify-content-between align-items-center" style="background-color: #6E1A33;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-badge-fill fs-5" id="iconeFicha"></i>
+                    <h6 class="mb-0 fw-bold" id="tituloFicha">Novo Funcionário</h6>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-light py-0 px-2" onclick="resetarFormularioNovo()" id="btnResetFicha" title="Limpar formulário e registar novo funcionário">
+                    <i class="bi bi-plus-circle me-1"></i>Novo
+                </button>
+            </div>
+
+            <form id="formColaborador" action="/utilizadores/criar" method="post" class="card-body p-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="colabId" name="id" value="" />
+
+                <div class="alert alert-info py-2 px-3 small d-none" id="alertaModoEdicao">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    A editar ficha de <strong id="lblNomeModoEdicao">-</strong>.
+                </div>
+
+                <!-- Nome Completo -->
+                <div class="mb-2">
+                    <label class="form-label fw-bold small mb-1">Nome Completo: <span class="text-danger">*</span></label>
+                    <input type="text" id="colabNomeCompleto" name="nomeCompleto" class="form-control form-control-sm" placeholder="Ex: Lucas Machava" required />
+                </div>
+
+                <!-- Utilizador & Perfil -->
+                <div class="row g-2 mb-2">
                     <div class="col-6">
-                        <label class="form-label fw-bold">Nome de Utilizador:</label>
-                        <input type="text" name="nomeUtilizador" class="form-control" placeholder="Ex: lmachava" required />
-                        <div class="form-text">Letras minúsculas e números.</div>
+                        <label class="form-label fw-bold small mb-1">Utilizador: <span class="text-danger">*</span></label>
+                        <input type="text" id="colabNomeUtilizador" name="nomeUtilizador" class="form-control form-control-sm font-monospace" placeholder="Ex: lmachava" required />
+                        <div class="form-text" style="font-size: 0.7rem;" id="helpUsername">Login único no sistema.</div>
                     </div>
                     <div class="col-6">
-                        <label class="form-label fw-bold">Função / Perfil:</label>
-                        <select name="perfilId" class="form-select" required>
+                        <label class="form-label fw-bold small mb-1">Função / Perfil: <span class="text-danger">*</span></label>
+                        <select id="colabPerfilId" name="perfilId" class="form-select form-select-sm" required>
                             @foreach (var p in perfis)
                             {
                                 <option value="@p.Id">@p.Nome</option>
@@ -235,34 +230,162 @@
                         </select>
                     </div>
                 </div>
-                <div class="row g-2 mb-3">
+
+                <!-- Contactos -->
+                <div class="row g-2 mb-2">
                     <div class="col-6">
-                        <label class="form-label">Telefone:</label>
-                        <input type="text" name="telefone" class="form-control" placeholder="+258 84 123 4567" />
+                        <label class="form-label small mb-1">Telefone:</label>
+                        <input type="text" id="colabTelefone" name="telefone" class="form-control form-control-sm" placeholder="+258 84 123 4567" />
                     </div>
                     <div class="col-6">
-                        <label class="form-label">Email:</label>
-                        <input type="email" name="email" class="form-control" placeholder="utilizador@menova.mz" />
-                    </div>
-                </div>
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="form-label fw-bold">Palavra-passe Inicial:</label>
-                        <input type="password" name="palavraPasse" class="form-control" placeholder="••••••••" required />
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label">PIN Rápido (4 dígitos):</label>
-                        <input type="password" name="pin" maxlength="4" class="form-control text-center font-monospace" placeholder="••••" />
-                        <div class="form-text">PIN único para salão e garçons.</div>
+                        <label class="form-label small mb-1">Email:</label>
+                        <input type="email" id="colabEmail" name="email" class="form-control form-control-sm" placeholder="colab@menova.mz" />
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn text-white fw-bold" style="background-color: #6E1A33;">
-                    <i class="bi bi-check-lg me-1"></i>Registar Colaborador
-                </button>
-            </div>
-        </form>
+
+                <!-- Credenciais: Senha e PIN -->
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small mb-1" id="lblPalavraPasse">Palavra-passe: <span class="text-danger">*</span></label>
+                        <input type="password" id="colabPalavraPasse" name="palavraPasse" class="form-control form-control-sm" placeholder="••••••••" required />
+                        <div class="form-text" style="font-size: 0.7rem;" id="helpPalavraPasse">Mínimo 6 caracteres.</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small mb-1">PIN Salão (4 dígitos):</label>
+                        <input type="password" id="colabPin" name="pin" maxlength="4" class="form-control form-control-sm text-center font-monospace" placeholder="••••" />
+                        <div class="form-text" style="font-size: 0.7rem;">Acesso rápido via Garçom/POS.</div>
+                    </div>
+                </div>
+
+                <!-- Checkbox Remover PIN (Visível apenas em edição de colaboradores com PIN) -->
+                <div class="form-check mb-3 d-none" id="divRemoverPin">
+                    <input class="form-check-input" type="checkbox" name="removerPin" value="true" id="colabRemoverPin">
+                    <label class="form-check-label text-danger small" for="colabRemoverPin">
+                        Remover PIN de acesso rápido configurado
+                    </label>
+                </div>
+
+                <!-- Botões de Ação do Card -->
+                <div class="pt-2 border-top d-flex gap-2">
+                    <button type="submit" class="btn text-white fw-bold flex-grow-1 shadow-sm py-2" style="background-color: #6E1A33;" id="btnSubmeterFicha">
+                        <i class="bi bi-check-lg me-1"></i><span id="textoBtnSubmeter">Registar Colaborador</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary px-3" onclick="resetarFormularioNovo()">
+                        Limpar
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    function carregarColaboradorPeloId(id) {
+        const row = document.getElementById('row-user-' + id);
+        if (!row) return;
+
+        // Remover classe ativa de outras linhas
+        document.querySelectorAll('#tabelaUtilizadores tbody tr').forEach(tr => tr.classList.remove('table-active'));
+        row.classList.add('table-active');
+
+        const nome = row.dataset.nome || '';
+        const username = row.dataset.username || '';
+        const email = row.dataset.email || '';
+        const telefone = row.dataset.telefone || '';
+        const perfilId = row.dataset.perfilId || '';
+        const hasPin = row.dataset.hasPin === 'true';
+
+        // Preencher Ficha
+        document.getElementById('colabId').value = id;
+        document.getElementById('colabNomeCompleto').value = nome;
+        
+        const usernameInput = document.getElementById('colabNomeUtilizador');
+        usernameInput.value = username;
+        usernameInput.readOnly = true;
+        usernameInput.classList.add('bg-light');
+        document.getElementById('helpUsername').textContent = 'Identificador exclusivo protegido contra alteração.';
+
+        document.getElementById('colabEmail').value = email;
+        document.getElementById('colabTelefone').value = telefone;
+
+        if (perfilId) {
+            document.getElementById('colabPerfilId').value = perfilId;
+        }
+
+        // Senha em edição é opcional
+        const passInput = document.getElementById('colabPalavraPasse');
+        passInput.value = '';
+        passInput.required = false;
+        passInput.name = 'novaPalavraPasse';
+        document.getElementById('lblPalavraPasse').innerHTML = 'Nova Palavra-passe:';
+        document.getElementById('helpPalavraPasse').textContent = 'Deixar em branco para manter a atual.';
+
+        // PIN
+        const pinInput = document.getElementById('colabPin');
+        pinInput.value = '';
+        pinInput.placeholder = hasPin ? '•••• (Definido)' : '••••';
+
+        // Checkbox Remover PIN
+        const divRemover = document.getElementById('divRemoverPin');
+        const chkRemover = document.getElementById('colabRemoverPin');
+        chkRemover.checked = false;
+        if (hasPin) {
+            divRemover.classList.remove('d-none');
+        } else {
+            divRemover.classList.add('d-none');
+        }
+
+        // Alterar Ação do Formulário
+        const form = document.getElementById('formColaborador');
+        form.action = '/utilizadores/editar/' + id;
+
+        // Títulos e Botão
+        document.getElementById('tituloFicha').textContent = 'Editar: ' + nome.split(' ')[0];
+        document.getElementById('iconeFicha').className = 'bi bi-person-gear fs-5';
+        document.getElementById('textoBtnSubmeter').textContent = 'Guardar Alterações';
+        document.getElementById('btnSubmeterFicha').className = 'btn text-white fw-bold flex-grow-1 shadow-sm py-2';
+        document.getElementById('btnSubmeterFicha').style.backgroundColor = '#6E1A33';
+
+        document.getElementById('alertaModoEdicao').classList.remove('d-none');
+        document.getElementById('lblNomeModoEdicao').textContent = nome;
+
+        // Focar no Nome Completo e rolar se necessário (ecrãs pequenos)
+        const cardFicha = document.getElementById('cardFichaColaborador');
+        if (window.innerWidth < 992) {
+            cardFicha.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        document.getElementById('colabNomeCompleto').focus();
+    }
+
+    function resetarFormularioNovo() {
+        document.querySelectorAll('#tabelaUtilizadores tbody tr').forEach(tr => tr.classList.remove('table-active'));
+
+        const form = document.getElementById('formColaborador');
+        form.reset();
+        form.action = '/utilizadores/criar';
+
+        document.getElementById('colabId').value = '';
+
+        const usernameInput = document.getElementById('colabNomeUtilizador');
+        usernameInput.readOnly = false;
+        usernameInput.classList.remove('bg-light');
+        document.getElementById('helpUsername').textContent = 'Login único no sistema.';
+
+        const passInput = document.getElementById('colabPalavraPasse');
+        passInput.required = true;
+        passInput.name = 'palavraPasse';
+        document.getElementById('lblPalavraPasse').innerHTML = 'Palavra-passe: <span class="text-danger">*</span>';
+        document.getElementById('helpPalavraPasse').textContent = 'Mínimo 6 caracteres.';
+
+        document.getElementById('colabPin').placeholder = '••••';
+        document.getElementById('divRemoverPin').classList.add('d-none');
+        document.getElementById('colabRemoverPin').checked = false;
+
+        document.getElementById('tituloFicha').textContent = 'Novo Funcionário';
+        document.getElementById('iconeFicha').className = 'bi bi-person-badge-fill fs-5';
+        document.getElementById('textoBtnSubmeter').textContent = 'Registar Colaborador';
+        document.getElementById('alertaModoEdicao').classList.add('d-none');
+    }
+</script>
+}

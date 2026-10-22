@@ -2,9 +2,11 @@ using Menova.Application.DTOs;
 using Menova.Application.Interfaces;
 using Menova.Application.Security;
 using Menova.Domain.Caixa;
+using Menova.Domain.Identity;
 using Menova.Domain.Impressao;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Menova.Web.Controllers;
 
@@ -19,6 +21,7 @@ public class CaixaController : Controller
     private readonly IContaService _contaService;
     private readonly ICurrentUserService _currentUser;
     private readonly IDateTimeService _dateTimeService;
+    private readonly IAppDbContext _context;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<CaixaController> _logger;
 
@@ -30,6 +33,7 @@ public class CaixaController : Controller
         IContaService contaService,
         ICurrentUserService currentUser,
         IDateTimeService dateTimeService,
+        IAppDbContext context,
         IServiceScopeFactory scopeFactory,
         ILogger<CaixaController> logger)
     {
@@ -40,6 +44,7 @@ public class CaixaController : Controller
         _contaService = contaService;
         _currentUser = currentUser;
         _dateTimeService = dateTimeService;
+        _context = context;
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -229,6 +234,63 @@ public class CaixaController : Controller
         }
     }
 
+    [HttpGet("sessoes")]
+    public async Task<IActionResult> Sessoes()
+    {
+        var ehAdminOuGerente = User.IsInRole(PerfisSistema.Administrador) || User.IsInRole(PerfisSistema.Gerente);
+        var utilizadorId = _currentUser.UtilizadorId;
+
+        var query = _context.SessoesCaixa
+            .Include(s => s.Caixa)
+            .Include(s => s.Utilizador)
+            .AsNoTracking();
+
+        // Operador apenas visualiza as suas próprias sessões
+        if (!ehAdminOuGerente && utilizadorId.HasValue)
+        {
+            query = query.Where(s => s.UtilizadorId == utilizadorId.Value);
+        }
+
+        var sessoes = await query
+            .OrderByDescending(s => s.AbertaEm)
+            .Take(150)
+            .ToListAsync();
+
+        ViewBag.EhAdminOuGerente = ehAdminOuGerente;
+        ViewBag.DateTimeService = _dateTimeService;
+
+        return View(sessoes);
+    }
+
+    [HttpGet("recibos")]
+    public async Task<IActionResult> Recibos()
+    {
+        var ehAdminOuGerente = User.IsInRole(PerfisSistema.Administrador) || User.IsInRole(PerfisSistema.Gerente);
+        var utilizadorNome = _currentUser.NomeUtilizador;
+        var utilizadorId = _currentUser.UtilizadorId;
+
+        var query = _context.Pagamentos
+            .Include(p => p.Conta).ThenInclude(c => c.Mesa)
+            .Include(p => p.SessaoCaixa).ThenInclude(s => s != null ? s.Caixa : null)
+            .AsNoTracking();
+
+        // Operador de caixa apenas visualiza os seus recibos emitidos
+        if (!ehAdminOuGerente)
+        {
+            query = query.Where(p => p.CriadoPor == utilizadorNome || (p.SessaoCaixa != null && utilizadorId.HasValue && p.SessaoCaixa.UtilizadorId == utilizadorId.Value));
+        }
+
+        var recibos = await query
+            .OrderByDescending(p => p.CriadoEm)
+            .Take(200)
+            .ToListAsync();
+
+        ViewBag.EhAdminOuGerente = ehAdminOuGerente;
+        ViewBag.DateTimeService = _dateTimeService;
+
+        return View(recibos);
+    }
+
     [HttpGet("recibo/{pagamentoId:guid}")]
     [Authorize(Policy = PermissoesCatalogo.CaixaCobrar)]
     public async Task<IActionResult> Recibo(Guid pagamentoId, bool autoPrint = false)
@@ -237,14 +299,33 @@ public class CaixaController : Controller
         if (pagamento == null)
         {
             TempData["Erro"] = "Comprovativo de pagamento não encontrado.";
-            return RedirectToAction("Index", "Pedidos");
+            return RedirectToAction(nameof(Recibos));
+        }
+
+        // Validação de Acesso: Operadores só podem ver os seus recibos
+        var ehAdminOuGerente = User.IsInRole(PerfisSistema.Administrador) || User.IsInRole(PerfisSistema.Gerente);
+        if (!ehAdminOuGerente)
+        {
+            var emitidoPeloOperador = string.Equals(pagamento.CriadoPor, _currentUser.NomeUtilizador, StringComparison.OrdinalIgnoreCase);
+            if (!emitidoPeloOperador && _currentUser.UtilizadorId.HasValue && pagamento.SessaoCaixaId != Guid.Empty)
+            {
+                var donoDaSessao = await _context.SessoesCaixa
+                    .AnyAsync(s => s.Id == pagamento.SessaoCaixaId && s.UtilizadorId == _currentUser.UtilizadorId.Value);
+                if (donoDaSessao) emitidoPeloOperador = true;
+            }
+
+            if (!emitidoPeloOperador)
+            {
+                TempData["Erro"] = "Acesso restrito: Os operadores de caixa apenas podem visualizar e reimprimir os recibos emitidos por si próprios.";
+                return RedirectToAction(nameof(Recibos));
+            }
         }
 
         var conta = await _contaService.GetContaPorIdAsync(pagamento.ContaId);
         if (conta == null)
         {
             TempData["Erro"] = "Conta associada não encontrada.";
-            return RedirectToAction("Index", "Pedidos");
+            return RedirectToAction(nameof(Recibos));
         }
 
         var todosPagamentos = await _pagamentoService.ObterPagamentosPorContaAsync(conta.Id);
@@ -266,6 +347,18 @@ public class CaixaController : Controller
     {
         try
         {
+            // Validação de Acesso: Operadores apenas consultam as suas próprias sessões
+            var ehAdminOuGerente = User.IsInRole(PerfisSistema.Administrador) || User.IsInRole(PerfisSistema.Gerente);
+            if (!ehAdminOuGerente && _currentUser.UtilizadorId.HasValue)
+            {
+                var donoDaSessao = await _context.SessoesCaixa.AnyAsync(s => s.Id == sessaoId && s.UtilizadorId == _currentUser.UtilizadorId.Value);
+                if (!donoDaSessao)
+                {
+                    TempData["Erro"] = "Acesso restrito: Os operadores apenas têm permissão para consultar o relatório das sessões abertas por si.";
+                    return RedirectToAction(nameof(Sessoes));
+                }
+            }
+
             var x = await _caixaService.GerarRelatorioXAsync(sessaoId);
             ViewBag.DateTimeService = _dateTimeService;
             return View(x);
@@ -378,10 +471,18 @@ public class CaixaController : Controller
     [Authorize(Policy = PermissoesCatalogo.ZVer)]
     public async Task<IActionResult> HistoricoZ()
     {
+        var ehAdminOuGerente = User.IsInRole(PerfisSistema.Administrador) || User.IsInRole(PerfisSistema.Gerente);
         var lista = await _fechoZService.ObterHistoricoZAsync();
+
+        if (!ehAdminOuGerente)
+        {
+            lista = lista.Where(z => string.Equals(z.EmitidoPor, _currentUser.NomeUtilizador, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
         var cadeiaValida = await _fechoZService.VerificarIntegridadeCadeiaAsync();
 
         ViewBag.CadeiaValida = cadeiaValida;
+        ViewBag.EhAdminOuGerente = ehAdminOuGerente;
         ViewBag.DateTimeService = _dateTimeService;
 
         return View(lista);

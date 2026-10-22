@@ -1,0 +1,187 @@
+@model List<Menova.Domain.Caixa.SessaoCaixa>
+@{
+    ViewData["Title"] = "Histórico de Sessões de Caixa";
+    var ehAdminOuGerente = (bool)(ViewBag.EhAdminOuGerente ?? false);
+    var dtService = (Menova.Application.Interfaces.IDateTimeService)ViewBag.DateTimeService;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-7">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;">
+            <i class="bi bi-clock-history me-2"></i>Histórico de Sessões de Caixa
+        </h3>
+        <p class="text-muted small mb-0">
+            @if (ehAdminOuGerente)
+            {
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1"><i class="bi bi-shield-lock-fill me-1"></i>Acesso Total</span>
+                <span>Registo e conferência de todas as aberturas e fechos de turno de todos os operadores do restaurante.</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1"><i class="bi bi-person-fill me-1"></i>Acesso Pessoal</span>
+                <span>Registo e conferência das sessões de caixa abertas e encerradas pelo seu utilizador.</span>
+            }
+        </p>
+    </div>
+    <div class="col-md-5 text-md-end mt-2 mt-md-0">
+        <a href="/caixa" class="btn text-white py-2 px-3 fw-semibold shadow-sm" style="background-color: #6E1A33;">
+            <i class="bi bi-wallet2 me-1"></i>Turno Ativo
+        </a>
+    </div>
+</div>
+
+<!-- Abas de Navegação do Módulo de Caixa -->
+<ul class="nav nav-tabs mb-3 border-bottom">
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa">
+            <i class="bi bi-wallet2 me-1"></i>Turno Ativo
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active fw-bold text-dark border-bottom-0" href="/caixa/sessoes">
+            <i class="bi bi-clock-history me-1" style="color: #6E1A33;"></i>Histórico de Sessões
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa/recibos">
+            <i class="bi bi-receipt me-1"></i>Recibos de Vendas
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa/historico-z">
+            <i class="bi bi-shield-check me-1"></i>Histórico Fiscal Z
+        </a>
+    </li>
+</ul>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="card border shadow-sm">
+    <div class="card-header bg-white py-2 border-bottom">
+        <div class="row g-2 align-items-center">
+            <div class="col-sm-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="filtroSessoes" class="form-control border-start-0" placeholder="Pesquisar por operador, caixa ou data..." autocomplete="off">
+                </div>
+            </div>
+            <div class="col-sm-6 text-sm-end text-muted small">
+                Total de Sessões Registadas: <strong>@Model.Count</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="tabelaHistoricoSessoes" data-paginate="10" data-filter-input="#filtroSessoes">
+            <thead class="table-light">
+                <tr>
+                    <th>Caixa</th>
+                    <th>Operador</th>
+                    <th>Abertura</th>
+                    <th>Fecho</th>
+                    <th class="text-end">Fundo Inicial</th>
+                    <th class="text-end">Total Vendas</th>
+                    <th class="text-end">Diferença</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-end" style="width: 140px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-2 text-secondary d-block mb-2"></i>
+                            Nenhuma sessão de caixa encontrada para o seu perfil.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var s in Model)
+                    {
+                        var eAberta = s.Estado == Menova.Domain.Caixa.EstadoSessaoCaixa.Aberta;
+                        var diferenca = s.Diferenca ?? 0;
+                        var difClass = diferenca == 0 ? "text-success" : (diferenca > 0 ? "text-primary" : "text-danger fw-bold");
+
+                        <tr>
+                            <td>
+                                <strong class="text-dark">@(s.Caixa?.Nome ?? "Caixa")</strong>
+                                <small class="text-muted d-block font-monospace">#@(s.Caixa?.Numero ?? 1)</small>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-person-circle text-secondary"></i>
+                                    <div>
+                                        <span class="fw-semibold text-dark">@(s.Utilizador?.NomeCompleto ?? "Colaborador")</span>
+                                        <small class="text-muted d-block font-monospace">@@@(s.Utilizador?.NomeUtilizador ?? "")</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="small">
+                                <div>@s.AbertaEm.AddHours(2).ToString("dd/MM/yyyy")</div>
+                                <div class="text-muted font-monospace">@s.AbertaEm.AddHours(2).ToString("HH:mm:ss")</div>
+                            </td>
+                            <td class="small">
+                                @if (s.FechadaEm.HasValue)
+                                {
+                                    <div>@s.FechadaEm.Value.AddHours(2).ToString("dd/MM/yyyy")</div>
+                                    <div class="text-muted font-monospace">@s.FechadaEm.Value.AddHours(2).ToString("HH:mm:ss")</div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Em Curso</span>
+                                }
+                            </td>
+                            <td class="text-end fw-semibold">
+                                @s.SaldoInicial.ToString("N2") MT
+                            </td>
+                            <td class="text-end fw-bold text-success">
+                                @s.TotalVendas.ToString("N2") MT
+                            </td>
+                            <td class="text-end @difClass">
+                                @if (s.FechadaEm.HasValue)
+                                {
+                                    <span>@diferenca.ToString("N2") MT</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (eAberta)
+                                {
+                                    <span class="badge bg-success">Aberta</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Fechada</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a href="/caixa/x/@s.Id" class="btn btn-sm btn-outline-secondary py-1 px-2 fw-semibold" title="Consultar Relatório X desta sessão">
+                                    <i class="bi bi-printer me-1"></i>Relatório X
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

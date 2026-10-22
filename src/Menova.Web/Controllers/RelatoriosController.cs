@@ -83,6 +83,20 @@ public class RelatoriosController : Controller
         return View(garcons);
     }
 
+    [HttpGet("exportacao")]
+    [Authorize(Policy = PermissoesCatalogo.RelatoriosExportar)]
+    public async Task<IActionResult> Exportacao(DateTime? inicio = null, DateTime? fim = null)
+    {
+        var (dataInicio, dataFim) = NormalizarPeriodo(inicio, fim);
+
+        var painel = await _relatorioService.ObterPainelVendasAsync(dataInicio, dataFim);
+        ViewBag.DateTimeService = _dateTimeService;
+        ViewBag.Inicio = dataInicio;
+        ViewBag.Fim = dataFim;
+
+        return View(painel);
+    }
+
     [HttpGet("exportar/csv")]
     [Authorize(Policy = PermissoesCatalogo.RelatoriosExportar)]
     public async Task<IActionResult> ExportarCsv(DateTime? inicio = null, DateTime? fim = null)
@@ -93,6 +107,44 @@ public class RelatoriosController : Controller
         var nomeFicheiro = $"menova_vendas_{dataInicio:yyyyMMdd}_{dataFim:yyyyMMdd}.csv";
 
         return File(csvBytes, "text/csv; charset=utf-8", nomeFicheiro);
+    }
+
+    [HttpGet("exportar/garcons-csv")]
+    [Authorize(Policy = PermissoesCatalogo.RelatoriosExportar)]
+    public async Task<IActionResult> ExportarGarconsCsv(DateTime? inicio = null, DateTime? fim = null)
+    {
+        var (dataInicio, dataFim) = NormalizarPeriodo(inicio, fim);
+        var garcons = await _relatorioService.ObterDesempenhoGarconsAsync(dataInicio, dataFim);
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append('\uFEFF'); // UTF-8 BOM para Excel
+        sb.AppendLine("Colaborador / Garçom;Contas Atendidas;Total Faturado (MZN);Ticket Médio (MZN)");
+        foreach (var g in garcons)
+        {
+            sb.AppendLine($"\"{g.FuncionarioNome}\";{g.TotalPedidos};{g.TotalFaturado:F2};{g.TicketMedio:F2}");
+        }
+
+        var nomeFicheiro = $"menova_desempenho_garcons_{dataInicio:yyyyMMdd}_{dataFim:yyyyMMdd}.csv";
+        return File(System.Text.Encoding.UTF8.GetBytes(sb.ToString()), "text/csv; charset=utf-8", nomeFicheiro);
+    }
+
+    [HttpGet("exportar/iva-csv")]
+    [Authorize(Policy = PermissoesCatalogo.RelatoriosExportar)]
+    public async Task<IActionResult> ExportarIvaCsv(DateTime? inicio = null, DateTime? fim = null)
+    {
+        var (dataInicio, dataFim) = NormalizarPeriodo(inicio, fim);
+        var resumoIva = await _relatorioService.ObterResumoIvaAsync(dataInicio, dataFim);
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append('\uFEFF');
+        sb.AppendLine("Taxa / Isenção;Base Tributável (MZN);IVA Liquidado (MZN);Total Faturado (MZN)");
+        foreach (var r in resumoIva)
+        {
+            sb.AppendLine($"\"{r.Taxa}\";{r.BaseTributavel:F2};{r.TotalIva:F2};{r.TotalComIva:F2}");
+        }
+
+        var nomeFicheiro = $"menova_apuramento_iva_{dataInicio:yyyyMMdd}_{dataFim:yyyyMMdd}.csv";
+        return File(System.Text.Encoding.UTF8.GetBytes(sb.ToString()), "text/csv; charset=utf-8", nomeFicheiro);
     }
 
     [HttpGet("exportar/excel")]

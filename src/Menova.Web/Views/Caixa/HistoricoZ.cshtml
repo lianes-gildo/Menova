@@ -10,11 +10,35 @@
         <p class="text-muted small mb-0">Livro de apuramentos diários com verificação contínua da cadeia de hash SHA-256.</p>
     </div>
     <div class="col-md-6 text-md-end mt-2 mt-md-0">
-        <a href="/caixa" class="btn btn-outline-secondary py-2 px-3">
-            <i class="bi bi-arrow-left me-1"></i>Voltar ao Caixa
+        <a href="/caixa" class="btn text-white py-2 px-3 fw-semibold shadow-sm" style="background-color: #6E1A33;">
+            <i class="bi bi-wallet2 me-1"></i>Turno Ativo
         </a>
     </div>
 </div>
+
+<!-- Abas de Navegação do Módulo de Caixa -->
+<ul class="nav nav-tabs mb-3 border-bottom">
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa">
+            <i class="bi bi-wallet2 me-1"></i>Turno Ativo
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa/sessoes">
+            <i class="bi bi-clock-history me-1"></i>Histórico de Sessões
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa/recibos">
+            <i class="bi bi-receipt me-1"></i>Recibos de Vendas
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active fw-bold text-dark border-bottom-0" href="/caixa/historico-z">
+            <i class="bi bi-shield-check me-1" style="color: #6E1A33;"></i>Histórico Fiscal Z
+        </a>
+    </li>
+</ul>
 
 <!-- Estado da Integridade Criptográfica -->
 <div class="alert @(cadeiaValida ? "alert-success" : "alert-danger") border-0 shadow-sm d-flex align-items-center py-3 mb-4">

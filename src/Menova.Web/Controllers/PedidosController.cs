@@ -41,6 +41,40 @@ public class PedidosController : Controller
         return View(contasAbertas);
     }
 
+    [HttpGet("api/ativos")]
+    public async Task<IActionResult> ObterContasAtivasJson()
+    {
+        try
+        {
+            var contas = await _contaService.ListarContasAbertasAsync();
+            var totalValor = contas.Sum(c => c.TotalLiquido);
+            return Json(new
+            {
+                sucesso = true,
+                totalContas = contas.Count,
+                totalValorAberto = totalValor,
+                totalValorFormatado = totalValor.ToString("N2") + " MT",
+                contas = contas.Select(c => new
+                {
+                    id = c.Id,
+                    numero = c.Numero,
+                    mesaNumero = c.MesaNumero,
+                    zonaNome = c.ZonaNome,
+                    criadoEm = c.CriadoEm.ToString("dd/MM/yyyy HH:mm"),
+                    criadoPor = c.CriadoPor,
+                    totalPedidos = c.Pedidos.Count,
+                    totalLiquido = c.TotalLiquido,
+                    totalLiquidoFormatado = c.TotalLiquido.ToString("N2") + " MT"
+                })
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao obter contas ativas via API");
+            return StatusCode(500, new { sucesso = false, mensagem = "Erro ao carregar comandas ativas." });
+        }
+    }
+
     [HttpGet("nova-comanda")]
     public async Task<IActionResult> NovaComanda(Guid? mesaId = null)
     {

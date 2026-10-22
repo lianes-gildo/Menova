@@ -71,4 +71,25 @@ public class HealthAndEndpointsTests : IClassFixture<WebApplicationFactory<Progr
         content.Should().Contain("iOS");
         content.Should().Contain("Windows");
     }
+
+    [Fact]
+    public async Task RotasProtegidas_SemAutenticacao_DevemRedirecionarParaLogin()
+    {
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        var responseUtilizadores = await client.GetAsync("/utilizadores");
+        responseUtilizadores.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        responseUtilizadores.Headers.Location?.ToString().Should().Contain("/auth/login");
+
+        var responseCaixa = await client.GetAsync("/caixa");
+        responseCaixa.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        responseCaixa.Headers.Location?.ToString().Should().Contain("/auth/login");
+
+        var responseExportacao = await client.GetAsync("/relatorios/exportacao");
+        responseExportacao.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        responseExportacao.Headers.Location?.ToString().Should().Contain("/auth/login");
+    }
 }

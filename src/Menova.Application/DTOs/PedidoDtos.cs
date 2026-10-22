@@ -75,7 +75,10 @@ public record ItemTicketKdsDto(
     string? Notas,
     List<string> Opcoes,
     EstadoItemPedido Estado,
-    string? EstacaoNome);
+    string? EstacaoNome,
+    bool EhBar = false,
+    int SlaAlvoMinutos = 15,
+    bool Atrasado = false);
 
 public record TicketKdsDto(
     Guid PedidoId,
@@ -87,7 +90,9 @@ public record TicketKdsDto(
     int MinutosDecorridos,
     UrgenciaKds Urgencia,
     string? Observacoes,
-    List<ItemTicketKdsDto> Itens);
+    List<ItemTicketKdsDto> Itens,
+    bool ContemBar = false,
+    bool ContemCozinha = true);
 
 public record AnularItemDto(
     Guid ItemId,

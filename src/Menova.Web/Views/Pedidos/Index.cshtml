@@ -18,17 +18,36 @@
     </div>
     <div class="col-md-6 text-md-end mt-2 mt-md-0 d-flex flex-wrap gap-2 align-items-center justify-content-start justify-content-md-end">
         <span class="badge bg-light text-dark border p-2">
-            Total em Aberto: <strong class="fs-6 text-success">@totalValorAberto.ToString("N2") MT</strong>
+            Total em Aberto: <strong class="fs-6 text-success" id="labelTotalValorAberto">@totalValorAberto.ToString("N2") MT</strong>
         </span>
-        <a href="/pedidos/nova-comanda" class="btn text-white py-2 px-3 text-nowrap" style="background-color: #6E1A33;">
+        <button type="button" class="btn btn-sm btn-outline-secondary py-2 px-3" onclick="atualizarTabelaPedidosAjax()" title="Atualizar dados agora">
+            <i class="bi bi-arrow-clockwise me-1" id="iconSyncPedidos"></i>Atualizar
+        </button>
+        <a href="/pedidos/nova-comanda" class="btn text-white py-2 px-3 text-nowrap fw-semibold shadow-sm" style="background-color: #6E1A33;">
             <i class="bi bi-plus-circle me-1"></i>Nova Comanda
         </a>
     </div>
 </div>
 
 <div class="card border shadow-sm">
+    <div class="card-header bg-white py-2 border-bottom">
+        <div class="row g-2 align-items-center">
+            <div class="col-sm-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="filtroContas" class="form-control border-start-0" placeholder="Pesquisar por mesa, comanda ou responsável..." autocomplete="off">
+                </div>
+            </div>
+            <div class="col-sm-6 text-sm-end text-muted small">
+                <span class="badge bg-success-subtle text-success border border-success-subtle me-1">
+                    <i class="bi bi-broadcast me-1"></i>Tempo Real Ativo
+                </span>
+                <span id="labelContasContador">@Model.Count contas em aberto</span>
+            </div>
+        </div>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="tabelaPedidos" data-paginate="10">
+        <table class="table table-hover align-middle mb-0" id="tabelaPedidos" data-paginate="10" data-filter-input="#filtroContas">
             <thead class="table-light">
                 <tr>
                     <th>Conta</th>
@@ -93,3 +112,93 @@
         </table>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    async function atualizarTabelaPedidosAjax() {
+        const icon = document.getElementById('iconSyncPedidos');
+        if (icon) icon.classList.add('spin-animation');
+
+        try {
+            const resp = await fetch('/pedidos/api/ativos');
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (!data.sucesso) return;
+
+            // Atualizar KPIs
+            const labelTotal = document.getElementById('labelTotalValorAberto');
+            if (labelTotal) labelTotal.textContent = data.totalValorFormatado;
+
+            const labelContador = document.getElementById('labelContasContador');
+            if (labelContador) labelContador.textContent = data.totalContas + ' contas em aberto';
+
+            const tbody = document.querySelector('#tabelaPedidos tbody');
+            if (!tbody) return;
+
+            if (!data.contas || data.contas.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-check2-circle fs-2 text-success d-block mb-2"></i>
+                            Não existem contas ou comandas abertas no momento.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            data.contas.forEach(c => {
+                const mesaHtml = c.mesaNumero 
+                    ? `<span class="fw-bold fs-6" style="color: #6E1A33;"><i class="bi bi-grid-fill me-1"></i>Mesa ${c.mesaNumero}</span><div class="small text-muted">${c.zonaNome || ''}</div>`
+                    : `<span class="badge bg-secondary"><i class="bi bi-shop me-1"></i>Balcão</span>`;
+
+                html += `
+                    <tr>
+                        <td>
+                            <span class="badge bg-light text-dark border font-monospace fs-6">${c.numero}</span>
+                        </td>
+                        <td>${mesaHtml}</td>
+                        <td>${c.criadoEm}</td>
+                        <td><i class="bi bi-person me-1"></i>${c.criadoPor}</td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary">${c.totalPedidos} comandas</span>
+                        </td>
+                        <td class="text-end fw-bold fs-6">${c.totalLiquidoFormatado}</td>
+                        <td class="text-end">
+                            <a href="/pedidos/detalhes/${c.id}" class="btn btn-sm btn-outline-secondary me-1 py-1 px-2 fw-semibold" title="Ver Detalhes">
+                                <i class="bi bi-eye"></i> Detalhes
+                            </a>
+                            <a href="/caixa/pagamento/${c.id}" class="btn btn-sm text-white py-1 px-2 fw-semibold" style="background-color: #6E1A33;" title="Liquidar Conta">
+                                <i class="bi bi-wallet2"></i> Cobrar
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+
+            // Refrescar paginação se a função global estiver disponível
+            const table = document.getElementById('tabelaPedidos');
+            if (table && table._refreshPagination) {
+                table._refreshPagination();
+            }
+        } catch (err) {
+            console.warn('Erro ao atualizar pedidos via AJAX:', err);
+        } finally {
+            if (icon) {
+                setTimeout(() => icon.classList.remove('spin-animation'), 400);
+            }
+        }
+    }
+
+    // Ouvir evento SignalR emitido globalmente por site.js
+    window.addEventListener('menova:novo-pedido', function () {
+        atualizarTabelaPedidosAjax();
+    });
+
+    // Fallback de polling a cada 20 segundos
+    setInterval(atualizarTabelaPedidosAjax, 20000);
+</script>
+}

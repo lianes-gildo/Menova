@@ -31,15 +31,35 @@
         transform: scale(0.98);
     }
     .stepper-btn {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
         padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 8px;
-        font-weight: 700;
+        font-weight: 800;
+        font-size: 1.1rem;
         touch-action: manipulation;
+        border: 1.5px solid #6E1A33;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .pwa-cat-btn {
+        background-color: #ffffff !important;
+        border: 1.5px solid #d1c7ca !important;
+        color: #43383c !important;
+        font-weight: 600 !important;
+        padding: 6px 14px !important;
+        font-size: 0.85rem !important;
+        touch-action: manipulation;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+    }
+    .pwa-cat-btn.active, .pwa-cat-btn.btn-wine {
+        background-color: #6E1A33 !important;
+        border-color: #6E1A33 !important;
+        color: #ffffff !important;
+        box-shadow: 0 3px 8px rgba(110, 26, 51, 0.28) !important;
     }
     .pills-scroll {
         display: flex;
@@ -53,18 +73,19 @@
         display: none;
     }
     .table-chip {
-        min-width: 82px;
-        height: 48px;
+        min-width: 84px;
+        height: 50px;
         display: inline-flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         border-radius: 10px;
-        padding: 4px 8px;
-        font-weight: 600;
-        font-size: 0.85rem;
+        padding: 5px 10px;
+        font-weight: 700;
+        font-size: 0.88rem;
         touch-action: manipulation;
         transition: all 0.15s ease;
+        border-width: 2px !important;
     }
     .table-chip.active-table {
         background-color: #6E1A33 !important;
@@ -164,12 +185,12 @@
 
     <!-- Abas de Categorias de Artigos -->
     <div class="pills-scroll mb-2 py-1" id="pwaCatPills">
-        <button type="button" class="btn btn-sm btn-wine active px-3 py-1 fw-semibold rounded-pill shadow-sm" onclick="filtrarPwaCat(null, this)">
-            Todas as Categorias
+        <button type="button" class="btn pwa-cat-btn active btn-wine rounded-pill" onclick="filtrarPwaCat(null, this)">
+            <i class="bi bi-grid-fill me-1"></i>Todas
         </button>
         @foreach (var cat in menu.Categorias)
         {
-            <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1 fw-semibold rounded-pill" onclick="filtrarPwaCat('@cat.Id', this)">
+            <button type="button" class="btn pwa-cat-btn rounded-pill" onclick="filtrarPwaCat('@cat.Id', this)">
                 @cat.Nome
             </button>
         }
@@ -580,9 +601,7 @@
         catPwaAtual = catId;
         document.querySelectorAll('#pwaCatPills button').forEach(b => {
             b.classList.remove('btn-wine', 'active', 'shadow-sm');
-            b.classList.add('btn-outline-secondary');
         });
-        btn.classList.remove('btn-outline-secondary');
         btn.classList.add('btn-wine', 'active', 'shadow-sm');
         filtrarPwaArtigos();
     }
@@ -1053,12 +1072,22 @@
                     estadoNome = 'A Preparar';
                 }
 
+                let badgeBarHtml = '';
+                if (i.ehBar) {
+                    if (i.atrasado || t.minutosDecorridos > 5) {
+                        badgeBarHtml = `<span class="badge bg-danger text-white border ms-1" style="font-size: 0.65rem;"><i class="bi bi-alarm-fill me-1"></i>Bar Atrasado (> 5m)</span>`;
+                    } else {
+                        badgeBarHtml = `<span class="badge bg-info text-dark border ms-1" style="font-size: 0.65rem;"><i class="bi bi-cup-straw me-1"></i>Bar Expresso &le; 5m</span>`;
+                    }
+                }
+
                 html += `
                     <div class="list-group-item px-2 py-2 d-flex justify-content-between align-items-center">
                         <div>
                             <div class="fw-bold small text-dark">${i.quantidade}x ${i.nomeArtigo}</div>
                             ${i.notas ? `<div class="small text-danger fw-semibold"><i class="bi bi-arrow-return-right me-1"></i>${i.notas}</div>` : ''}
                             <span class="badge ${badgeClass}" style="font-size: 0.68rem;">${estadoNome}</span>
+                            ${badgeBarHtml}
                             ${i.estacaoNome ? `<span class="badge bg-light text-muted border ms-1" style="font-size: 0.65rem;">${i.estacaoNome}</span>` : ''}
                         </div>
                         <div>

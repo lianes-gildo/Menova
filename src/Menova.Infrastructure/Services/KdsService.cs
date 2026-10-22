@@ -32,6 +32,7 @@ public class KdsService : IKdsService
             .Include(p => p.Conta).ThenInclude(c => c.Mesa).ThenInclude(m => m != null ? m.Zona : null)
             .Include(p => p.Itens).ThenInclude(i => i.OpcoesSelecionadas)
             .Include(p => p.Itens).ThenInclude(i => i.Estacao)
+            .Include(p => p.Itens).ThenInclude(i => i.Artigo).ThenInclude(a => a != null ? a.Categoria : null)
             .Where(p => p.Estado != EstadoPedido.Entregue && p.Estado != EstadoPedido.Cancelado);
 
         var pedidos = await pedidosQuery
@@ -55,22 +56,38 @@ public class KdsService : IKdsService
             if (!itensList.Any()) continue;
 
             var minutos = (int)(agora - p.CriadoEm).TotalMinutes;
-            var urgencia = minutos switch
+
+            var itensDto = itensList.Select(i =>
+            {
+                var ehBar = ItemEhBarOuBebida(i);
+                var slaMin = ehBar ? 5 : 15;
+                var atrasado = minutos > slaMin && i.Estado != EstadoItemPedido.Pronto;
+
+                return new ItemTicketKdsDto(
+                    i.Id,
+                    i.NomeArtigo,
+                    i.Quantidade,
+                    i.Notas,
+                    i.OpcoesSelecionadas.Select(o => o.NomeOpcao).ToList(),
+                    i.Estado,
+                    i.Estacao?.Nome,
+                    ehBar,
+                    slaMin,
+                    atrasado
+                );
+            }).ToList();
+
+            var contemBar = itensDto.Any(i => i.EhBar);
+            var contemCozinha = itensDto.Any(i => !i.EhBar);
+            var temBarAtrasado = itensDto.Any(i => i.EhBar && i.Atrasado);
+
+            // Se tiver bebida do bar a demorar mais de 5 minutos, o ticket sobe imediatamente para urgência máxima
+            var urgencia = temBarAtrasado ? UrgenciaKds.Urgente : (minutos switch
             {
                 < 10 => UrgenciaKds.Normal,
                 <= 20 => UrgenciaKds.Atencao,
                 _ => UrgenciaKds.Urgente
-            };
-
-            var itensDto = itensList.Select(i => new ItemTicketKdsDto(
-                i.Id,
-                i.NomeArtigo,
-                i.Quantidade,
-                i.Notas,
-                i.OpcoesSelecionadas.Select(o => o.NomeOpcao).ToList(),
-                i.Estado,
-                i.Estacao?.Nome
-            )).ToList();
+            });
 
             resultado.Add(new TicketKdsDto(
                 p.Id,
@@ -82,11 +99,41 @@ public class KdsService : IKdsService
                 minutos,
                 urgencia,
                 p.Observacoes,
-                itensDto
+                itensDto,
+                contemBar,
+                contemCozinha
             ));
         }
 
         return resultado;
+    }
+
+    private static bool ItemEhBarOuBebida(ItemPedido item)
+    {
+        var estacao = item.Estacao?.Nome?.ToLowerInvariant() ?? "";
+        if (estacao.Contains("bar") || estacao.Contains("bebida") || estacao.Contains("copa")) return true;
+
+        var cat = item.Artigo?.Categoria?.Nome?.ToLowerInvariant() ?? "";
+        if (cat.Contains("bar") || cat.Contains("bebida") || cat.Contains("cerveja") || 
+            cat.Contains("vinho") || cat.Contains("sumo") || cat.Contains("cocktail") || 
+            cat.Contains("refrigerante") || cat.Contains("café") || cat.Contains("cafe") ||
+            cat.Contains("destilado") || cat.Contains("licor") || cat.Contains("agua") || cat.Contains("água"))
+        {
+            return true;
+        }
+
+        var nome = item.NomeArtigo?.ToLowerInvariant() ?? "";
+        if (nome.Contains("cerveja") || nome.Contains("vinho") || nome.Contains("sumo") || 
+            nome.Contains("coca-cola") || nome.Contains("fanta") || nome.Contains("sprite") || 
+            nome.Contains("água") || nome.Contains("whisky") || nome.Contains("gin") || 
+            nome.Contains("vodka") || nome.Contains("café") || nome.Contains("espresso") || 
+            nome.Contains("chá") || nome.Contains("cocktail") || nome.Contains("2m") || 
+            nome.Contains("txilar") || nome.Contains("laurentina"))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     public async Task AtualizarEstadoItemAsync(Guid itemId, EstadoItemPedido novoEstado, CancellationToken cancellationToken = default)

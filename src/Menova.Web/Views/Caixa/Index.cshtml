@@ -12,14 +12,35 @@
         <p class="text-muted small mb-0">Abertura de caixa, sangrias, suprimentos, pagamentos e fecho diário Z.</p>
     </div>
     <div class="col-md-6 text-md-end mt-2 mt-md-0">
-        <a href="/caixa/historico-z" class="btn btn-outline-secondary py-2 px-3 me-2">
-            <i class="bi bi-shield-check me-1"></i>Histórico e Auditoria Z
-        </a>
         <a href="/pedidos" class="btn btn-outline-primary py-2 px-3">
             <i class="bi bi-receipt-cutoff me-1"></i>Contas e Cobranças
         </a>
     </div>
 </div>
+
+<!-- Abas de Navegação do Módulo de Caixa -->
+<ul class="nav nav-tabs mb-3 border-bottom">
+    <li class="nav-item">
+        <a class="nav-link active fw-bold text-dark border-bottom-0" href="/caixa">
+            <i class="bi bi-wallet2 me-1" style="color: #6E1A33;"></i>Turno Ativo
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa/sessoes">
+            <i class="bi bi-clock-history me-1"></i>Histórico de Sessões
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa/recibos">
+            <i class="bi bi-receipt me-1"></i>Recibos de Vendas
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa/historico-z">
+            <i class="bi bi-shield-check me-1"></i>Histórico Fiscal Z
+        </a>
+    </li>
+</ul>
 
 @if (TempData["Sucesso"] != null)
 {

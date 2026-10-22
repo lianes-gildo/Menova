@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initConfirmModals();
     initAutoTablePagination();
     initInactivityWatchdog();
+    initGlobalRealtime();
 });
 
 // Deteção Inteligente de Modo Aplicação / Atalho PWA Instalado
@@ -580,4 +581,84 @@ function initInactivityWatchdog() {
             window.location.href = '/auth/login?motivo=inactividade';
         }
     }, 1000);
+}
+
+// =========================================================================
+// 8. Cliente SignalR Global e Tempo Real (Menova Enterprise Push Engine)
+// =========================================================================
+function initGlobalRealtime() {
+    if (typeof signalR === 'undefined') return;
+    if (document.body.classList.contains('login-page') || window.location.pathname.startsWith('/auth/login')) return;
+
+    // Evitar conexões duplicadas
+    if (window._menovaGlobalHubConnection) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl('/hub/menova')
+        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+        .build();
+
+    window._menovaGlobalHubConnection = connection;
+
+    // 1. Novo Pedido
+    connection.on('NovoPedido', function (payload) {
+        // Disparar evento DOM customizado para páginas ativas consumirem sem reload
+        window.dispatchEvent(new CustomEvent('menova:novo-pedido', { detail: payload }));
+
+        // Atualizar badges visuais no sidebar
+        const badgePedidos = document.getElementById('badgeLivePedidos');
+        if (badgePedidos) {
+            let current = parseInt(badgePedidos.textContent || '0', 10);
+            badgePedidos.textContent = current + 1;
+            badgePedidos.style.display = 'inline-block';
+            badgePedidos.classList.add('animate-pulse');
+            setTimeout(() => badgePedidos.classList.remove('animate-pulse'), 3000);
+        }
+
+        // Notificação toast informativa inteligente
+        if (typeof window.mostrarToast === 'function') {
+            const mesaTexto = payload.numeroMesa ? `Mesa ${payload.numeroMesa}` : 'Balcão';
+            window.mostrarToast(`Nova comanda registada para ${mesaTexto}.`, 'info');
+        }
+    });
+
+    // 2. Estado do Item de Pedido Alterado (Pronto / Em Preparação / Entregue)
+    connection.on('EstadoItemAlterado', function (payload) {
+        window.dispatchEvent(new CustomEvent('menova:estado-item-alterado', { detail: payload }));
+
+        if (payload.novoEstado === 'Pronto') {
+            if (typeof window.mostrarToast === 'function') {
+                window.mostrarToast(`Artigo pronto na cozinha/bar!`, 'success');
+            }
+        }
+    });
+
+    // 3. Mesa Alterada (Livre / Ocupada / Conta Pedida)
+    connection.on('MesaAlterada', function (payload) {
+        window.dispatchEvent(new CustomEvent('menova:mesa-alterada', { detail: payload }));
+    });
+
+    // 4. Artigo Esgotado / 86
+    connection.on('Artigo86Alterado', function (payload) {
+        window.dispatchEvent(new CustomEvent('menova:artigo-esgotado', { detail: payload }));
+    });
+
+    // 5. Alerta de Caixa
+    connection.on('AlertaCaixa', function (payload) {
+        window.dispatchEvent(new CustomEvent('menova:alerta-caixa', { detail: payload }));
+        if (typeof window.mostrarToast === 'function') {
+            window.mostrarToast(payload.mensagem || 'Alerta de operação de caixa.', 'aviso');
+        }
+    });
+
+    // Iniciar conexão e juntar salas relevantes
+    connection.start()
+        .then(() => {
+            connection.invoke('JuntarSala', 'kds_geral').catch(() => {});
+            connection.invoke('JuntarSala', 'caixa').catch(() => {});
+            connection.invoke('JuntarSala', 'sala').catch(() => {});
+        })
+        .catch(err => {
+            console.warn('[SignalR] Falha ao iniciar conexão global em tempo real:', err);
+        });
 }

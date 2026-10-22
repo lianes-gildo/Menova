@@ -1,0 +1,163 @@
+@model List<Menova.Domain.Caixa.Pagamento>
+@{
+    ViewData["Title"] = "Histórico de Recibos de Vendas";
+    var ehAdminOuGerente = (bool)(ViewBag.EhAdminOuGerente ?? false);
+    var dtService = (Menova.Application.Interfaces.IDateTimeService)ViewBag.DateTimeService;
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-7">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;">
+            <i class="bi bi-receipt me-2"></i>Histórico de Recibos e Comprovativos
+        </h3>
+        <p class="text-muted small mb-0">
+            @if (ehAdminOuGerente)
+            {
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1"><i class="bi bi-shield-lock-fill me-1"></i>Acesso Total</span>
+                <span>Consulta e reimpressão de todos os comprovativos de cobrança emitidos no restaurante.</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1"><i class="bi bi-person-fill me-1"></i>Acesso Pessoal</span>
+                <span>Consulta e reimpressão exclusiva dos recibos de venda emitidos pelo seu operador de caixa.</span>
+            }
+        </p>
+    </div>
+    <div class="col-md-5 text-md-end mt-2 mt-md-0">
+        <a href="/caixa" class="btn text-white py-2 px-3 fw-semibold shadow-sm" style="background-color: #6E1A33;">
+            <i class="bi bi-wallet2 me-1"></i>Turno Ativo
+        </a>
+    </div>
+</div>
+
+<!-- Abas de Navegação do Módulo de Caixa -->
+<ul class="nav nav-tabs mb-3 border-bottom">
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa">
+            <i class="bi bi-wallet2 me-1"></i>Turno Ativo
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa/sessoes">
+            <i class="bi bi-clock-history me-1"></i>Histórico de Sessões
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active fw-bold text-dark border-bottom-0" href="/caixa/recibos">
+            <i class="bi bi-receipt me-1" style="color: #6E1A33;"></i>Recibos de Vendas
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" href="/caixa/historico-z">
+            <i class="bi bi-shield-check me-1"></i>Histórico Fiscal Z
+        </a>
+    </li>
+</ul>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="card border shadow-sm">
+    <div class="card-header bg-white py-2 border-bottom">
+        <div class="row g-2 align-items-center">
+            <div class="col-sm-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="filtroRecibos" class="form-control border-start-0" placeholder="Pesquisar por recibo, operador, mesa ou método..." autocomplete="off">
+                </div>
+            </div>
+            <div class="col-sm-6 text-sm-end text-muted small">
+                Total de Recibos Listados: <strong>@Model.Count</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="tabelaHistoricoRecibos" data-paginate="10" data-filter-input="#filtroRecibos">
+            <thead class="table-light">
+                <tr>
+                    <th>Comprovativo</th>
+                    <th>Data / Hora</th>
+                    <th>Emitido Por</th>
+                    <th>Mesa / Local</th>
+                    <th>Método</th>
+                    <th>Referência</th>
+                    <th class="text-end">Troco</th>
+                    <th class="text-end">Valor Liquidado</th>
+                    <th class="text-end" style="width: 130px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="bi bi-receipt fs-2 text-secondary d-block mb-2"></i>
+                            Nenhum recibo de venda encontrado para o seu utilizador.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var p in Model)
+                    {
+                        var mesa = p.Conta?.Mesa != null ? $"Mesa {p.Conta.Mesa.Numero}" : "Balcão";
+
+                        <tr>
+                            <td>
+                                <span class="badge bg-light text-dark border font-monospace fs-6">
+                                    REC-@p.Id.ToString()[..8].ToUpper()
+                                </span>
+                            </td>
+                            <td class="small">
+                                <div>@p.CriadoEm.AddHours(2).ToString("dd/MM/yyyy")</div>
+                                <div class="text-muted font-monospace">@p.CriadoEm.AddHours(2).ToString("HH:mm:ss")</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-1">
+                                    <i class="bi bi-person-fill text-muted"></i>
+                                    <span class="fw-semibold text-dark">@p.CriadoPor</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    <i class="bi bi-geo-alt me-1"></i>@mesa
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">@p.Metodo</span>
+                            </td>
+                            <td class="small text-muted font-monospace">
+                                @(string.IsNullOrWhiteSpace(p.Referencia) ? "-" : p.Referencia)
+                            </td>
+                            <td class="text-end small text-muted">
+                                @(p.Troco > 0 ? $"{p.Troco:N2} MT" : "-")
+                            </td>
+                            <td class="text-end fw-bold text-success fs-6">
+                                @p.Valor.ToString("N2") MT
+                            </td>
+                            <td class="text-end">
+                                <a href="/caixa/recibo/@p.Id" class="btn btn-sm btn-outline-primary py-1 px-2 fw-semibold" title="Visualizar ou reimprimir comprovativo">
+                                    <i class="bi bi-eye me-1"></i>Ver Recibo
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

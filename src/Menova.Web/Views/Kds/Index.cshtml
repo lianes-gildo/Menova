@@ -23,10 +23,24 @@
     </div>
 </div>
 
-<!-- Filtros de Estação -->
-<div class="d-flex flex-wrap gap-2 mb-3">
-    <a href="/kds" class="btn btn-sm @(!estacaoSel.HasValue ? "btn-dark active fw-bold" : "btn-outline-secondary")">
-        Todas as Estações
+<!-- Filtros Rápidos de Estação & Especialidade (Cozinha vs Bar) -->
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="btn-group btn-group-sm shadow-sm" role="group">
+        <button type="button" class="btn btn-dark active fw-bold" id="kdsFiltroTodos" onclick="filtrarKdsTipo('todos', this)">
+            <i class="bi bi-grid-fill me-1"></i>Todos os Pedidos
+        </button>
+        <button type="button" class="btn btn-outline-dark fw-semibold" id="kdsFiltroCozinha" onclick="filtrarKdsTipo('cozinha', this)">
+            <i class="bi bi-fire me-1 text-danger"></i>Cozinha (Pratos)
+        </button>
+        <button type="button" class="btn btn-outline-info text-dark fw-semibold" id="kdsFiltroBar" onclick="filtrarKdsTipo('bar', this)">
+            <i class="bi bi-cup-straw me-1 text-primary"></i>Bar (Expresso &le; 5m)
+        </button>
+    </div>
+
+    <div class="vr mx-1 d-none d-sm-block"></div>
+
+    <a href="/kds" class="btn btn-sm @(!estacaoSel.HasValue ? "btn-light border fw-bold" : "btn-outline-secondary")">
+        Todas as Zonas
     </a>
     @foreach (var est in estacoes)
     {
@@ -65,7 +79,9 @@
                 _ => "bg-secondary text-white"
             };
 
-            <div class="col-sm-6 col-md-4 col-lg-3 ticket-col" id="ticket-@t.PedidoId">
+            <div class="col-sm-6 col-md-4 col-lg-3 ticket-col" id="ticket-@t.PedidoId"
+                 data-contem-bar="@(t.ContemBar ? "true" : "false")"
+                 data-contem-cozinha="@(t.ContemCozinha ? "true" : "false")">
                 <div class="card h-100 border-2 @borderClass shadow-sm">
                     <div class="card-header @headerClass py-2 d-flex justify-content-between align-items-center">
                         <div class="fw-bold fs-6">
@@ -76,9 +92,18 @@
                         </div>
                     </div>
                     <div class="card-body p-2 d-flex flex-column">
-                        <div class="small text-muted mb-2 d-flex justify-content-between">
+                        <div class="small text-muted mb-2 d-flex justify-content-between align-items-center">
                             <span>Ticket #@t.NumeroSequencial</span>
-                            <span>@t.CriadoEm.ToString("HH:mm")</span>
+                            <div class="d-flex gap-1">
+                                @if (t.ContemBar)
+                                {
+                                    <span class="badge bg-info text-dark" style="font-size: 0.65rem;"><i class="bi bi-cup-straw"></i> Bar &le;5m</span>
+                                }
+                                @if (t.ContemCozinha)
+                                {
+                                    <span class="badge bg-light text-secondary border" style="font-size: 0.65rem;"><i class="bi bi-fire"></i> Cozinha</span>
+                                }
+                            </div>
                         </div>
 
                         @if (!string.IsNullOrEmpty(t.Observacoes))
@@ -107,12 +132,33 @@
                                     _ => item.Estado.ToString()
                                 };
 
-                                <div class="list-group-item px-1 py-2 border-bottom d-flex justify-content-between align-items-center" 
+                                <div class="list-group-item px-1 py-2 border-bottom d-flex justify-content-between align-items-center @(item.EhBar ? "bg-light-subtle" : "")" 
                                      id="kds-item-@item.ItemId">
                                     <div class="pe-2">
-                                        <div class="fw-bold">
-                                            <span class="badge bg-light text-dark border me-1">@item.Quantidade.ToString("0.###")x</span>
-                                            @item.NomeArtigo
+                                        <div class="fw-bold d-flex flex-wrap align-items-center gap-1">
+                                            <span class="badge bg-light text-dark border">@item.Quantidade.ToString("0.###")x</span>
+                                            <span>@item.NomeArtigo</span>
+                                            @if (item.EhBar)
+                                            {
+                                                if (item.Atrasado)
+                                                {
+                                                    <span class="badge bg-danger text-white border shadow-sm animate-pulse" style="font-size: 0.65rem;" title="Bebida a demorar mais de 5 minutos!">
+                                                        <i class="bi bi-alarm-fill me-1"></i>Atraso Bar (> 5m)!
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle" style="font-size: 0.65rem;">
+                                                        <i class="bi bi-cup-straw me-1"></i>Bar Expresso (&le;5m)
+                                                    </span>
+                                                }
+                                            }
+                                            else if (item.Atrasado)
+                                            {
+                                                <span class="badge bg-danger text-white border shadow-sm" style="font-size: 0.65rem;">
+                                                    <i class="bi bi-alarm-fill me-1"></i>Atraso (> 15m)
+                                                </span>
+                                            }
                                         </div>
                                         @if (!string.IsNullOrEmpty(item.Notas))
                                         {
@@ -239,6 +285,28 @@
         } catch (e) {
             console.error(e);
         }
+    }
+
+    function filtrarKdsTipo(tipo, btn) {
+        document.querySelectorAll('#kdsFiltroTodos, #kdsFiltroCozinha, #kdsFiltroBar').forEach(b => {
+            b.classList.remove('active', 'btn-dark', 'text-white');
+            b.classList.add('btn-outline-dark');
+        });
+        btn.classList.add('active', 'btn-dark', 'text-white');
+        btn.classList.remove('btn-outline-dark');
+
+        document.querySelectorAll('.ticket-col').forEach(card => {
+            const contemBar = card.dataset.contemBar === 'true';
+            const contemCozinha = card.dataset.contemCozinha === 'true';
+
+            if (tipo === 'todos') {
+                card.style.display = '';
+            } else if (tipo === 'bar') {
+                card.style.display = contemBar ? '' : 'none';
+            } else if (tipo === 'cozinha') {
+                card.style.display = contemCozinha ? '' : 'none';
+            }
+        });
     }
 
     async function bumpTicket(pedidoId) {

@@ -51,6 +51,33 @@ public class UtilizadoresController : Controller
         return View(utilizadores);
     }
 
+    [HttpGet("detalhes/{id:guid}")]
+    public async Task<IActionResult> Detalhes(Guid id)
+    {
+        var u = await _context.Utilizadores
+            .Include(u => u.UtilizadoresPerfis).ThenInclude(up => up.Perfil)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (u == null) return NotFound(new { sucesso = false, mensagem = "Colaborador não encontrado." });
+
+        var perfil = u.UtilizadoresPerfis.FirstOrDefault()?.Perfil;
+
+        return Json(new
+        {
+            sucesso = true,
+            id = u.Id,
+            nomeCompleto = u.NomeCompleto,
+            nomeUtilizador = u.NomeUtilizador,
+            email = u.Email,
+            telefone = u.Telefone,
+            perfilId = perfil?.Id,
+            perfilNome = perfil?.Nome,
+            hasPin = !string.IsNullOrEmpty(u.HashPin),
+            ativo = u.Ativo,
+            ehRootAdmin = u.EhRootAdmin
+        });
+    }
+
     [HttpPost("criar")]
     [Authorize(Policy = PermissoesCatalogo.UtilizadoresGerir)]
     [ValidateAntiForgeryToken]
