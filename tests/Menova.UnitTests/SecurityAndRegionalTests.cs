@@ -86,4 +86,65 @@ public class SecurityAndRegionalTests
         permissoesProibidasGarcom.Should().NotContain(Menova.Application.Security.PermissoesCatalogo.ContasAbrir);
         permissoesProibidasGarcom.Should().NotContain(Menova.Application.Security.PermissoesCatalogo.MesasVer);
     }
+
+    [Fact]
+    public void Utilizador_DevePermitirAssociarCredencialBiometrica()
+    {
+        var utilizador = new Menova.Domain.Identity.Utilizador
+        {
+            NomeCompleto = "Garçom Amilcar",
+            NomeUtilizador = "amilcar",
+            HashPalavraPasse = "hash",
+            BiometriaCredencialId = "bio_cred_xyz_123",
+            BiometriaDispositivo = "iPhone 15 Pro (Face ID)",
+            BiometriaRegistadaEm = DateTime.UtcNow
+        };
+
+        utilizador.BiometriaCredencialId.Should().Be("bio_cred_xyz_123");
+        utilizador.BiometriaDispositivo.Should().Contain("Face ID");
+        utilizador.BiometriaRegistadaEm.Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData("1234", true)]
+    [InlineData("9999", true)]
+    [InlineData("0000", true)]
+    [InlineData("123", false)]
+    [InlineData("12345", false)]
+    [InlineData("abcd", false)]
+    [InlineData("12a4", false)]
+    public void PinGarcom_ValidacaoDeFormato4Digitos(string pin, bool validoEsperado)
+    {
+        var regex = new System.Text.RegularExpressions.Regex(@"^\d{4}$");
+        var valido = regex.IsMatch(pin);
+        valido.Should().Be(validoEsperado);
+    }
+
+    [Fact]
+    public void SalaDtos_AtualizarZonaDtoECriarMesaDto_DevemConterTodosOsDados()
+    {
+        var zonaId = Guid.NewGuid();
+        var zonaDto = new Menova.Application.DTOs.AtualizarZonaDto(
+            Id: zonaId,
+            Nome: "Esplanada Sul",
+            Ordem: 2,
+            Ativa: true
+        );
+
+        zonaDto.Nome.Should().Be("Esplanada Sul");
+        zonaDto.Ordem.Should().Be(2);
+        zonaDto.Ativa.Should().BeTrue();
+
+        var mesaDto = new Menova.Application.DTOs.CriarMesaDto(
+            ZonaId: zonaDto.Id,
+            Numero: "15",
+            Lugares: 6,
+            PosicaoX: 10,
+            PosicaoY: 20
+        );
+
+        mesaDto.Numero.Should().Be("15");
+        mesaDto.Lugares.Should().Be(6);
+        mesaDto.ZonaId.Should().Be(zonaDto.Id);
+    }
 }

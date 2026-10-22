@@ -18,6 +18,24 @@
     </div>
 }
 
+<!-- Botão de Acesso Rápido por Biometria Nativa (Face ID / Impressão Digital) -->
+<div id="blocoLoginBiometria" class="d-none mb-3">
+    <div id="alertaErroBio" class="alert alert-danger py-2 px-3 small d-none mb-2"></div>
+    <button type="button" id="btnAcessoBiometria" class="btn text-white w-100 py-3 fw-bold rounded-4 shadow-sm d-flex align-items-center justify-content-center gap-2" style="background: linear-gradient(135deg, #6E1A33 0%, #4a0f20 100%); font-size: 1.05rem;" onclick="iniciarLoginBiometria()">
+        <i class="bi bi-fingerprint fs-4" id="iconBioLogin"></i>
+        <span id="textBioLogin">Entrar com Face ID / Digital</span>
+        <span id="spinnerBioLogin" class="spinner-border spinner-border-sm d-none" role="status"></span>
+    </button>
+    <div class="text-center mt-2 small text-muted">
+        <span id="labelDispositivoBio">Dispositivo registado com autenticação biométrica</span>
+    </div>
+    <div class="d-flex align-items-center my-3">
+        <hr class="flex-grow-1 my-0 text-muted opacity-25">
+        <span class="px-2 text-muted small fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">OU ACEDA COM</span>
+        <hr class="flex-grow-1 my-0 text-muted opacity-25">
+    </div>
+</div>
+
 <!-- Abas de Seleção: Credenciais vs PIN -->
 <ul class="nav nav-pills nav-fill mb-3 p-1 rounded-3 bg-light border" id="loginTabs" role="tablist">
     <li class="nav-item" role="presentation">
@@ -95,7 +113,7 @@
             }
 
             <div class="text-center mb-3">
-                <label for="inputPin" class="form-label fw-semibold text-dark small">Introduza o seu PIN pessoal (4 dígitos)</label>
+                <label for="inputPin" class="form-label fw-semibold text-dark small">Introduza o seu PIN de 4 dígitos</label>
                 <input type="password" name="pin" id="inputPin" class="form-control form-control-lg text-center fw-bold fs-3 letter-spacing-lg mx-auto" 
                        style="max-width: 200px; letter-spacing: 0.5rem;" maxlength="8" inputmode="numeric" pattern="[0-9]*" placeholder="••••" required autocomplete="off" />
             </div>
@@ -144,8 +162,8 @@
             var input = document.getElementById('inputPin');
             if (input && input.value.length < 8) {
                 input.value += d;
-                if (input.value.length === 4) {
-                    // Opcional: auto-submeter ao atingir 4 dígitos
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(8);
                 }
             }
         }
@@ -157,6 +175,20 @@
             }
         }
 
+        function base64ToBuffer(base64) {
+            let str = base64.replace(/-/g, '+').replace(/_/g, '/');
+            while (str.length % 4) {
+                str += '=';
+            }
+            const binary = window.atob(str);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // Reconhecimento de Biometria no Dispositivo
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 var token = localStorage.getItem('menova_device_token');
@@ -164,7 +196,110 @@
                     var inputToken = document.getElementById('inputTokenDispositivo');
                     if (inputToken) inputToken.value = token;
                 }
-            } catch (e) {}
+
+                var credId = localStorage.getItem('menova_biometria_cred_id');
+                var dispositivoNome = localStorage.getItem('menova_biometria_dispositivo');
+                if (credId && window.PublicKeyCredential) {
+                    var bloco = document.getElementById('blocoLoginBiometria');
+                    if (bloco) {
+                        bloco.classList.remove('d-none');
+                        if (dispositivoNome) {
+                            var label = document.getElementById('labelDispositivoBio');
+                            if (label) label.textContent = 'Autenticado para: ' + dispositivoNome;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Erro ao carregar credenciais locais:', e);
+            }
         });
+
+        // Iniciar Autenticação Biométrica Nativa (Face ID / Fingerprint)
+        async function iniciarLoginBiometria() {
+            const credId = localStorage.getItem('menova_biometria_cred_id');
+            if (!credId || !window.PublicKeyCredential) return;
+
+            const btn = document.getElementById('btnAcessoBiometria');
+            const text = document.getElementById('textBioLogin');
+            const icon = document.getElementById('iconBioLogin');
+            const spinner = document.getElementById('spinnerBioLogin');
+
+            btn.disabled = true;
+            text.textContent = 'Aguardando validação...';
+            icon.classList.add('d-none');
+            spinner.classList.remove('d-none');
+
+            try {
+                // 1. Obter Desafio de Login do Servidor
+                const respDesafio = await fetch('/auth/biometria/desafio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!respDesafio.ok) throw new Error('Não foi possível gerar desafio de segurança.');
+                const dadosDesafio = await respDesafio.json();
+
+                // 2. Chamar o Autenticador Nativo do Sistema Operativo (Face ID / Touch ID)
+                const challengeBuffer = base64ToBuffer(dadosDesafio.challenge);
+                const credIdBuffer = base64ToBuffer(credId);
+
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: challengeBuffer,
+                        allowCredentials: [{
+                            id: credIdBuffer,
+                            type: 'public-key',
+                            transports: ['internal']
+                        }],
+                        userVerification: 'required',
+                        timeout: 60000
+                    }
+                });
+
+                if (!assertion) throw new Error('Autenticação biométrica cancelada.');
+
+                // 3. Validar no Servidor e Iniciar Sessão
+                const urlParams = new URLSearchParams(window.location.search);
+                const returnUrl = urlParams.get('returnUrl') || '';
+
+                const respAuth = await fetch('/auth/biometria/autenticar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        credentialId: credId,
+                        returnUrl: returnUrl
+                    })
+                });
+
+                const dataAuth = await respAuth.json();
+
+                if (respAuth.ok && dataAuth.sucesso) {
+                    text.textContent = 'Bem-vindo, ' + (dataAuth.nome || 'Colaborador') + '!';
+                    setTimeout(() => {
+                        window.location.href = dataAuth.redirecionarUrl || '/garcom';
+                    }, 400);
+                } else {
+                    const elAlerta = document.getElementById('alertaErroBio');
+                    if (elAlerta) {
+                        elAlerta.textContent = dataAuth.mensagem || 'Falha na validação biométrica.';
+                        elAlerta.classList.remove('d-none');
+                    }
+                }
+            } catch (err) {
+                console.warn('Erro no login biométrico:', err);
+                if (err.name !== 'NotAllowedError') {
+                    const elAlerta = document.getElementById('alertaErroBio');
+                    if (elAlerta) {
+                        elAlerta.textContent = 'Erro na leitura biométrica: ' + (err.message || 'Tente com o PIN ou Palavra-passe.');
+                        elAlerta.classList.remove('d-none');
+                    }
+                }
+            } finally {
+                btn.disabled = false;
+                text.textContent = 'Entrar com Face ID / Digital';
+                icon.classList.remove('d-none');
+                spinner.classList.add('d-none');
+            }
+        }
     </script>
 }

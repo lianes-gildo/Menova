@@ -58,6 +58,7 @@ public class PedidosController : Controller
                 {
                     id = c.Id,
                     numero = c.Numero,
+                    mesaId = c.MesaId,
                     mesaNumero = c.MesaNumero,
                     zonaNome = c.ZonaNome,
                     criadoEm = c.CriadoEm.ToString("dd/MM/yyyy HH:mm"),
@@ -78,6 +79,11 @@ public class PedidosController : Controller
     [HttpGet("nova-comanda")]
     public async Task<IActionResult> NovaComanda(Guid? mesaId = null)
     {
+        if (User.IsInRole(PerfisSistema.Garcom))
+        {
+            return RedirectToAction("Index", "Garcom", new { mesaId });
+        }
+
         var zonas = await _salaService.GetZonasComMesasAsync();
         var menu = await _menuService.GetMenuCompletoAsync();
 

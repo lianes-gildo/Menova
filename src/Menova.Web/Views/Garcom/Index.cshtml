@@ -1149,6 +1149,17 @@
     document.addEventListener('DOMContentLoaded', function () {
         carregarStatusCozinha();
         setInterval(carregarStatusCozinha, 10000);
+
+        // Pré-selecionar mesa se fornecida por URL (/garcom?mesaId=...)
+        const urlParams = new URLSearchParams(window.location.search);
+        const mesaParam = urlParams.get('mesaId');
+        if (mesaParam) {
+            const chip = document.getElementById('chip-mesa-' + mesaParam);
+            if (chip) {
+                chip.click();
+                chip.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            }
+        }
     });
 </script>
 }

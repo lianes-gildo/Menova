@@ -62,4 +62,142 @@ public class MesasController : Controller
         if (mesa == null) return NotFound();
         return Json(mesa);
     }
+
+    [HttpPost("criar-mesa")]
+    [Authorize(Policy = PermissoesCatalogo.MesasGerir)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CriarMesa([FromForm] CriarMesaDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Numero))
+        {
+            TempData["Erro"] = "O número ou identificador da mesa é obrigatório.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            await _salaService.CriarMesaAsync(dto);
+            TempData["Sucesso"] = $"Mesa {dto.Numero} criada com sucesso com capacidade para {dto.Lugares} pessoas.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao criar mesa");
+            TempData["Erro"] = $"Erro ao criar mesa: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost("editar-mesa")]
+    [Authorize(Policy = PermissoesCatalogo.MesasGerir)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditarMesa([FromForm] AtualizarMesaDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Numero))
+        {
+            TempData["Erro"] = "O número da mesa é obrigatório.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            await _salaService.AtualizarMesaAsync(dto);
+            TempData["Sucesso"] = $"Mesa {dto.Numero} atualizada com sucesso.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao atualizar mesa");
+            TempData["Erro"] = $"Erro ao atualizar mesa: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost("eliminar-mesa/{id:guid}")]
+    [Authorize(Policy = PermissoesCatalogo.MesasGerir)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EliminarMesa(Guid id)
+    {
+        try
+        {
+            await _salaService.EliminarMesaAsync(id);
+            TempData["Sucesso"] = "Mesa desativada com sucesso.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao eliminar mesa");
+            TempData["Erro"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost("criar-zona")]
+    [Authorize(Policy = PermissoesCatalogo.MesasGerir)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CriarZona([FromForm] CriarZonaDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Nome))
+        {
+            TempData["Erro"] = "O nome do salão/zona é obrigatório.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            await _salaService.CriarZonaAsync(dto);
+            TempData["Sucesso"] = $"Salão/Zona '{dto.Nome}' criado com sucesso.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao criar zona");
+            TempData["Erro"] = $"Erro ao criar salão: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost("editar-zona")]
+    [Authorize(Policy = PermissoesCatalogo.MesasGerir)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditarZona([FromForm] AtualizarZonaDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Nome))
+        {
+            TempData["Erro"] = "O nome do salão é obrigatório.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            await _salaService.AtualizarZonaAsync(dto);
+            TempData["Sucesso"] = $"Salão '{dto.Nome}' atualizado com sucesso.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao editar zona");
+            TempData["Erro"] = $"Erro ao editar salão: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost("eliminar-zona/{id:guid}")]
+    [Authorize(Policy = PermissoesCatalogo.MesasGerir)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EliminarZona(Guid id)
+    {
+        try
+        {
+            await _salaService.EliminarZonaAsync(id);
+            TempData["Sucesso"] = "Salão desativado com sucesso.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao eliminar salão");
+            TempData["Erro"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
 }

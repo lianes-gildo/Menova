@@ -3,33 +3,44 @@
 @using Menova.Domain.Identity
 @inject Menova.Application.Interfaces.ICurrentUserService CurrentUser
 @{
-    if (User.IsInRole(PerfisSistema.Garcom))
+    var ehGarcom = User.IsInRole(PerfisSistema.Garcom);
+    if (ehGarcom)
     {
         Layout = "_LayoutGarcom";
     }
     ViewData["Title"] = "Gestão de Pedidos e Contas";
-    var totalValorAberto = Model.Sum(c => c.TotalLiquido);
+    var totalValorAberto = Model?.Sum(c => c.TotalLiquido) ?? 0m;
+    var podeCobrar = CurrentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar);
 }
 
 <div class="row mb-3 align-items-center">
     <div class="col-md-6">
         <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-receipt-cutoff me-2"></i>Contas e Comandas Abertas</h3>
-        <p class="text-muted small mb-0">Controlo de consumo ativo por mesa e balcão.</p>
+        <p class="text-muted small mb-0">Controlo de consumo ativo por mesa e balcão em tempo real.</p>
     </div>
     <div class="col-md-6 text-md-end mt-2 mt-md-0 d-flex flex-wrap gap-2 align-items-center justify-content-start justify-content-md-end">
-        <span class="badge bg-light text-dark border p-2">
+        <span class="badge bg-light text-dark border p-2 shadow-sm">
             Total em Aberto: <strong class="fs-6 text-success" id="labelTotalValorAberto">@totalValorAberto.ToString("N2") MT</strong>
         </span>
-        <button type="button" class="btn btn-sm btn-outline-secondary py-2 px-3" onclick="atualizarTabelaPedidosAjax()" title="Atualizar dados agora">
+        <button type="button" class="btn btn-sm btn-outline-secondary py-2 px-3 rounded-pill" onclick="atualizarTabelaPedidosAjax()" title="Atualizar dados agora">
             <i class="bi bi-arrow-clockwise me-1" id="iconSyncPedidos"></i>Atualizar
         </button>
-        <a href="/pedidos/nova-comanda" class="btn text-white py-2 px-3 text-nowrap fw-semibold shadow-sm" style="background-color: #6E1A33;">
-            <i class="bi bi-plus-circle me-1"></i>Nova Comanda
-        </a>
+        @if (ehGarcom)
+        {
+            <a href="/garcom" class="btn text-white py-2 px-3 text-nowrap fw-semibold shadow-sm rounded-pill" style="background-color: #6E1A33;">
+                <i class="bi bi-plus-circle me-1"></i>Novo Pedido
+            </a>
+        }
+        else
+        {
+            <a href="/pedidos/nova-comanda" class="btn text-white py-2 px-3 text-nowrap fw-semibold shadow-sm rounded-pill" style="background-color: #6E1A33;">
+                <i class="bi bi-plus-circle me-1"></i>Nova Comanda
+            </a>
+        }
     </div>
 </div>
 
-<div class="card border shadow-sm">
+<div class="card border shadow-sm rounded-4">
     <div class="card-header bg-white py-2 border-bottom">
         <div class="row g-2 align-items-center">
             <div class="col-sm-6">
@@ -38,15 +49,84 @@
                     <input type="text" id="filtroContas" class="form-control border-start-0" placeholder="Pesquisar por mesa, comanda ou responsável..." autocomplete="off">
                 </div>
             </div>
-            <div class="col-sm-6 text-sm-end text-muted small">
-                <span class="badge bg-success-subtle text-success border border-success-subtle me-1">
+            <div class="col-sm-6 text-sm-end text-muted small d-flex align-items-center justify-content-between justify-content-sm-end gap-2">
+                <span class="badge bg-success-subtle text-success border border-success-subtle">
                     <i class="bi bi-broadcast me-1"></i>Tempo Real Ativo
                 </span>
-                <span id="labelContasContador">@Model.Count contas em aberto</span>
+                <span id="labelContasContador" class="fw-semibold">@(Model?.Count ?? 0) contas em aberto</span>
             </div>
         </div>
     </div>
-    <div class="table-responsive">
+
+    <!-- Layout Mobile: Flutter-Grade Cards (Visível apenas em dispositivos móveis) -->
+    <div class="d-md-none p-2 bg-light bg-opacity-50" id="contasMobileContainer">
+        @if (Model == null || !Model.Any())
+        {
+            <div class="text-center py-5 text-muted bg-white rounded-3 border p-4 my-2">
+                <i class="bi bi-check2-circle fs-1 text-success d-block mb-2"></i>
+                <div class="fw-bold">Sem comandas abertas</div>
+                <small class="text-muted">Não existem contas ou comandas ativas neste momento.</small>
+            </div>
+        }
+        else
+        {
+            @foreach (var c in Model)
+            {
+                <div class="card border-0 shadow-sm rounded-3 mb-2 bg-white conta-card-item" data-search="@c.Numero @c.MesaNumero @c.ZonaNome @c.CriadoPor">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                @if (!string.IsNullOrEmpty(c.MesaNumero))
+                                {
+                                    <span class="badge px-2 py-1 text-white fw-bold me-1" style="background-color: #6E1A33; font-size: 0.85rem;">
+                                        <i class="bi bi-grid-fill me-1"></i>Mesa @c.MesaNumero
+                                    </span>
+                                    <span class="badge bg-light text-muted border small">@c.ZonaNome</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary px-2 py-1 fs-6"><i class="bi bi-shop me-1"></i>Balcão</span>
+                                }
+                            </div>
+                            <span class="badge bg-light text-dark border font-monospace fs-6">@c.Numero</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-baseline my-2">
+                            <div class="small text-muted">
+                                <div><i class="bi bi-person me-1"></i>@c.CriadoPor</div>
+                                <div><i class="bi bi-clock me-1"></i>@c.CriadoEm.ToString("dd/MM HH:mm") &bull; <span class="badge bg-secondary-subtle text-dark border-0">@c.Pedidos.Count pedido(s)</span></div>
+                            </div>
+                            <div class="text-end">
+                                <div class="small text-muted">Total Conta</div>
+                                <div class="fs-5 fw-bold text-success">@c.TotalLiquido.ToString("N2") MT</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                            <a href="/pedidos/detalhes/@c.Id" class="btn btn-outline-secondary btn-sm flex-grow-1 py-2 fw-semibold rounded-pill">
+                                <i class="bi bi-eye me-1"></i>Ver Detalhes
+                            </a>
+                            @if (podeCobrar)
+                            {
+                                <a href="/caixa/pagamento/@c.Id" class="btn text-white btn-sm flex-grow-1 py-2 fw-semibold rounded-pill shadow-sm" style="background-color: #6E1A33;">
+                                    <i class="bi bi-wallet2 me-1"></i>Cobrar
+                                </a>
+                            }
+                            else if (ehGarcom)
+                            {
+                                <a href="/garcom@(c.MesaId.HasValue ? $"?mesaId={c.MesaId.Value}" : "")" class="btn btn-sm flex-grow-1 py-2 fw-semibold rounded-pill text-white shadow-sm" style="background-color: #6E1A33;">
+                                    <i class="bi bi-plus-circle me-1"></i>+ Pedir Mais
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Layout Desktop: Tabela Tradicional com Paginação -->
+    <div class="d-none d-md-block table-responsive">
         <table class="table table-hover align-middle mb-0" id="tabelaPedidos" data-paginate="10" data-filter-input="#filtroContas">
             <thead class="table-light">
                 <tr>
@@ -56,7 +136,7 @@
                     <th>Responsável</th>
                     <th class="text-center">Total Pedidos</th>
                     <th class="text-end">Total (MZN)</th>
-                    <th class="text-end" style="width: 140px;">Ações</th>
+                    <th class="text-end" style="width: 170px;">Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -95,13 +175,19 @@
                             </td>
                             <td class="text-end fw-bold fs-6">@c.TotalLiquido.ToString("N2") MT</td>
                             <td class="text-end">
-                                <a href="/pedidos/detalhes/@c.Id" class="btn btn-sm btn-outline-secondary me-1" title="Ver Detalhes">
+                                <a href="/pedidos/detalhes/@c.Id" class="btn btn-sm btn-outline-secondary me-1 py-1 px-2 fw-semibold" title="Ver Detalhes">
                                     <i class="bi bi-eye"></i> Detalhes
                                 </a>
-                                @if (CurrentUser.TemPermissao(PermissoesCatalogo.CaixaCobrar))
+                                @if (podeCobrar)
                                 {
-                                    <a href="/caixa/pagamento/@c.Id" class="btn btn-sm text-white" style="background-color: #6E1A33;" title="Liquidar Conta">
+                                    <a href="/caixa/pagamento/@c.Id" class="btn btn-sm text-white py-1 px-2 fw-semibold" style="background-color: #6E1A33;" title="Liquidar Conta">
                                         <i class="bi bi-wallet2"></i> Cobrar
+                                    </a>
+                                }
+                                else if (ehGarcom)
+                                {
+                                    <a href="/garcom@(c.MesaId.HasValue ? $"?mesaId={c.MesaId.Value}" : "")" class="btn btn-sm btn-outline-danger py-1 px-2 fw-semibold" style="color: #6E1A33; border-color: #6E1A33;" title="Adicionar Itens à Comanda">
+                                        <i class="bi bi-plus-circle"></i> + Pedir
                                     </a>
                                 }
                             </td>
@@ -115,6 +201,9 @@
 
 @section Scripts {
 <script>
+    const podeCobrar = @(podeCobrar.ToString().ToLowerInvariant());
+    const ehGarcom = @(ehGarcom.ToString().ToLowerInvariant());
+
     async function atualizarTabelaPedidosAjax() {
         const icon = document.getElementById('iconSyncPedidos');
         if (icon) icon.classList.add('spin-animation');
@@ -133,51 +222,132 @@
             if (labelContador) labelContador.textContent = data.totalContas + ' contas em aberto';
 
             const tbody = document.querySelector('#tabelaPedidos tbody');
-            if (!tbody) return;
+            const mobileContainer = document.getElementById('contasMobileContainer');
 
             if (!data.contas || data.contas.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
-                            <i class="bi bi-check2-circle fs-2 text-success d-block mb-2"></i>
-                            Não existem contas ou comandas abertas no momento.
-                        </td>
-                    </tr>
-                `;
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-check2-circle fs-2 text-success d-block mb-2"></i>
+                                Não existem contas ou comandas abertas no momento.
+                            </td>
+                        </tr>
+                    `;
+                }
+                if (mobileContainer) {
+                    mobileContainer.innerHTML = `
+                        <div class="text-center py-5 text-muted bg-white rounded-3 border p-4 my-2">
+                            <i class="bi bi-check2-circle fs-1 text-success d-block mb-2"></i>
+                            <div class="fw-bold">Sem comandas abertas</div>
+                            <small class="text-muted">Não existem contas ou comandas ativas neste momento.</small>
+                        </div>
+                    `;
+                }
                 return;
             }
 
-            let html = '';
-            data.contas.forEach(c => {
-                const mesaHtml = c.mesaNumero 
-                    ? `<span class="fw-bold fs-6" style="color: #6E1A33;"><i class="bi bi-grid-fill me-1"></i>Mesa ${c.mesaNumero}</span><div class="small text-muted">${c.zonaNome || ''}</div>`
-                    : `<span class="badge bg-secondary"><i class="bi bi-shop me-1"></i>Balcão</span>`;
+            // 1. Renderizar Tabela Desktop
+            if (tbody) {
+                let htmlDesktop = '';
+                data.contas.forEach(c => {
+                    const mesaHtml = c.mesaNumero 
+                        ? `<span class="fw-bold fs-6" style="color: #6E1A33;"><i class="bi bi-grid-fill me-1"></i>Mesa ${c.mesaNumero}</span><div class="small text-muted">${c.zonaNome || ''}</div>`
+                        : `<span class="badge bg-secondary"><i class="bi bi-shop me-1"></i>Balcão</span>`;
 
-                html += `
-                    <tr>
-                        <td>
-                            <span class="badge bg-light text-dark border font-monospace fs-6">${c.numero}</span>
-                        </td>
-                        <td>${mesaHtml}</td>
-                        <td>${c.criadoEm}</td>
-                        <td><i class="bi bi-person me-1"></i>${c.criadoPor}</td>
-                        <td class="text-center">
-                            <span class="badge bg-secondary">${c.totalPedidos} comandas</span>
-                        </td>
-                        <td class="text-end fw-bold fs-6">${c.totalLiquidoFormatado}</td>
-                        <td class="text-end">
-                            <a href="/pedidos/detalhes/${c.id}" class="btn btn-sm btn-outline-secondary me-1 py-1 px-2 fw-semibold" title="Ver Detalhes">
-                                <i class="bi bi-eye"></i> Detalhes
-                            </a>
+                    let acoesHtml = `
+                        <a href="/pedidos/detalhes/${c.id}" class="btn btn-sm btn-outline-secondary me-1 py-1 px-2 fw-semibold" title="Ver Detalhes">
+                            <i class="bi bi-eye"></i> Detalhes
+                        </a>
+                    `;
+
+                    if (podeCobrar) {
+                        acoesHtml += `
                             <a href="/caixa/pagamento/${c.id}" class="btn btn-sm text-white py-1 px-2 fw-semibold" style="background-color: #6E1A33;" title="Liquidar Conta">
                                 <i class="bi bi-wallet2"></i> Cobrar
                             </a>
-                        </td>
-                    </tr>
-                `;
-            });
+                        `;
+                    } else if (ehGarcom) {
+                        acoesHtml += `
+                            <a href="/garcom${c.mesaId ? '?mesaId=' + c.mesaId : ''}" class="btn btn-sm btn-outline-danger py-1 px-2 fw-semibold" style="color: #6E1A33; border-color: #6E1A33;" title="Adicionar Itens à Comanda">
+                                <i class="bi bi-plus-circle"></i> + Pedir
+                            </a>
+                        `;
+                    }
 
-            tbody.innerHTML = html;
+                    htmlDesktop += `
+                        <tr>
+                            <td>
+                                <span class="badge bg-light text-dark border font-monospace fs-6">${c.numero}</span>
+                            </td>
+                            <td>${mesaHtml}</td>
+                            <td>${c.criadoEm}</td>
+                            <td><i class="bi bi-person me-1"></i>${c.criadoPor}</td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary">${c.totalPedidos} comandas</span>
+                            </td>
+                            <td class="text-end fw-bold fs-6">${c.totalLiquidoFormatado}</td>
+                            <td class="text-end">${acoesHtml}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = htmlDesktop;
+            }
+
+            // 2. Renderizar Cards Mobile (Flutter-Grade)
+            if (mobileContainer) {
+                let htmlMobile = '';
+                data.contas.forEach(c => {
+                    const mesaBadge = c.mesaNumero
+                        ? `<span class="badge px-2 py-1 text-white fw-bold me-1" style="background-color: #6E1A33; font-size: 0.85rem;"><i class="bi bi-grid-fill me-1"></i>Mesa ${c.mesaNumero}</span><span class="badge bg-light text-muted border small">${c.zonaNome || ''}</span>`
+                        : `<span class="badge bg-secondary px-2 py-1 fs-6"><i class="bi bi-shop me-1"></i>Balcão</span>`;
+
+                    let acoesMobile = `
+                        <a href="/pedidos/detalhes/${c.id}" class="btn btn-outline-secondary btn-sm flex-grow-1 py-2 fw-semibold rounded-pill">
+                            <i class="bi bi-eye me-1"></i>Ver Detalhes
+                        </a>
+                    `;
+
+                    if (podeCobrar) {
+                        acoesMobile += `
+                            <a href="/caixa/pagamento/${c.id}" class="btn text-white btn-sm flex-grow-1 py-2 fw-semibold rounded-pill shadow-sm" style="background-color: #6E1A33;">
+                                <i class="bi bi-wallet2 me-1"></i>Cobrar
+                            </a>
+                        `;
+                    } else if (ehGarcom) {
+                        acoesMobile += `
+                            <a href="/garcom${c.mesaId ? '?mesaId=' + c.mesaId : ''}" class="btn text-white btn-sm flex-grow-1 py-2 fw-semibold rounded-pill shadow-sm" style="background-color: #6E1A33;">
+                                <i class="bi bi-plus-circle me-1"></i>+ Pedir Mais
+                            </a>
+                        `;
+                    }
+
+                    htmlMobile += `
+                        <div class="card border-0 shadow-sm rounded-3 mb-2 bg-white conta-card-item" data-search="${c.numero} ${c.mesaNumero || ''} ${c.zonaNome || ''} ${c.criadoPor}">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>${mesaBadge}</div>
+                                    <span class="badge bg-light text-dark border font-monospace fs-6">${c.numero}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-baseline my-2">
+                                    <div class="small text-muted">
+                                        <div><i class="bi bi-person me-1"></i>${c.criadoPor}</div>
+                                        <div><i class="bi bi-clock me-1"></i>${c.criadoEm} &bull; <span class="badge bg-secondary-subtle text-dark border-0">${c.totalPedidos} pedido(s)</span></div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small text-muted">Total Conta</div>
+                                        <div class="fs-5 fw-bold text-success">${c.totalLiquidoFormatado}</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                                    ${acoesMobile}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                mobileContainer.innerHTML = htmlMobile;
+            }
 
             // Refrescar paginação se a função global estiver disponível
             const table = document.getElementById('tabelaPedidos');
@@ -193,12 +363,32 @@
         }
     }
 
-    // Ouvir evento SignalR emitido globalmente por site.js
+    // Filtro instantâneo para cards mobile
+    document.getElementById('filtroContas')?.addEventListener('input', function(e) {
+        const query = (e.target.value || '').toLowerCase().trim();
+        const cards = document.querySelectorAll('#contasMobileContainer .conta-card-item');
+        cards.forEach(card => {
+            const searchData = (card.getAttribute('data-search') || '').toLowerCase();
+            if (!query || searchData.includes(query)) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // Ouvir eventos SignalR em tempo real
     window.addEventListener('menova:novo-pedido', function () {
         atualizarTabelaPedidosAjax();
     });
+    window.addEventListener('menova:pedido-atualizado', function () {
+        atualizarTabelaPedidosAjax();
+    });
+    window.addEventListener('menova:mesa-atualizada', function () {
+        atualizarTabelaPedidosAjax();
+    });
 
-    // Fallback de polling a cada 20 segundos
-    setInterval(atualizarTabelaPedidosAjax, 20000);
+    // Fallback de polling a cada 15 segundos
+    setInterval(atualizarTabelaPedidosAjax, 15000);
 </script>
 }

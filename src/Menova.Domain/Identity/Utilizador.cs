@@ -18,6 +18,12 @@ public class Utilizador : SoftDeletableEntity
     public bool DeveAlterarPalavraPasse { get; set; } = false;
     public string SeloSeguranca { get; set; } = Guid.NewGuid().ToString("N");
 
+    // Autenticação Biométrica Nativa (WebAuthn / FIDO2 / Face ID / Impressão Digital)
+    public string? BiometriaCredencialId { get; set; }
+    public string? BiometriaPublicKey { get; set; }
+    public string? BiometriaDispositivo { get; set; }
+    public DateTime? BiometriaRegistadaEm { get; set; }
+
     public bool EhRootAdmin => string.Equals(NomeUtilizador, "admin", StringComparison.OrdinalIgnoreCase);
 
     public ICollection<UtilizadorPerfil> UtilizadoresPerfis { get; set; } = new List<UtilizadorPerfil>();

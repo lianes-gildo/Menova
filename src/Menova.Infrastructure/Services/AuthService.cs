@@ -248,6 +248,83 @@ public class AuthService : IAuthService
             SeloSeguranca: utilizador.SeloSeguranca);
     }
 
+    public async Task<ResultadoLogin> AutenticarBiometriaAsync(
+        string credencialId,
+        string ip,
+        string? userAgent,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(credencialId))
+        {
+            return new ResultadoLogin(false, "Credencial biométrica inválida.");
+        }
+
+        var utilizador = await _context.Utilizadores
+            .Include(u => u.UtilizadoresPerfis).ThenInclude(up => up.Perfil)
+            .FirstOrDefaultAsync(u => u.Ativo && u.BiometriaCredencialId == credencialId, cancellationToken);
+
+        if (utilizador == null)
+        {
+            RegistarTentativa(null, "BIOMETRIA_DESCONHECIDA", ip, null, false, "Credencial biométrica não reconhecida");
+            await _context.SaveChangesAsync(cancellationToken);
+            return new ResultadoLogin(false, "Dispositivo biométrico não associado a nenhum utilizador ativo.");
+        }
+
+        if (utilizador.EstaBloqueado())
+        {
+            var minutosRestantes = (int)Math.Ceiling((utilizador.BloqueadoAte!.Value - DateTime.UtcNow).TotalMinutes);
+            RegistarTentativa(utilizador.Id, utilizador.NomeUtilizador, ip, null, false, "Conta bloqueada");
+            await _context.SaveChangesAsync(cancellationToken);
+            return new ResultadoLogin(false, $"Conta temporariamente bloqueada. Tente dentro de {minutosRestantes} minuto(s).", Bloqueado: true, BloqueadoAte: utilizador.BloqueadoAte);
+        }
+
+        utilizador.RegistarSucessoLogin();
+
+        // 1. Invalidar sessões anteriores (Garantir 1 única sessão ativa por utilizador)
+        var sessoesAnteriores = await _context.SessoesUtilizador
+            .Where(s => s.UtilizadorId == utilizador.Id && !s.Revogada)
+            .ToListAsync(cancellationToken);
+        foreach (var s in sessoesAnteriores)
+        {
+            s.Revogada = true;
+        }
+
+        // 2. Gerar novo Selo de Segurança único para invalidar outros dispositivos
+        utilizador.SeloSeguranca = Guid.NewGuid().ToString("N");
+
+        var sessao = new SessaoUtilizador
+        {
+            UtilizadorId = utilizador.Id,
+            Inicio = DateTime.UtcNow,
+            UltimoAcesso = DateTime.UtcNow,
+            Ip = ip,
+            UserAgent = userAgent,
+            Revogada = false
+        };
+        _context.SessoesUtilizador.Add(sessao);
+
+        RegistarTentativa(utilizador.Id, utilizador.NomeUtilizador, ip, null, true, "Autenticação biométrica bem-sucedida");
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var perfilPrincipal = utilizador.UtilizadoresPerfis.FirstOrDefault()?.Perfil.Codigo;
+
+        await _auditoriaService.RegistarAsync(
+            "login.biometria.sucesso",
+            "utilizadores",
+            utilizador.Id.ToString(),
+            valoresDepois: new { utilizador.NomeUtilizador, ip, dispositivo = utilizador.BiometriaDispositivo },
+            cancellationToken: cancellationToken);
+
+        return new ResultadoLogin(
+            Sucesso: true,
+            DeveAlterarPalavraPasse: false,
+            UtilizadorId: utilizador.Id,
+            NomeCompleto: utilizador.NomeCompleto,
+            NomeUtilizador: utilizador.NomeUtilizador,
+            PerfilCodigo: perfilPrincipal,
+            SeloSeguranca: utilizador.SeloSeguranca);
+    }
+
     public async Task<(bool Sucesso, string? MensagemErro)> AlterarPalavraPasseAsync(
         Guid utilizadorId,
         string palavraPasseAtual,

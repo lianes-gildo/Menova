@@ -28,15 +28,21 @@
             --sar: env(safe-area-inset-right, 0px);
             --sab: env(safe-area-inset-bottom, 0px);
             --sal: env(safe-area-inset-left, 0px);
+            --menova-wine: #6E1A33;
+            --menova-wine-dark: #551427;
+            --menova-wine-light: #fbebf0;
         }
         body {
             background-color: #f7f5f2;
-            color: #2b2b2b;
+            color: #242424;
             overscroll-behavior-y: contain;
             -webkit-tap-highlight-color: transparent;
-            padding-top: calc(96px + var(--sat));
-            padding-bottom: calc(85px + var(--sab));
+            padding-top: calc(56px + var(--sat));
+            padding-bottom: calc(72px + var(--sab));
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
+
+        /* Header Flutter-Style Superior Fixo */
         .garcom-header-fixed {
             position: fixed;
             top: 0;
@@ -44,78 +50,151 @@
             right: 0;
             width: 100%;
             z-index: 1030;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.14);
+            background-color: var(--menova-wine);
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+            padding-top: var(--sat);
         }
         .garcom-navbar {
-            background-color: #6E1A33;
-            color: #ffffff;
-            padding-top: calc(0.45rem + var(--sat));
-            padding-bottom: 0.45rem;
-            padding-left: calc(0.75rem + var(--sal));
-            padding-right: calc(0.75rem + var(--sar));
-        }
-        .garcom-brand {
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            color: #ffffff;
-            text-decoration: none;
+            height: 56px;
+            padding-left: calc(0.85rem + var(--sal));
+            padding-right: calc(0.85rem + var(--sar));
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: space-between;
+        }
+        .garcom-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #ffffff;
         }
         .garcom-brand img {
-            height: 38px;
+            height: 36px;
+            max-height: 36px;
             width: auto;
-            border-radius: 4px;
+            max-width: 140px;
+            object-fit: contain;
+            display: block;
         }
-        .toast-container-mobile {
+        .status-dot-pulse {
+            width: 8px;
+            height: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.4);
+            animation: pulse-dot 2s infinite;
+        }
+        @@keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* Bottom Navigation Bar Flutter-Grade (Material 3 Elevado) */
+        .garcom-bottom-nav {
             position: fixed;
-            top: calc(65px + var(--sat));
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1060;
-            width: 90%;
-            max-width: 360px;
-            pointer-events: none;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(64px + var(--sab));
+            background: #ffffff;
+            border-top: 1px solid #ebe5e7;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: var(--sab);
+            padding-left: var(--sal);
+            padding-right: var(--sar);
+            z-index: 1040;
+            box-shadow: 0 -3px 18px rgba(0, 0, 0, 0.08);
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .toast-container-mobile .toast {
-            pointer-events: auto;
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-decoration: none;
+            color: #7d7276;
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 6px 0;
+            touch-action: manipulation;
         }
+        .bottom-nav-item .nav-icon-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 30px;
+            border-radius: 16px;
+            font-size: 1.25rem;
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bottom-nav-item .nav-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-top: 2px;
+            letter-spacing: -0.2px;
+            transition: color 0.18s ease;
+        }
+        .bottom-nav-item.active {
+            color: var(--menova-wine);
+        }
+        .bottom-nav-item.active .nav-icon-wrapper {
+            background-color: var(--menova-wine-light);
+            color: var(--menova-wine);
+            transform: translateY(-1px);
+        }
+        .bottom-nav-item.active .nav-label {
+            font-weight: 700;
+            color: var(--menova-wine);
+        }
+        .bottom-nav-item:active {
+            transform: scale(0.92);
+        }
+
         button, .btn, .card {
             touch-action: manipulation;
         }
     </style>
 </head>
 <body class="d-flex flex-column min-vh-100" style="max-width: 100vw; overflow-x: hidden;">
-    <!-- Bloco de Cabeçalho 100% Fixo no Topo (Não sobe no scroll) -->
+    <!-- Cabeçalho Flutter 100% Fixo no Topo (Não sobe no scroll) -->
     <header class="garcom-header-fixed" id="garcomHeaderFixed">
-        <!-- Barra Superior Vinho (Logótipo Menova Ampliado + Perfil) -->
-        <div class="garcom-navbar d-flex justify-content-between align-items-center">
-            <div class="garcom-brand user-select-none d-flex align-items-center" style="cursor: default; min-width: 0;">
-                <img src="~/menova_logo_0f.png" alt="Menova" style="height: 38px !important; max-height: 38px !important; width: auto !important; max-width: 160px !important; object-fit: contain !important; display: block !important;" />
-            </div>
+        <div class="garcom-navbar">
+            <a href="/garcom" class="garcom-brand">
+                <img src="~/menova_logo_0f.png" alt="Menova" />
+                <div class="status-dot-pulse" title="Conectado em tempo real" id="headerConnectionDot"></div>
+            </a>
             
-            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <div class="d-flex align-items-center gap-2">
+                <a href="/garcom/perfil" class="btn btn-sm btn-outline-light py-1 px-2 d-flex align-items-center rounded-pill shadow-none" style="font-size: 0.82rem; border-color: rgba(255,255,255,0.35);">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <span class="d-inline-block text-truncate" style="max-width: 85px; font-weight: 600;">@(CurrentUser.NomeCompleto?.Split(' ')[0] ?? CurrentUser.NomeUtilizador)</span>
+                </a>
+
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-light dropdown-toggle py-1 px-2 d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle me-1"></i>
-                        <span class="d-inline-block text-truncate" style="max-width: 80px;">@(CurrentUser.NomeCompleto?.Split(' ')[0] ?? CurrentUser.NomeUtilizador)</span>
+                    <button class="btn btn-sm btn-outline-light py-1 px-2 rounded-circle shadow-none" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: rgba(255,255,255,0.35);" title="Opções">
+                        <i class="bi bi-three-dots-vertical"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow">
-                        <li><h6 class="dropdown-header">Colaborador: @CurrentUser.NomeUtilizador</h6></li>
-                        <li><a class="dropdown-item" href="/garcom"><i class="bi bi-phone me-2"></i>Ementa &amp; Pedido</a></li>
-                        <li><a class="dropdown-item" href="/mesas"><i class="bi bi-layout-wtf me-2"></i>Salão &amp; Mesas</a></li>
-                        <li><a class="dropdown-item" href="/pedidos"><i class="bi bi-receipt me-2"></i>Comandas Ativas</a></li>
-                        <li class="pwa-install-menu-item"><a class="dropdown-item" href="/app"><i class="bi bi-download me-2"></i>Instalar Aplicação</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-1">
+                        <li><h6 class="dropdown-header">Garçom: @CurrentUser.NomeUtilizador</h6></li>
+                        <li><a class="dropdown-item py-2" href="/garcom/perfil"><i class="bi bi-shield-lock me-2 text-primary"></i>Trocar PIN &amp; Biometria</a></li>
+                        <li class="pwa-install-menu-item"><a class="dropdown-item py-2" href="/app"><i class="bi bi-download me-2 text-success"></i>Instalar Aplicação</a></li>
                         @if (CurrentUser.TemPermissao(PermissoesCatalogo.PainelVer))
                         {
-                            <li><a class="dropdown-item" href="/dashboard"><i class="bi bi-grid-1x2 me-2"></i>Painel Principal</a></li>
+                            <li><a class="dropdown-item py-2" href="/dashboard"><i class="bi bi-grid-1x2 me-2"></i>Painel Central</a></li>
                         }
-                        <li><hr class="dropdown-divider"></li>
+                        <li><hr class="dropdown-divider my-1"></li>
                         <li>
                             <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="dropdown-item text-danger">
+                                <button type="submit" class="dropdown-item py-2 text-danger">
                                     <i class="bi bi-box-arrow-right me-2"></i>Terminar sessão
                                 </button>
                             </form>
@@ -124,27 +203,46 @@
                 </div>
             </div>
         </div>
-
-        <!-- Subnav Coeso e Estruturado do Garçom (Fixo junto ao Header) -->
-        @{
-            var ctrlAtual = ViewContext.RouteData.Values["Controller"]?.ToString();
-        }
-        <nav class="bg-white border-bottom shadow-sm px-2 py-1" style="max-width: 100vw; overflow-x: auto; scrollbar-width: none;">
-            <div class="d-flex align-items-center justify-content-start justify-content-sm-center gap-1 gap-sm-2 flex-nowrap" style="min-width: max-content;">
-                <a href="/garcom" class="btn btn-sm @(ctrlAtual == "Garcom" ? "text-white" : "btn-light border") px-2 px-sm-3 py-1 fw-semibold rounded-pill text-nowrap flex-shrink-0" style="@(ctrlAtual == "Garcom" ? "background-color: #6E1A33; border-color: #6E1A33;" : "")">
-                    <i class="bi bi-phone-fill me-1"></i>Ementa &amp; Pedido
-                </a>
-                <a href="/mesas" class="btn btn-sm @(ctrlAtual == "Mesas" ? "text-white" : "btn-light border") px-2 px-sm-3 py-1 fw-semibold rounded-pill text-nowrap flex-shrink-0" style="@(ctrlAtual == "Mesas" ? "background-color: #6E1A33; border-color: #6E1A33;" : "")">
-                    <i class="bi bi-layout-wtf me-1"></i>Salão &amp; Mesas
-                </a>
-                <a href="/pedidos" class="btn btn-sm @(ctrlAtual == "Pedidos" ? "text-white" : "btn-light border") px-2 px-sm-3 py-1 fw-semibold rounded-pill text-nowrap flex-shrink-0" style="@(ctrlAtual == "Pedidos" ? "background-color: #6E1A33; border-color: #6E1A33;" : "")">
-                    <i class="bi bi-receipt-cutoff me-1"></i>Comandas
-                </a>
-            </div>
-        </nav>
     </header>
 
-    <!-- Modal Global de Confirmação Interno (Regra 5: Zero alert/confirm nativo) -->
+    <!-- Conteúdo Principal Dinâmico -->
+    <main class="container-fluid px-2 py-3 flex-grow-1" style="max-width: 100vw; overflow-x: hidden; padding-left: calc(0.5rem + var(--sal)) !important; padding-right: calc(0.5rem + var(--sar)) !important;">
+        @RenderBody()
+    </main>
+
+    <!-- Barra de Navegação Inferior Flutter-Grade (Docked Bottom Navigation Bar) -->
+    @{
+        var ctrl = ViewContext.RouteData.Values["Controller"]?.ToString();
+        var act = ViewContext.RouteData.Values["Action"]?.ToString();
+    }
+    <nav class="garcom-bottom-nav" id="garcomBottomNav">
+        <a href="/garcom" class="bottom-nav-item @(ctrl == "Garcom" && act != "Perfil" ? "active" : "")" onclick="triggerHapticFeedback()">
+            <div class="nav-icon-wrapper">
+                <i class="bi bi-phone-fill"></i>
+            </div>
+            <span class="nav-label">Ementa</span>
+        </a>
+        <a href="/mesas" class="bottom-nav-item @(ctrl == "Mesas" ? "active" : "")" onclick="triggerHapticFeedback()">
+            <div class="nav-icon-wrapper">
+                <i class="bi bi-layout-wtf"></i>
+            </div>
+            <span class="nav-label">Mesas</span>
+        </a>
+        <a href="/pedidos" class="bottom-nav-item @(ctrl == "Pedidos" ? "active" : "")" onclick="triggerHapticFeedback()">
+            <div class="nav-icon-wrapper">
+                <i class="bi bi-receipt-cutoff"></i>
+            </div>
+            <span class="nav-label">Comandas</span>
+        </a>
+        <a href="/garcom/perfil" class="bottom-nav-item @(ctrl == "Garcom" && act == "Perfil" ? "active" : "")" onclick="triggerHapticFeedback()">
+            <div class="nav-icon-wrapper">
+                <i class="bi bi-person-badge-fill"></i>
+            </div>
+            <span class="nav-label">Meu Perfil</span>
+        </a>
+    </nav>
+
+    <!-- Modal Global de Confirmação Interno (Zero alert/confirm nativo) -->
     <div class="modal fade" id="globalConfirmModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow border-0 rounded-4">
@@ -163,21 +261,22 @@
         </div>
     </div>
 
-    <!-- Conteúdo Principal -->
-    <main class="container-fluid px-2 py-3 flex-grow-1" style="max-width: 100vw; overflow-x: hidden; padding-left: calc(0.5rem + var(--sal)) !important; padding-right: calc(0.5rem + var(--sar)) !important;">
-        @RenderBody()
-    </main>
-
     <!-- Container Global de Notificações Toast -->
     <div id="menovaToastContainer" class="menova-toast-container"></div>
 
-    <!-- Scripts 100% Locais -->
+    <!-- Scripts Locais -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/signalr/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     
     <script>
-        // Função Global de Confirmação para substituir confirm()
+        function triggerHapticFeedback() {
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(10);
+            }
+        }
+
+        // Função Global de Confirmação para substituir confirm() nativo
         function confirmarAcaoModal(titulo, mensagem, callbackConfirmar) {
             const titleEl = document.getElementById('globalConfirmModalTitle');
             const bodyEl = document.getElementById('globalConfirmModalBody');
@@ -199,6 +298,11 @@
             });
 
             modalInstance.show();
+        }
+
+        // Ocultar menu instalar se já estiver a correr em standalone (PWA instalado)
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            document.querySelectorAll('.pwa-install-menu-item').forEach(el => el.style.display = 'none');
         }
 
         // Registo do Service Worker

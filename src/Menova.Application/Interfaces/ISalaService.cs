@@ -12,4 +12,7 @@ public interface ISalaService
     Task AtualizarMesaAsync(AtualizarMesaDto dto, CancellationToken cancellationToken = default);
     Task EliminarMesaAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Guid> CriarZonaAsync(CriarZonaDto dto, CancellationToken cancellationToken = default);
+    Task AtualizarZonaAsync(AtualizarZonaDto dto, CancellationToken cancellationToken = default);
+    Task EliminarZonaAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<ZonaDto?> GetZonaPorIdAsync(Guid id, CancellationToken cancellationToken = default);
 }

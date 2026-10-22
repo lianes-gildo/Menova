@@ -211,6 +211,88 @@ public class SalaService : ISalaService
         return zona.Id;
     }
 
+    public async Task AtualizarZonaAsync(AtualizarZonaDto dto, CancellationToken cancellationToken = default)
+    {
+        var zona = await _context.Zonas.FirstOrDefaultAsync(z => z.Id == dto.Id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Zona {dto.Id} não encontrada.");
+
+        var nomeAnterior = zona.Nome;
+        zona.Nome = dto.Nome.Trim();
+        zona.Ordem = dto.Ordem;
+        zona.Ativa = dto.Ativa;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await _auditoria.RegistarAsync(
+            acao: "ZONA.ATUALIZAR",
+            entidade: "zonas",
+            entidadeId: zona.Id.ToString(),
+            valoresAntes: new { Nome = nomeAnterior },
+            valoresDepois: new { zona.Nome, zona.Ordem, zona.Ativa },
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task EliminarZonaAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var zona = await _context.Zonas.Include(z => z.Mesas).FirstOrDefaultAsync(z => z.Id == id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Zona {id} não encontrada.");
+
+        if (zona.Mesas.Any(m => m.Ativa && (m.Estado == EstadoMesa.Ocupada || m.Estado == EstadoMesa.ContaPedida)))
+        {
+            throw new InvalidOperationException("Não é possível remover um salão/zona com mesas ocupadas ou com contas em aberto.");
+        }
+
+        zona.Ativa = false;
+        foreach (var m in zona.Mesas)
+        {
+            m.Ativa = false;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await _auditoria.RegistarAsync(
+            acao: "ZONA.DESATIVAR",
+            entidade: "zonas",
+            entidadeId: zona.Id.ToString(),
+            valoresAntes: new { zona.Nome },
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task<ZonaDto?> GetZonaPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var z = await _context.Zonas
+            .AsNoTracking()
+            .Include(z => z.Mesas)
+            .FirstOrDefaultAsync(z => z.Id == id, cancellationToken);
+
+        if (z == null) return null;
+
+        var mesasDtos = z.Mesas.Where(m => m.Ativa).Select(m => new MesaDto(
+            m.Id,
+            m.ZonaId,
+            z.Nome,
+            m.Numero,
+            m.Lugares,
+            m.PosicaoX,
+            m.PosicaoY,
+            m.Estado,
+            ObterDescricaoEstado(m.Estado),
+            m.Ativa,
+            null,
+            null,
+            null
+        )).ToList();
+
+        return new ZonaDto(
+            z.Id,
+            z.Nome,
+            z.Ordem,
+            z.Ativa,
+            mesasDtos.Count,
+            mesasDtos.Count(m => m.Estado == EstadoMesa.Ocupada || m.Estado == EstadoMesa.ContaPedida),
+            mesasDtos);
+    }
+
     private static string ObterDescricaoEstado(EstadoMesa estado) => estado switch
     {
         EstadoMesa.Livre => "Livre",

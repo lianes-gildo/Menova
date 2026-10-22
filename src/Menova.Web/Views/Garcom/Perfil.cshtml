@@ -1,0 +1,405 @@
+@model Menova.Domain.Identity.Utilizador
+@{
+    Layout = "_LayoutGarcom";
+    ViewData["Title"] = "Meu Perfil e Segurança";
+    var perfilPrincipal = Model.UtilizadoresPerfis.FirstOrDefault()?.Perfil.Nome ?? "Garçom";
+    var temPin = !string.IsNullOrEmpty(Model.HashPin);
+    var temBiometria = !string.IsNullOrEmpty(Model.BiometriaCredencialId);
+}
+
+<div class="row g-3 justify-content-center pb-4">
+    <!-- Coluna Central: Perfil do Garçom -->
+    <div class="col-12 col-md-8 col-lg-6">
+
+        <!-- 1. Cartão de Identificação do Colaborador (Flutter Hero Style) -->
+        <div class="card border-0 shadow-sm rounded-4 mb-3 bg-white overflow-hidden">
+            <div class="p-3 text-white d-flex align-items-center gap-3" style="background: linear-gradient(135deg, #6E1A33 0%, #4a0f20 100%);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow" style="width: 58px; height: 58px; background-color: rgba(255,255,255,0.2); font-size: 1.6rem; border: 2px solid rgba(255,255,255,0.4);">
+                    @(string.IsNullOrEmpty(Model.NomeCompleto) ? "G" : Model.NomeCompleto[0].ToString().ToUpper())
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <h5 class="fw-bold mb-0 text-truncate">@Model.NomeCompleto</h5>
+                    <div class="small opacity-75">@@@Model.NomeUtilizador &bull; <span class="badge bg-white text-dark rounded-pill px-2 py-0">@perfilPrincipal</span></div>
+                </div>
+                <div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
+                        <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Ativo
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body p-3">
+                <div class="row g-2 small text-muted">
+                    <div class="col-6">
+                        <span class="d-block text-dark fw-semibold">Email / Contacto:</span>
+                        <span class="text-truncate d-block">@(Model.Email ?? Model.Telefone ?? "Não registado")</span>
+                    </div>
+                    <div class="col-6 text-end">
+                        <span class="d-block text-dark fw-semibold">Último Acesso:</span>
+                        <span>@(Model.UltimoLoginEm.HasValue ? Model.UltimoLoginEm.Value.ToString("dd/MM/yyyy HH:mm") : "Primeiro acesso")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Cartão: Alterar PIN de 4 Dígitos -->
+        <div class="card border-0 shadow-sm rounded-4 mb-3 bg-white">
+            <div class="card-body p-3 p-sm-4">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background-color: #fbebf0; color: #6E1A33;">
+                        <i class="bi bi-shield-lock-fill fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark">Código PIN de Acesso Rápido</h6>
+                        <small class="text-muted">Acesso rápido no tablet/telemóvel com 4 dígitos.</small>
+                    </div>
+                </div>
+
+                <div class="p-2 mb-3 rounded-3 bg-light border small text-muted">
+                    <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                    @(temPin ? "Já possui um PIN ativo. Pode alterá-lo a qualquer momento introduzindo a sua credencial atual." : "Ainda não definiu um PIN. Defina um código numérico de 4 dígitos para entrada rápida.")
+                </div>
+
+                <form id="formAlterarPin" onsubmit="submeterAlteracaoPin(event)">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Credencial Atual: <span class="text-danger">*</span></label>
+                        <input type="password" id="inputPinAtual" class="form-control" placeholder="@(temPin ? "Introduza o seu PIN atual ou Palavra-passe" : "Introduza a sua Palavra-passe de login")" required autocomplete="current-password" />
+                        <div class="form-text small">Para segurança, confirme a sua identidade atual.</div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Novo PIN (4 dígitos): <span class="text-danger">*</span></label>
+                            <input type="password" id="inputNovoPin" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" class="form-control text-center font-monospace fs-5 fw-bold" placeholder="••••" required autocomplete="new-password" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Confirmar Novo PIN: <span class="text-danger">*</span></label>
+                            <input type="password" id="inputConfirmarPin" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" class="form-control text-center font-monospace fs-5 fw-bold" placeholder="••••" required autocomplete="new-password" />
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btnSalvarPin" class="btn text-white w-100 py-2 fw-semibold rounded-pill shadow-sm" style="background-color: #6E1A33;">
+                        <span id="btnSalvarPinText"><i class="bi bi-check2-circle me-1"></i>Guardar Novo Código PIN</span>
+                        <span id="btnSalvarPinSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 3. Cartão: Autenticação Biométrica Nativa (Face ID / Impressão Digital) -->
+        <div class="card border-0 shadow-sm rounded-4 mb-3 bg-white">
+            <div class="card-body p-3 p-sm-4">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background-color: #e6f4ea; color: #137333;">
+                        <i class="bi bi-fingerprint fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark">Biometria (Face ID / Impressão Digital)</h6>
+                        <small class="text-muted">Início de sessão instantâneo com autenticador nativo.</small>
+                    </div>
+                </div>
+
+                <div id="bioIncompativelAviso" class="alert alert-warning small d-none my-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    O seu navegador ou telemóvel atual não suporta autenticação biométrica WebAuthn / FIDO2 nativa. Utilize a versão mais recente do Safari (iOS) ou Chrome (Android).
+                </div>
+
+                <div id="bioCompativelContainer">
+                    <div class="p-3 mb-3 rounded-3 border bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small fw-bold text-dark">Estado no Dispositivo:</span>
+                            <span class="badge @(temBiometria ? "bg-success" : "bg-secondary")" id="badgeEstadoBio">
+                                @(temBiometria ? "Ativa" : "Não Registada")
+                            </span>
+                        </div>
+                        <div class="small text-muted" id="detalhesBioTexto">
+                            @if (temBiometria)
+                            {
+                                <div><i class="bi bi-phone me-1"></i>Dispositivo: <strong>@(Model.BiometriaDispositivo ?? "Dispositivo Atual")</strong></div>
+                                <div><i class="bi bi-calendar-check me-1"></i>Registada em: @(Model.BiometriaRegistadaEm?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                            }
+                            else
+                            {
+                                <span>Pode registar este telemóvel ou tablet para entrar no sistema com um simples toque na impressão digital ou leitura de Face ID.</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2">
+                        <button type="button" id="btnRegistarBio" class="btn text-white py-2 fw-semibold rounded-pill shadow-sm" style="background-color: #6E1A33;" onclick="iniciarRegistoBiometria()">
+                            <span id="btnRegistarBioText">
+                                <i class="bi bi-fingerprint me-1"></i>@(temBiometria ? "Atualizar Face ID / Impressão Digital" : "Ativar Face ID / Impressão Digital")
+                            </span>
+                            <span id="btnRegistarBioSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        </button>
+
+                        <div id="btnRemoverBioWrapper" class="@(temBiometria ? "" : "d-none")">
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100 py-2 fw-semibold rounded-pill" onclick="removerBiometria()">
+                                <i class="bi bi-trash3 me-1"></i>Desativar Biometria neste Dispositivo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Terminar Sessão -->
+        <div class="text-center mt-3">
+            <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-secondary py-2 px-4 rounded-pill fw-semibold">
+                    <i class="bi bi-box-arrow-right me-1"></i>Terminar Sessão em Segurança
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // 1. Verificação de suporte a WebAuthn (Face ID / Impressão Digital)
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.PublicKeyCredential) {
+            document.getElementById('bioIncompativelAviso')?.classList.remove('d-none');
+            document.getElementById('bioCompativelContainer')?.classList.add('d-none');
+        }
+    });
+
+    // 2. Submissão e Alteração de PIN
+    async function submeterAlteracaoPin(e) {
+        e.preventDefault();
+
+        const pinAtual = document.getElementById('inputPinAtual').value;
+        const novoPin = document.getElementById('inputNovoPin').value;
+        const confirmarPin = document.getElementById('inputConfirmarPin').value;
+
+        if (!/^\d{4}$/.test(novoPin)) {
+            mostrarToast('Erro de Validação', 'O novo PIN deve ser composto exatamente por 4 dígitos numéricos.', 'danger');
+            return;
+        }
+
+        if (novoPin !== confirmarPin) {
+            mostrarToast('Erro de Validação', 'A confirmação do novo PIN não coincide com o valor introduzido.', 'danger');
+            return;
+        }
+
+        const btn = document.getElementById('btnSalvarPin');
+        const text = document.getElementById('btnSalvarPinText');
+        const spinner = document.getElementById('btnSalvarPinSpinner');
+
+        btn.disabled = true;
+        text.classList.add('d-none');
+        spinner.classList.remove('d-none');
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        try {
+            const resp = await fetch('/garcom/alterar-pin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token || ''
+                },
+                body: JSON.stringify({
+                    credencialAtual: pinAtual,
+                    novoPin: novoPin,
+                    confirmarPin: confirmarPin
+                })
+            });
+
+            const data = await resp.json();
+
+            if (resp.ok && data.sucesso) {
+                mostrarToast('PIN Atualizado', data.mensagem || 'Código PIN de 4 dígitos guardado com sucesso!', 'success');
+                document.getElementById('formAlterarPin').reset();
+            } else {
+                mostrarToast('Atenção', data.mensagem || 'Erro ao alterar o código PIN.', 'warning');
+            }
+        } catch (err) {
+            console.error('Erro ao alterar PIN:', err);
+            mostrarToast('Erro', 'Ocorreu um problema ao comunicar com o servidor. Verifique a sua ligação.', 'danger');
+        } finally {
+            btn.disabled = false;
+            text.classList.remove('d-none');
+            spinner.classList.add('d-none');
+        }
+    }
+
+    // 3. Auxiliares de Conversão Base64URL para WebAuthn
+    function bufferToBase64(buffer) {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function base64ToBuffer(base64) {
+        let str = base64.replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) {
+            str += '=';
+        }
+        const binary = window.atob(str);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+    // 4. Registo de Biometria Nativa via W3C WebAuthn
+    async function iniciarRegistoBiometria() {
+        if (!window.PublicKeyCredential) {
+            mostrarToast('Não Suportado', 'Este dispositivo não suporta biometria WebAuthn.', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('btnRegistarBio');
+        const text = document.getElementById('btnRegistarBioText');
+        const spinner = document.getElementById('btnRegistarBioSpinner');
+
+        btn.disabled = true;
+        text.classList.add('d-none');
+        spinner.classList.remove('d-none');
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        try {
+            // Obter Desafio do Servidor
+            const respDesafio = await fetch('/garcom/biometria/desafio', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token || '' }
+            });
+
+            if (!respDesafio.ok) {
+                throw new Error('Falha ao gerar desafio de segurança no servidor.');
+            }
+
+            const dadosDesafio = await respDesafio.json();
+            if (!dadosDesafio.sucesso) {
+                throw new Error(dadosDesafio.mensagem || 'Falha ao iniciar registo biométrico.');
+            }
+
+            const challengeBuffer = base64ToBuffer(dadosDesafio.challenge);
+            const userIdBuffer = new TextEncoder().encode(dadosDesafio.userId);
+
+            // Solicitar Biometria Nativa ao Sistema Operativo (iOS FaceID / Android Biometrics / Touch ID)
+            const publicKeyCredentialCreationOptions = {
+                challenge: challengeBuffer,
+                rp: {
+                    name: "Menova POS",
+                    id: window.location.hostname
+                },
+                user: {
+                    id: userIdBuffer,
+                    name: dadosDesafio.userName,
+                    displayName: dadosDesafio.displayName
+                },
+                pubKeyCredParams: [
+                    { alg: -7, type: "public-key" },  // ES256
+                    { alg: -257, type: "public-key" } // RS256
+                ],
+                authenticatorSelection: {
+                    authenticatorAttachment: "platform", // Dispositivo nativo
+                    userVerification: "required",
+                    requireResidentKey: false
+                },
+                timeout: 60000,
+                attestation: "none"
+            };
+
+            const credential = await navigator.credentials.create({
+                publicKey: publicKeyCredentialCreationOptions
+            });
+
+            if (!credential) {
+                throw new Error('Registo biométrico cancelado ou indisponível.');
+            }
+
+            const rawIdBase64 = bufferToBase64(credential.rawId);
+
+            // Identificar dispositivo para facilidade de gestão
+            const userAgent = navigator.userAgent;
+            let dispositivo = "Dispositivo Móvel";
+            if (/iPhone|iPad|iPod/.test(userAgent)) dispositivo = "Apple iOS (Face ID / Touch ID)";
+            else if (/Android/.test(userAgent)) dispositivo = "Android Biometria";
+            else if (/Macintosh/.test(userAgent)) dispositivo = "Mac Touch ID";
+            else if (/Windows/.test(userAgent)) dispositivo = "Windows Hello";
+
+            // Guardar credencial no servidor
+            const respRegisto = await fetch('/garcom/biometria/registar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token || ''
+                },
+                body: JSON.stringify({
+                    credentialId: rawIdBase64,
+                    publicKey: null,
+                    dispositivo: dispositivo
+                })
+            });
+
+            const dataRegisto = await respRegisto.json();
+
+            if (respRegisto.ok && dataRegisto.sucesso) {
+                // Guardar token biométrico localmente para reconhecimento no ecrã de login
+                localStorage.setItem('menova_biometria_cred_id', rawIdBase64);
+                localStorage.setItem('menova_biometria_dispositivo', dispositivo);
+
+                mostrarToast('Biometria Registada', dataRegisto.mensagem || 'Face ID / Impressão digital configurada!', 'success');
+
+                // Atualizar UI
+                document.getElementById('badgeEstadoBio').textContent = 'Ativa';
+                document.getElementById('badgeEstadoBio').className = 'badge bg-success';
+                document.getElementById('detalhesBioTexto').innerHTML = `
+                    <div><i class="bi bi-phone me-1"></i>Dispositivo: <strong>${dataRegisto.dispositivo}</strong></div>
+                    <div><i class="bi bi-calendar-check me-1"></i>Registada em: ${dataRegisto.registadaEm || 'Hoje'}</div>
+                `;
+                document.getElementById('btnRemoverBioWrapper')?.classList.remove('d-none');
+                document.getElementById('btnRegistarBioText').innerHTML = '<i class="bi bi-fingerprint me-1"></i>Atualizar Face ID / Impressão Digital';
+            } else {
+                mostrarToast('Erro', dataRegisto.mensagem || 'Falha ao guardar biometria.', 'danger');
+            }
+        } catch (err) {
+            console.warn('Falha no registo de biometria:', err);
+            mostrarToast('Biometria Cancelada', err.message || 'A autenticação biométrica foi cancelada pelo utilizador.', 'info');
+        } finally {
+            btn.disabled = false;
+            text.classList.remove('d-none');
+            spinner.classList.add('d-none');
+        }
+    }
+
+    // 5. Remover Biometria
+    function removerBiometria() {
+        confirmarAcaoModal(
+            'Desativar Biometria',
+            'Deseja realmente desativar a entrada por biometria (Face ID / Impressão digital) para esta conta?',
+            async () => {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                try {
+                    const resp = await fetch('/garcom/biometria/remover', {
+                        method: 'POST',
+                        headers: { 'RequestVerificationToken': token || '' }
+                    });
+                    const data = await resp.json();
+                    if (data.sucesso) {
+                        localStorage.removeItem('menova_biometria_cred_id');
+                        localStorage.removeItem('menova_biometria_dispositivo');
+                        mostrarToast('Biometria Removida', data.mensagem, 'success');
+                        setTimeout(() => window.location.reload(), 800);
+                    } else {
+                        mostrarToast('Erro', data.mensagem, 'danger');
+                    }
+                } catch (err) {
+                    mostrarToast('Erro', 'Falha ao remover biometria.', 'danger');
+                }
+            }
+        );
+    }
+</script>
+}

@@ -173,6 +173,98 @@ public class AuthController : Controller
         return RedirecionarPorPerfil(resultado.PerfilCodigo, returnUrl);
     }
 
+    [HttpPost("biometria/desafio")]
+    [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
+    public IActionResult BiometriaDesafio()
+    {
+        var challengeBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+        var challengeBase64 = Convert.ToBase64String(challengeBytes);
+
+        Response.Cookies.Append("menova_bio_login_challenge", challengeBase64, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !Request.Host.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase),
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.UtcNow.AddMinutes(3)
+        });
+
+        return Json(new { sucesso = true, challenge = challengeBase64 });
+    }
+
+    public record LoginBiometriaDto(string CredentialId, string? ReturnUrl);
+
+    [HttpPost("biometria/autenticar")]
+    [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> BiometriaAutenticar([FromBody] LoginBiometriaDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.CredentialId))
+        {
+            return BadRequest(new { sucesso = false, mensagem = "Credencial biométrica não fornecida." });
+        }
+
+        if (!Request.Cookies.TryGetValue("menova_bio_login_challenge", out var challenge) || string.IsNullOrEmpty(challenge))
+        {
+            return BadRequest(new { sucesso = false, mensagem = "O desafio de autenticação biométrica expirou. Por favor, tente novamente." });
+        }
+
+        Response.Cookies.Delete("menova_bio_login_challenge");
+
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        var userAgent = HttpContext.Request.Headers.UserAgent.ToString();
+
+        var resultado = await _authService.AutenticarBiometriaAsync(dto.CredentialId.Trim(), ip, userAgent);
+        if (!resultado.Sucesso)
+        {
+            return BadRequest(new { sucesso = false, mensagem = resultado.MensagemErro ?? "Credencial biométrica não reconhecida ou utilizador inativo." });
+        }
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, resultado.UtilizadorId!.Value.ToString()),
+            new(ClaimTypes.Name, resultado.NomeUtilizador!),
+            new("nome_completo", resultado.NomeCompleto ?? resultado.NomeUtilizador!),
+            new(ClaimTypes.Role, resultado.PerfilCodigo ?? "GARCOM"),
+            new("deve_alterar_palavra_passe", "false"),
+            new("selo_seguranca", resultado.SeloSeguranca ?? string.Empty)
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(15)
+        };
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity),
+            authProperties);
+
+        string destino = "/garcom";
+        if (string.Equals(resultado.PerfilCodigo, PerfisSistema.Administrador, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(resultado.PerfilCodigo, PerfisSistema.Gerente, StringComparison.OrdinalIgnoreCase))
+        {
+            destino = "/dashboard";
+        }
+        else if (string.Equals(resultado.PerfilCodigo, PerfisSistema.Caixa, StringComparison.OrdinalIgnoreCase))
+        {
+            destino = "/caixa";
+        }
+        else if (string.Equals(resultado.PerfilCodigo, PerfisSistema.CozinhaBar, StringComparison.OrdinalIgnoreCase))
+        {
+            destino = "/kds";
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.ReturnUrl) && Url.IsLocalUrl(dto.ReturnUrl) && dto.ReturnUrl != "/" && dto.ReturnUrl != "/dashboard")
+        {
+            destino = dto.ReturnUrl;
+        }
+
+        return Json(new { sucesso = true, redirecionarUrl = destino, nome = resultado.NomeCompleto ?? resultado.NomeUtilizador });
+    }
+
     [HttpGet("heartbeat")]
     [HttpPost("heartbeat")]
     [Authorize]

@@ -1,8 +1,11 @@
 @model List<Menova.Application.DTOs.ZonaDto>
 @using Menova.Domain.Sala
 @using Menova.Domain.Identity
+@using Menova.Application.Security
+@inject Menova.Application.Interfaces.ICurrentUserService CurrentUser
 @{
-    if (User.IsInRole(PerfisSistema.Garcom))
+    var ehGarcom = User.IsInRole(PerfisSistema.Garcom);
+    if (ehGarcom)
     {
         Layout = "_LayoutGarcom";
     }
@@ -10,26 +13,60 @@
     var totalMesas = Model.Sum(z => z.TotalMesas);
     var ocupadas = Model.Sum(z => z.MesasOcupadas);
     var livres = totalMesas - ocupadas;
+    var podeGerir = CurrentUser.TemPermissao(PermissoesCatalogo.MesasGerir);
 }
 
+<!-- Cabeçalho Principal -->
 <div class="row mb-3 align-items-center">
-    <div class="col-md-6">
-        <h3 class="mb-0 fw-bold" style="color: #6E1A33;"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Planta de Sala e Mesas</h3>
-        <p class="text-muted small mb-0">Monitorização em tempo real das mesas e zonas do restaurante.</p>
+    <div class="col-md-5">
+        <h3 class="mb-0 fw-bold" style="color: #6E1A33;">
+            <i class="bi bi-grid-3x3-gap-fill me-2"></i>Planta de Salões e Mesas
+        </h3>
+        <p class="text-muted small mb-0">Gestão de salões, capacidade de lugares e ocupação em tempo real.</p>
     </div>
-    <div class="col-md-6 text-md-end mt-2 mt-md-0 d-flex flex-wrap gap-1 align-items-center justify-content-start justify-content-md-end">
-        <span class="badge bg-success py-2 px-2 px-sm-3"><i class="bi bi-circle-fill me-1 small"></i> Livres: <strong>@livres</strong></span>
-        <span class="badge py-2 px-2 px-sm-3" style="background-color: #6E1A33;"><i class="bi bi-person-fill me-1"></i> Ocupadas: <strong>@ocupadas</strong></span>
-        <span class="badge bg-secondary py-2 px-2 px-sm-3"><i class="bi bi-grid me-1"></i> Total: <strong>@totalMesas</strong></span>
+    <div class="col-md-7 text-md-end mt-2 mt-md-0 d-flex flex-wrap gap-2 align-items-center justify-content-start justify-content-md-end">
+        <div class="d-flex gap-1">
+            <span class="badge bg-success py-2 px-2 px-sm-3 shadow-sm"><i class="bi bi-circle-fill me-1 small"></i> Livres: <strong>@livres</strong></span>
+            <span class="badge py-2 px-2 px-sm-3 shadow-sm" style="background-color: #6E1A33;"><i class="bi bi-person-fill me-1"></i> Ocupadas: <strong>@ocupadas</strong></span>
+            <span class="badge bg-secondary py-2 px-2 px-sm-3 shadow-sm"><i class="bi bi-grid me-1"></i> Total: <strong>@totalMesas</strong></span>
+        </div>
+
+        @if (podeGerir)
+        {
+            <div class="btn-group shadow-sm ms-sm-2">
+                <button type="button" class="btn text-white fw-semibold py-2 px-3" style="background-color: #6E1A33;" data-bs-toggle="modal" data-bs-target="#modalCriarMesa">
+                    <i class="bi bi-plus-circle me-1"></i>Nova Mesa
+                </button>
+                <button type="button" class="btn btn-outline-secondary fw-semibold py-2 px-3" data-bs-toggle="modal" data-bs-target="#modalCriarZona">
+                    <i class="bi bi-building-add me-1"></i>Novo Salão
+                </button>
+            </div>
+        }
     </div>
 </div>
 
-<!-- Tabs das Zonas com Rolagem Suave -->
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<!-- Tabs das Zonas / Salões com Ações de Edição -->
 <ul class="nav nav-tabs mb-3 border-bottom flex-nowrap overflow-x-auto pb-1" id="zonaTabs" role="tablist" style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
     @for (int i = 0; i < Model.Count; i++)
     {
         var zona = Model[i];
-        <li class="nav-item flex-shrink-0" role="presentation">
+        <li class="nav-item flex-shrink-0 d-flex align-items-center me-1" role="presentation">
             <button class="nav-link text-nowrap @(i == 0 ? "active fw-bold" : "")" 
                     id="tab-@zona.Id" 
                     data-bs-toggle="tab" 
@@ -37,85 +74,129 @@
                     type="button" 
                     role="tab">
                 @zona.Nome 
-                <span class="badge bg-light text-dark border ms-2">@zona.Mesas.Count</span>
+                <span class="badge bg-light text-dark border ms-2">@zona.Mesas.Count mesas</span>
             </button>
+            @if (podeGerir)
+            {
+                <button type="button" class="btn btn-sm btn-link text-muted p-0 px-1" 
+                        onclick="abrirModalEditarZona('@zona.Id', '@zona.Nome', @zona.Ordem)" 
+                        title="Configurar salão '@zona.Nome'">
+                    <i class="bi bi-gear-fill" style="font-size: 0.85rem;"></i>
+                </button>
+            }
         </li>
     }
 </ul>
 
-<!-- Conteúdo das Zonas -->
+<!-- Grelha de Mesas por Salão -->
 <div class="tab-content" id="zonaTabsContent">
     @for (int i = 0; i < Model.Count; i++)
     {
         var zona = Model[i];
         <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="zona-@zona.Id" role="tabpanel">
-            <div class="row g-3">
-                @foreach (var mesa in zona.Mesas)
-                {
-                    var cardClass = mesa.Estado switch
+            @if (!zona.Mesas.Any())
+            {
+                <div class="card border-dashed p-5 text-center my-3 bg-light">
+                    <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                    <h5 class="fw-bold text-dark">Nenhuma mesa registada neste salão</h5>
+                    <p class="text-muted small">Adicione mesas especificando o número e a capacidade de pessoas.</p>
+                    @if (podeGerir)
                     {
-                        EstadoMesa.Livre => "border-success bg-white text-dark",
-                        EstadoMesa.Ocupada => "text-white",
-                        EstadoMesa.ContaPedida => "border-warning bg-warning bg-opacity-25 text-dark",
-                        EstadoMesa.Reservada => "border-primary bg-primary bg-opacity-10 text-dark",
-                        EstadoMesa.Bloqueada => "border-secondary bg-light text-muted",
-                        _ => "border-secondary"
-                    };
-
-                    var cardStyle = mesa.Estado == EstadoMesa.Ocupada ? "background-color: #6E1A33; border: 1px solid #6E1A33;" : "";
-                    var badgeClass = mesa.Estado switch
+                        <div>
+                            <button type="button" class="btn text-white fw-semibold" style="background-color: #6E1A33;" 
+                                    onclick="prepararNovaMesaParaZona('@zona.Id')">
+                                <i class="bi bi-plus-circle me-1"></i>Adicionar Mesa a @zona.Nome
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="row g-2 g-sm-3">
+                    @foreach (var mesa in zona.Mesas)
                     {
-                        EstadoMesa.Livre => "bg-success",
-                        EstadoMesa.Ocupada => "bg-light text-dark",
-                        EstadoMesa.ContaPedida => "bg-warning text-dark",
-                        EstadoMesa.Reservada => "bg-primary",
-                        EstadoMesa.Bloqueada => "bg-secondary",
-                        _ => "bg-dark"
-                    };
+                        var cardClass = mesa.Estado switch
+                        {
+                            EstadoMesa.Livre => "border-success bg-white text-dark",
+                            EstadoMesa.Ocupada => "text-white",
+                            EstadoMesa.ContaPedida => "border-warning bg-warning bg-opacity-25 text-dark",
+                            EstadoMesa.Reservada => "border-primary bg-primary bg-opacity-10 text-dark",
+                            EstadoMesa.Bloqueada => "border-secondary bg-light text-muted",
+                            _ => "border-secondary"
+                        };
 
-                    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                        <div class="card h-100 shadow-sm mesa-card @cardClass" 
-                             id="mesa-card-@mesa.Id" 
-                             style="@cardStyle cursor: pointer; transition: transform 0.15s ease-in-out;"
-                             onclick="abrirModalMesa('@mesa.Id', '@mesa.Numero', '@mesa.ZonaNome', '@((int)mesa.Estado)', '@mesa.Lugares')">
-                            <div class="card-body p-3 text-center">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="small opacity-75"><i class="bi bi-people-fill me-1"></i>@mesa.Lugares</span>
-                                    <span class="badge @badgeClass" id="mesa-badge-@mesa.Id">@mesa.EstadoDescricao</span>
-                                </div>
-                                <h2 class="fw-bold my-2 mesa-numero">@mesa.Numero</h2>
-                                <div class="small opacity-75 mt-2">
-                                    <i class="bi bi-geo-alt me-1"></i>@zona.Nome
+                        var cardStyle = mesa.Estado == EstadoMesa.Ocupada ? "background-color: #6E1A33; border: 1px solid #6E1A33;" : "";
+                        var badgeClass = mesa.Estado switch
+                        {
+                            EstadoMesa.Livre => "bg-success",
+                            EstadoMesa.Ocupada => "bg-light text-dark",
+                            EstadoMesa.ContaPedida => "bg-warning text-dark",
+                            EstadoMesa.Reservada => "bg-primary",
+                            EstadoMesa.Bloqueada => "bg-secondary",
+                            _ => "bg-dark"
+                        };
+
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                            <div class="card h-100 shadow-sm mesa-card @cardClass" 
+                                 id="mesa-card-@mesa.Id" 
+                                 style="@cardStyle cursor: pointer; transition: transform 0.15s ease-in-out;"
+                                 onclick="abrirModalMesa('@mesa.Id', '@mesa.Numero', '@mesa.ZonaNome', '@((int)mesa.Estado)', '@mesa.Lugares', '@mesa.ZonaId')">
+                                <div class="card-body p-2 p-sm-3 text-center d-flex flex-column justify-content-between">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="badge bg-light text-dark border small fw-semibold" title="Capacidade: @mesa.Lugares pessoas">
+                                            <i class="bi bi-people-fill me-1"></i>@mesa.Lugares
+                                        </span>
+                                        <span class="badge @badgeClass" id="mesa-badge-@mesa.Id" style="font-size: 0.68rem;">@mesa.EstadoDescricao</span>
+                                    </div>
+                                    <h3 class="fw-bold my-2 mesa-numero">@mesa.Numero</h3>
+                                    <div class="small opacity-75 text-truncate" style="font-size: 0.75rem;">
+                                        <i class="bi bi-geo-alt me-1"></i>@zona.Nome
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                }
-            </div>
+                    }
+                </div>
+            }
         </div>
     }
 </div>
 
-<!-- Modal de Ação da Mesa -->
+<!-- Modal Principal de Ação e Consulta da Mesa -->
 <div class="modal fade" id="modalMesa" tabindex="-1" aria-labelledby="modalMesaTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content shadow border-0">
             <div class="modal-header text-white" style="background-color: #6E1A33;">
-                <h5 class="modal-title" id="modalMesaTitle"><i class="bi bi-grid-fill me-2"></i>Mesa <span id="modalMesaNumero"></span></h5>
+                <h5 class="modal-title fw-bold" id="modalMesaTitle"><i class="bi bi-grid-fill me-2"></i>Mesa <span id="modalMesaNumero"></span></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-3">
                 <input type="hidden" id="modalMesaId" />
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Zona:</label>
-                    <span id="modalMesaZona" class="text-muted ms-2"></span>
+                <input type="hidden" id="modalMesaZonaId" />
+
+                <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded mb-3 border">
+                    <div>
+                        <div class="small text-muted">Localização:</div>
+                        <strong class="fs-6 text-dark" id="modalMesaZona"></strong>
+                    </div>
+                    <div class="border-start ps-3">
+                        <div class="small text-muted">Capacidade Oficial:</div>
+                        <strong class="fs-6 text-dark"><span id="modalMesaLugares"></span> pessoas</strong>
+                    </div>
                 </div>
+
+                @if (ehGarcom)
+                {
+                    <div class="mb-3">
+                        <a href="/garcom" id="btnAtenderMesaGarcom" class="btn text-white w-100 py-2 fw-bold shadow-sm" style="background-color: #6E1A33;">
+                            <i class="bi bi-phone-fill me-1"></i>Registar Comanda nesta Mesa
+                        </a>
+                    </div>
+                }
+
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Capacidade:</label>
-                    <span id="modalMesaLugares" class="text-muted ms-2"></span> lugares
-                </div>
-                <div class="mb-4">
-                    <label for="selectEstadoMesa" class="form-label fw-bold">Alterar Estado da Mesa:</label>
+                    <label for="selectEstadoMesa" class="form-label fw-bold small">Estado Operacional da Mesa:</label>
                     <select id="selectEstadoMesa" class="form-select">
                         <option value="1">Livre</option>
                         <option value="2">Ocupada</option>
@@ -125,32 +206,310 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="inputMotivoEstado" class="form-label">Motivo (opcional):</label>
-                    <input type="text" id="inputMotivoEstado" class="form-control" placeholder="Ex: Reserva confirmada por telefone" />
+                    <label for="inputMotivoEstado" class="form-label small">Observação / Motivo (opcional):</label>
+                    <input type="text" id="inputMotivoEstado" class="form-control form-control-sm" placeholder="Ex: Reserva confirmada por telefone" />
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="button" class="btn text-white" style="background-color: #6E1A33;" onclick="salvarEstadoMesa()">Guardar Estado</button>
+            <div class="modal-footer d-flex justify-content-between">
+                <div>
+                    @if (podeGerir)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" onclick="abrirEdicaoMesaFromDetalhes()">
+                            <i class="bi bi-pencil-square me-1"></i>Editar Mesa
+                        </button>
+                    }
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-sm text-white fw-bold" style="background-color: #6E1A33;" onclick="salvarEstadoMesa()">Guardar Estado</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-@Html.AntiForgeryToken()
+@if (podeGerir)
+{
+    <!-- Modal: Criar Nova Mesa -->
+    <div class="modal fade" id="modalCriarMesa" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="/mesas/criar-mesa" method="post" class="modal-content shadow border-0">
+                @Html.AntiForgeryToken()
+                <div class="modal-header text-white" style="background-color: #6E1A33;">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Registar Nova Mesa</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div class="row g-2 mb-3">
+                        <div class="col-8">
+                            <label class="form-label fw-bold small">Número ou Nome da Mesa: <span class="text-danger">*</span></label>
+                            <input type="text" name="Numero" id="criarMesaNumero" class="form-control" placeholder="Ex: 12 ou VIP 1" required />
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label fw-bold small">Lugares / Pessoas: <span class="text-danger">*</span></label>
+                            <input type="number" name="Lugares" id="criarMesaLugares" class="form-control" value="4" min="1" max="100" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Salão / Zona: <span class="text-danger">*</span></label>
+                        <select name="ZonaId" id="criarMesaZonaId" class="form-select" required>
+                            @foreach (var z in Model)
+                            {
+                                <option value="@z.Id">@z.Nome</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small">Posição X (Planta):</label>
+                            <input type="number" name="PosicaoX" class="form-control form-control-sm" value="0" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">Posição Y (Planta):</label>
+                            <input type="number" name="PosicaoY" class="form-control form-control-sm" value="0" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn text-white fw-bold" style="background-color: #6E1A33;">
+                        <i class="bi bi-check-lg me-1"></i>Registar Mesa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Mesa Existente -->
+    <div class="modal fade" id="modalEditarMesa" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0">
+                <form action="/mesas/editar-mesa" method="post" id="formEditarMesa">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" id="editarMesaId" />
+                    <div class="modal-header text-white" style="background-color: #6E1A33;">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Mesa: <span id="lblEditarMesaNum"></span></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-3">
+                        <div class="row g-2 mb-3">
+                            <div class="col-8">
+                                <label class="form-label fw-bold small">Número ou Nome da Mesa: <span class="text-danger">*</span></label>
+                                <input type="text" name="Numero" id="editarMesaNumero" class="form-control" required />
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label fw-bold small">Capacidade (Lugares): <span class="text-danger">*</span></label>
+                                <input type="number" name="Lugares" id="editarMesaLugares" class="form-control" min="1" max="100" required />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Salão / Zona: <span class="text-danger">*</span></label>
+                            <select name="ZonaId" id="editarMesaZonaId" class="form-select" required>
+                                @foreach (var z in Model)
+                                {
+                                    <option value="@z.Id">@z.Nome</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="Ativa" value="true" id="editarMesaAtiva" checked />
+                            <label class="form-check-label small fw-semibold" for="editarMesaAtiva">
+                                Mesa operacional e ativa no restaurante
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmarEliminarMesa()">
+                            <i class="bi bi-trash3 me-1"></i>Desativar Mesa
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn text-white fw-bold btn-sm" style="background-color: #6E1A33;">
+                                <i class="bi bi-save me-1"></i>Guardar Alterações
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <form id="formEliminarMesa" method="post" action="" class="d-none">
+                    @Html.AntiForgeryToken()
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Criar Salão / Zona -->
+    <div class="modal fade" id="modalCriarZona" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="/mesas/criar-zona" method="post" class="modal-content shadow border-0">
+                @Html.AntiForgeryToken()
+                <div class="modal-header text-white" style="background-color: #6E1A33;">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-building-add me-2"></i>Novo Salão ou Zona</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nome do Salão / Área: <span class="text-danger">*</span></label>
+                        <input type="text" name="Nome" class="form-control" placeholder="Ex: Esplanada, Salão VIP, Terraço..." required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Ordem de Apresentação:</label>
+                        <input type="number" name="Ordem" class="form-control form-control-sm" value="@(Model.Count + 1)" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn text-white fw-bold" style="background-color: #6E1A33;">
+                        <i class="bi bi-check-lg me-1"></i>Criar Salão
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Salão / Zona -->
+    <div class="modal fade" id="modalEditarZona" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0">
+                <form action="/mesas/editar-zona" method="post" id="formEditarZona">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" id="editarZonaId" />
+                    <div class="modal-header text-white" style="background-color: #6E1A33;">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-gear-fill me-2"></i>Editar Salão / Zona</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-3">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome do Salão: <span class="text-danger">*</span></label>
+                            <input type="text" name="Nome" id="editarZonaNome" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">Ordem de Apresentação:</label>
+                            <input type="number" name="Ordem" id="editarZonaOrdem" class="form-control form-control-sm" />
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="Ativa" value="true" id="editarZonaAtiva" checked />
+                            <label class="form-check-label small fw-semibold" for="editarZonaAtiva">
+                                Salão ativo para atendimento
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmarEliminarZona()">
+                            <i class="bi bi-trash3 me-1"></i>Desativar Salão
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn text-white fw-bold btn-sm" style="background-color: #6E1A33;">
+                                <i class="bi bi-save me-1"></i>Guardar Alterações
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <form id="formEliminarZona" method="post" action="" class="d-none">
+                    @Html.AntiForgeryToken()
+                </form>
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
 <script>
-    function abrirModalMesa(id, numero, zona, estado, lugares) {
+    function abrirModalMesa(id, numero, zona, estado, lugares, zonaId) {
         document.getElementById('modalMesaId').value = id;
         document.getElementById('modalMesaNumero').textContent = numero;
         document.getElementById('modalMesaZona').textContent = zona;
         document.getElementById('modalMesaLugares').textContent = lugares;
         document.getElementById('selectEstadoMesa').value = estado;
         document.getElementById('inputMotivoEstado').value = '';
+        if (document.getElementById('modalMesaZonaId')) {
+            document.getElementById('modalMesaZonaId').value = zonaId || '';
+        }
+
+        const btnAtender = document.getElementById('btnAtenderMesaGarcom');
+        if (btnAtender) {
+            btnAtender.href = '/garcom?mesaId=' + id;
+        }
         
         var modal = new bootstrap.Modal(document.getElementById('modalMesa'));
         modal.show();
+    }
+
+    function prepararNovaMesaParaZona(zonaId) {
+        const selectZona = document.getElementById('criarMesaZonaId');
+        if (selectZona) selectZona.value = zonaId;
+        const modal = new bootstrap.Modal(document.getElementById('modalCriarMesa'));
+        modal.show();
+    }
+
+    function abrirEdicaoMesaFromDetalhes() {
+        const id = document.getElementById('modalMesaId').value;
+        const numero = document.getElementById('modalMesaNumero').textContent;
+        const lugares = document.getElementById('modalMesaLugares').textContent;
+        const zonaId = document.getElementById('modalMesaZonaId')?.value || '';
+
+        // Fechar modal de detalhes
+        bootstrap.Modal.getInstance(document.getElementById('modalMesa'))?.hide();
+
+        document.getElementById('editarMesaId').value = id;
+        document.getElementById('lblEditarMesaNum').textContent = numero;
+        document.getElementById('editarMesaNumero').value = numero;
+        document.getElementById('editarMesaLugares').value = lugares;
+        if (zonaId) document.getElementById('editarMesaZonaId').value = zonaId;
+        document.getElementById('editarMesaAtiva').checked = true;
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditarMesa'));
+        modal.show();
+    }
+
+    function confirmarEliminarMesa() {
+        const id = document.getElementById('editarMesaId').value;
+        const num = document.getElementById('editarMesaNumero').value;
+        if (typeof window.confirmarAcaoModal === 'function') {
+            window.confirmarAcaoModal(
+                'Desativar Mesa',
+                `Tem a certeza de que deseja desativar a Mesa ${num}? Ela deixará de constar na planta ativa.`,
+                function () {
+                    const form = document.getElementById('formEliminarMesa');
+                    form.action = '/mesas/eliminar-mesa/' + id;
+                    form.submit();
+                }
+            );
+        } else {
+            const form = document.getElementById('formEliminarMesa');
+            form.action = '/mesas/eliminar-mesa/' + id;
+            form.submit();
+        }
+    }
+
+    function abrirModalEditarZona(id, nome, ordem) {
+        document.getElementById('editarZonaId').value = id;
+        document.getElementById('editarZonaNome').value = nome;
+        document.getElementById('editarZonaOrdem').value = ordem;
+        document.getElementById('editarZonaAtiva').checked = true;
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditarZona'));
+        modal.show();
+    }
+
+    function confirmarEliminarZona() {
+        const id = document.getElementById('editarZonaId').value;
+        const nome = document.getElementById('editarZonaNome').value;
+        if (typeof window.confirmarAcaoModal === 'function') {
+            window.confirmarAcaoModal(
+                'Desativar Salão',
+                `Tem a certeza de que pretende desativar o salão '${nome}'? Todas as mesas associadas ficarão inativas.`,
+                function () {
+                    const form = document.getElementById('formEliminarZona');
+                    form.action = '/mesas/eliminar-zona/' + id;
+                    form.submit();
+                }
+            );
+        } else {
+            const form = document.getElementById('formEliminarZona');
+            form.action = '/mesas/eliminar-zona/' + id;
+            form.submit();
+        }
     }
 
     async function salvarEstadoMesa() {
@@ -182,48 +541,37 @@
         }
     }
 
-    // Tempo Real via SignalR
-    document.addEventListener("DOMContentLoaded", function () {
-        if (typeof signalR !== "undefined") {
-            const connection = new signalR.HubConnectionBuilder()
-                .withUrl("/hub/menova")
-                .withAutomaticReconnect()
-                .build();
+    // Ouvinte em Tempo Real via SignalR
+    window.addEventListener('menova:mesa-alterada', function (e) {
+        const data = e.detail;
+        if (!data) return;
+        const card = document.getElementById("mesa-card-" + data.mesaId);
+        const badge = document.getElementById("mesa-badge-" + data.mesaId);
+        if (card && badge) {
+            badge.textContent = data.estadoDescricao;
+            card.className = "card h-100 shadow-sm mesa-card";
+            card.style.backgroundColor = "";
+            card.style.border = "";
+            badge.className = "badge";
 
-            connection.on("MesaAlterada", function (data) {
-                const card = document.getElementById("mesa-card-" + data.mesaId);
-                const badge = document.getElementById("mesa-badge-" + data.mesaId);
-                if (card && badge) {
-                    badge.textContent = data.estadoDescricao;
-                    
-                    // Reset styling
-                    card.className = "card h-100 shadow-sm mesa-card";
-                    card.style.backgroundColor = "";
-                    card.style.border = "";
-                    badge.className = "badge";
-
-                    if (data.novoEstado === 1) { // Livre
-                        card.classList.add("border-success", "bg-white", "text-dark");
-                        badge.classList.add("bg-success");
-                    } else if (data.novoEstado === 2) { // Ocupada
-                        card.classList.add("text-white");
-                        card.style.backgroundColor = "#6E1A33";
-                        card.style.border = "1px solid #6E1A33";
-                        badge.classList.add("bg-light", "text-dark");
-                    } else if (data.novoEstado === 3) { // Conta Pedida
-                        card.classList.add("border-warning", "bg-warning", "bg-opacity-25", "text-dark");
-                        badge.classList.add("bg-warning", "text-dark");
-                    } else if (data.novoEstado === 4) { // Reservada
-                        card.classList.add("border-primary", "bg-primary", "bg-opacity-10", "text-dark");
-                        badge.classList.add("bg-primary");
-                    } else if (data.novoEstado === 5) { // Bloqueada
-                        card.classList.add("border-secondary", "bg-light", "text-muted");
-                        badge.classList.add("bg-secondary");
-                    }
-                }
-            });
-
-            connection.start().catch(err => console.error("Erro ao ligar ao SignalR:", err));
+            if (data.novoEstado === 1) { // Livre
+                card.classList.add("border-success", "bg-white", "text-dark");
+                badge.classList.add("bg-success");
+            } else if (data.novoEstado === 2) { // Ocupada
+                card.classList.add("text-white");
+                card.style.backgroundColor = "#6E1A33";
+                card.style.border = "1px solid #6E1A33";
+                badge.classList.add("bg-light", "text-dark");
+            } else if (data.novoEstado === 3) { // Conta Pedida
+                card.classList.add("border-warning", "bg-warning", "bg-opacity-25", "text-dark");
+                badge.classList.add("bg-warning", "text-dark");
+            } else if (data.novoEstado === 4) { // Reservada
+                card.classList.add("border-primary", "bg-primary", "bg-opacity-10", "text-dark");
+                badge.classList.add("bg-primary");
+            } else if (data.novoEstado === 5) { // Bloqueada
+                card.classList.add("border-secondary", "bg-light", "text-muted");
+                badge.classList.add("bg-secondary");
+            }
         }
     });
 </script>

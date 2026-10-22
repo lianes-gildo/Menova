@@ -1044,6 +1044,24 @@ namespace Menova.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("atualizado_por");
 
+                    b.Property<string>("BiometriaCredencialId")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("biometria_credencial_id");
+
+                    b.Property<string>("BiometriaDispositivo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("biometria_dispositivo");
+
+                    b.Property<string>("BiometriaPublicKey")
+                        .HasColumnType("text")
+                        .HasColumnName("biometria_public_key");
+
+                    b.Property<DateTime?>("BiometriaRegistadaEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("biometria_registada_em");
+
                     b.Property<DateTime?>("BloqueadoAte")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("bloqueado_ate");
@@ -1140,6 +1158,10 @@ namespace Menova.Infrastructure.Persistence.Migrations
                         .HasColumnName("versao");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BiometriaCredencialId")
+                        .IsUnique()
+                        .HasFilter("biometria_credencial_id IS NOT NULL");
 
                     b.HasIndex("NomeUtilizador")
                         .IsUnique();

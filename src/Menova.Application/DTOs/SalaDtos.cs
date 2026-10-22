@@ -50,3 +50,9 @@ public record AtualizarEstadoMesaDto(
 public record CriarZonaDto(
     string Nome,
     int Ordem);
+
+public record AtualizarZonaDto(
+    Guid Id,
+    string Nome,
+    int Ordem,
+    bool Ativa);

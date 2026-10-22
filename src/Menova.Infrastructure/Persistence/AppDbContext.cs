@@ -112,6 +112,12 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(e => e.DeveAlterarPalavraPasse).HasDefaultValue(false).HasColumnName("deve_alterar_palavra_passe");
             entity.Property(e => e.SeloSeguranca).HasMaxLength(64).IsRequired().HasColumnName("selo_seguranca");
 
+            entity.Property(e => e.BiometriaCredencialId).HasMaxLength(512).HasColumnName("biometria_credencial_id");
+            entity.Property(e => e.BiometriaPublicKey).HasColumnName("biometria_public_key");
+            entity.Property(e => e.BiometriaDispositivo).HasMaxLength(100).HasColumnName("biometria_dispositivo");
+            entity.Property(e => e.BiometriaRegistadaEm).HasColumnName("biometria_registada_em");
+            entity.HasIndex(e => e.BiometriaCredencialId).IsUnique().HasFilter("biometria_credencial_id IS NOT NULL");
+
             entity.Property(e => e.CriadoEm).HasColumnName("criado_em");
             entity.Property(e => e.CriadoPor).HasMaxLength(50).HasColumnName("criado_por");
             entity.Property(e => e.AtualizadoEm).HasColumnName("atualizado_em");
